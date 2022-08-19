@@ -91,9 +91,9 @@ const COOKIE_HARV_USERID_NAME = 'harvest-user-id';
 
 export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects, entries }: EntriesProps) => {
     const router = useRouter();
-    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME));
-    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME));
-    const [ harvestUserId, setHarvestUserId ] = useState<string>(cookies.get(COOKIE_HARV_USERID_NAME));
+    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
+    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
+    const [ harvestUserId, setHarvestUserId ] = useState<string>(cookies.get(COOKIE_HARV_USERID_NAME) ?? '');
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
     console.log(entries);
     useEffect(() => {
@@ -109,7 +109,7 @@ export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects, 
     }, [ harvestUserId ]);
 
     useEffect(() => {
-        const url = `/?from=${ format(dateRange[0], DATE_FORMAT) }&to=${ format(dateRange[1], DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&userid=${ harvestUserId }`
+        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&userid=${ harvestUserId }`
         router.push(url, url)
     }, [ dateRange ])
 
