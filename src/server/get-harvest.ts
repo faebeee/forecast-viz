@@ -1,4 +1,4 @@
-import {GetProjectReports, GetTaskReport, GetTimeEntriesResponse, TimeEntry} from "./harvest-types";
+import { GetProjectReports, GetTaskReport, GetTimeEntriesResponse, TimeEntry } from "./harvest-types";
 import axios from "axios";
 
 export type QueryParams = {
@@ -11,7 +11,7 @@ export const getHarvest = (accessToken: string, accountId: number) => {
     const api = axios.create({
         baseURL: 'https://api.harvestapp.com/v2',
         headers: {
-            Authorization: ` Bearer ${accessToken}`,
+            Authorization: ` Bearer ${ accessToken }`,
             'Harvest-Account-Id': accountId
         }
     })
@@ -21,9 +21,12 @@ export const getHarvest = (accessToken: string, accountId: number) => {
                                       from,
                                       to
                                   }: QueryParams): Promise<TimeEntry[]> => {
-        console.log(userId, from, to)
-        const response = await api.get<GetTimeEntriesResponse>(`/time_entries?user_id=${userId}&from=${from}&to=${to}`);
-        return response.data.time_entries;
+        try {
+            const response = await api.get<GetTimeEntriesResponse>(`/time_entries?user_id=${ userId }&from=${ from }&to=${ to }`);
+            return response.data.time_entries ?? [];
+        } catch (e) {
+            return [];
+        }
     }
 
 
@@ -32,15 +35,19 @@ export const getHarvest = (accessToken: string, accountId: number) => {
                                          from,
                                          to
                                      }: QueryParams) => {
-        const response = await api.get<GetProjectReports.Response>(`/reports/time/projects?user_id=${userId}&from=${from}&to=${to}`)
-        return response.data.results;
+        try {
+            const response = await api.get<GetProjectReports.Response>(`/reports/time/projects?user_id=${ userId }&from=${ from }&to=${ to }`)
+            return response.data.results;
+        } catch (e) {
+            return [];
+        }
     }
     const getTasksReport = async ({
-                                         userId,
-                                         from,
-                                         to
-                                     }: QueryParams) => {
-        const response = await api.get<GetTaskReport.Response>(`https://api.harvestapp.com/v2/reports/time/tasks?from=${from}&to=${to}`)
+                                      userId,
+                                      from,
+                                      to
+                                  }: QueryParams) => {
+        const response = await api.get<GetTaskReport.Response>(`https://api.harvestapp.com/v2/reports/time/tasks?from=${ from }&to=${ to }`)
         return response.data.results;
     }
 

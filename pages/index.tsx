@@ -24,6 +24,11 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     if (!token || !account) {
         return {
             props: {
+                entries: [],
+                hoursTotal: 0,
+                totalEntries: 0,
+                projects: [],
+                totalProjects: 0,
                 from,
                 to,
                 projectHoursSpent: []
