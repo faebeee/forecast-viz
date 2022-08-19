@@ -1,12 +1,11 @@
 import { getHarvest } from "../src/server/get-harvest";
 import uniq from "lodash/uniq";
+import get from "lodash/get";
 import { TimeEntry } from "../src/server/harvest-types";
-import { Table, Panel, Input } from 'rsuite';
 import { useEffect, useState } from "react";
 import cookies from 'js-cookie';
 import { useRouter } from "next/router";
 import { endOfWeek, format, startOfWeek } from 'date-fns';
-import Cookies from 'cookies'
 import { NextApiRequest, NextApiResponse } from "next";
 import { Card, CardContent, TextField, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -90,13 +89,13 @@ const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 const COOKIE_HARV_USERID_NAME = 'harvest-user-id';
 
-export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects }: EntriesProps) => {
+export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects, entries }: EntriesProps) => {
     const router = useRouter();
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME));
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME));
     const [ harvestUserId, setHarvestUserId ] = useState<string>(cookies.get(COOKIE_HARV_USERID_NAME));
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
-
+    console.log(entries);
     useEffect(() => {
         cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
     }, [ harvestToken ])
@@ -169,6 +168,49 @@ export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects }
                         { field: 'projectId', headerName: 'ID', width: 90 },
                         { field: 'projectName', headerName: 'Project Name', flex: 1 },
                         { field: 'hours', headerName: 'Hours', flex: 1 },
+
+                    ] }
+                    disableSelectionOnClick
+                    experimentalFeatures={ { newEditingApi: true } }
+                />
+            </CardContent>
+        </Card>
+
+        <Card>
+            <Typography variant={ 'h2' }>Data</Typography>
+            <CardContent>
+                <DataGrid
+                    autoHeight
+                    getRowId={ (r: TimeEntry) => r.id }
+                    rows={ entries }
+                    columns={ [
+                        { field: 'id', headerName: 'ID', width: 90 },
+                        {
+                            field: 'task.name',
+                            headerName: 'Task Name',
+                            flex: 1,
+                            renderCell: ({ field, row }) => <>{ get(row, field) }</>
+                        },
+                        {
+                            field: 'client.name',
+                            headerName: 'Client Name',
+                            flex: 1,
+                            renderCell: ({ field, row }) => <>{ get(row, field) }</>
+                        },
+                        {
+                            field: 'project.code',
+                            headerName: 'Project Code',
+                            flex: 1,
+                            renderCell: ({ field, row }) => <>{ get(row, field) }</>
+                        },
+                        {
+                            field: 'project.name',
+                            headerName: 'Project Name',
+                            flex: 1,
+                            renderCell: ({ field, row }) => <>{ get(row, field) }</>
+                        },
+                        { field: 'notes', headerName: 'Notes', flex: 1 },
+                        { field: 'hours', headerName: 'Hours', width: 90 },
 
                     ] }
                     disableSelectionOnClick
