@@ -7,7 +7,7 @@ export type QueryParams = {
     to: string;
 }
 
-export const getHarvest = (accessToken: string, accountId: string) => {
+export const getHarvest = (accessToken: string, accountId: number) => {
     const api = axios.create({
         baseURL: 'https://api.harvestapp.com/v2',
         headers: {

@@ -1,14 +1,17 @@
-import {getHarvest} from "../src/server/get-harvest";
+import { getHarvest } from "../src/server/get-harvest";
 import uniq from "lodash/uniq";
-import {TimeEntry} from "../src/server/harvest-types";
-import {Table, Panel, Input} from 'rsuite';
-import {useEffect, useState} from "react";
+import { TimeEntry } from "../src/server/harvest-types";
+import { Table, Panel, Input } from 'rsuite';
+import { useEffect, useState } from "react";
 import cookies from 'js-cookie';
-import {DateRangePicker} from 'rsuite';
-import {useRouter} from "next/router";
-import {endOfWeek, format, startOfWeek} from 'date-fns';
+import { useRouter } from "next/router";
+import { endOfWeek, format, startOfWeek } from 'date-fns';
 import Cookies from 'cookies'
-import {NextApiRequest, NextApiResponse} from "next";
+import { NextApiRequest, NextApiResponse } from "next";
+import { Card, CardContent, TextField, Typography } from "@mui/material";
+import { DataGrid } from '@mui/x-data-grid';
+import { DateRangePicker } from "@mui/x-date-pickers-pro";
+import { Box } from "@mui/system";
 
 const DATE_FORMAT = 'yyyy-MM-dd';
 
@@ -30,12 +33,12 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     }
     const api = getHarvest(token, account);
 
-    const entries = await api.getTimeEntries({userId, from, to});
+    const entries = await api.getTimeEntries({ userId, from, to });
 
     const projects = uniq(entries.reduce((acc, entry) => {
         acc.push(entry.project.name)
         return acc;
-    }, []));
+    }, [] as string[]));
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = entry.project.name;
@@ -51,7 +54,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
         acc[projectId].hours += entry.hours;
 
         return acc;
-    }, {});
+    }, {} as Record<string, { projectName: string, projectId: number, hours: number }>);
 
     const hoursTotal = entries.reduce((acc, entry) => {
 
@@ -80,78 +83,99 @@ export type EntriesProps = {
     hoursTotal: number;
     from: string;
     to: string;
-    projectHoursSpent: unknown[];
+    projectHoursSpent: { projectId: number, projectName: string, hours: number }[];
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 const COOKIE_HARV_USERID_NAME = 'harvest-user-id';
 
-export const Index = ({projectHoursSpent, from, to, hoursTotal, totalProjects}: EntriesProps) => {
+export const Index = ({ projectHoursSpent, from, to, hoursTotal, totalProjects }: EntriesProps) => {
     const router = useRouter();
-    const [harvestToken, setHarvestToken] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME));
-    const [harvestAccountId, setHarvestAccountId] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME));
-    const [harvestUserId, setHarvestUserId] = useState<string>(cookies.get(COOKIE_HARV_USERID_NAME));
-    const [dateRange, setDateRange] = useState([new Date(from), new Date(to)]);
+    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME));
+    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME));
+    const [ harvestUserId, setHarvestUserId ] = useState<string>(cookies.get(COOKIE_HARV_USERID_NAME));
+    const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
-    }, [harvestToken])
+    }, [ harvestToken ])
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
-    }, [harvestAccountId]);
+    }, [ harvestAccountId ]);
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_USERID_NAME, harvestUserId)
-    }, [harvestUserId]);
+    }, [ harvestUserId ]);
 
     useEffect(() => {
-        const url = `/?from=${format(dateRange[0], DATE_FORMAT)}&to=${format(dateRange[1], DATE_FORMAT)}&token=${harvestToken}&account=${harvestAccountId}&userid=${harvestUserId}`
+        const url = `/?from=${ format(dateRange[0], DATE_FORMAT) }&to=${ format(dateRange[1], DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&userid=${ harvestUserId }`
         router.push(url, url)
-    }, [dateRange])
-
+    }, [ dateRange ])
 
     return <div>
-        <Panel header="Settings" shaded>
-            <Input value={harvestToken} placeholder={'Harvest Access Token'}
-                   onChange={(e) => setHarvestToken(e as string)}/>
-            <Input value={harvestAccountId} placeholder={'Harvest Account Id'}
-                   onChange={(e) => setHarvestAccountId(e as string)}/>
-        </Panel>
+        <Card>
+            <Typography variant={ 'h2' }>Settings</Typography>
+            <CardContent>
+                <div>
+                    <TextField label={ 'Harvest Access Token' } fullWidth value={ harvestToken }
+                        onChange={ (e) => setHarvestToken(e.target.value) }/>
+                </div>
+                <div>
+                    <TextField fullWidth label={ 'Harvest Account Id' } value={ harvestAccountId }
+                        onChange={ (e) => setHarvestAccountId(e.target.value) }/>
+                </div>
+            </CardContent>
+        </Card>
 
-        <Panel header="Filters" shaded>
-            <Input value={harvestUserId} placeholder={'Harvest User Id'}
-                   onChange={(e) => setHarvestUserId(e as string)}/>
+        <Card>
+            <Typography variant={ 'h2' }>Filters</Typography>
+            <CardContent>
+                <TextField fullWidth value={ harvestUserId } label={ 'Harvest User Id' }
+                    onChange={ (e) => setHarvestUserId(e.target.value) }/>
 
-            <DateRangePicker value={dateRange} onChange={setDateRange}/>
-        </Panel>
+                <DateRangePicker
+                    value={ dateRange }
+                    onChange={ (newValue) => setDateRange(newValue) }
+                    renderInput={ (startProps, endProps) => (
+                        <>
+                            <TextField { ...startProps } />
+                            <Box sx={ { mx: 2 } }> to </Box>
+                            <TextField { ...endProps } />
+                        </>
+                    ) }
+                />
+            </CardContent>
+        </Card>
 
-        <Panel header="Totals" shaded>
-            {hoursTotal} {totalProjects}
-        </Panel>
+        <Card>
+            <Typography variant={ 'h2' }>Totals</Typography>
+            <CardContent>
+
+                { hoursTotal } { totalProjects }
+            </CardContent>
+        </Card>
 
 
-        <Panel header="Time spent on Projects" shaded>
-            <Table
-                autoHeight
-                data={projectHoursSpent}>
-                <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>ID</Table.HeaderCell>
-                    <Table.Cell dataKey="projectId"/>
-                </Table.Column>
+        <Card>
+            <Typography variant={ 'h2' }>Data</Typography>
+            <CardContent>
+                <DataGrid
+                    autoHeight
+                    getRowId={ (r) => r.projectId }
+                    rows={ projectHoursSpent }
+                    columns={ [
+                        { field: 'projectId', headerName: 'ID', width: 90 },
+                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                        { field: 'hours', headerName: 'Hours', flex: 1 },
 
-                <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Project</Table.HeaderCell>
-                    <Table.Cell dataKey="projectName"/>
-                </Table.Column>
-
-                <Table.Column flexGrow={1}>
-                    <Table.HeaderCell>Hours</Table.HeaderCell>
-                    <Table.Cell dataKey="hours"/>
-                </Table.Column>
-            </Table>
-        </Panel>
+                    ] }
+                    disableSelectionOnClick
+                    experimentalFeatures={ { newEditingApi: true } }
+                />
+            </CardContent>
+        </Card>
     </div>;
 
 }
