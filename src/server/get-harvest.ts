@@ -21,6 +21,7 @@ export const getHarvest = (accessToken: string, accountId: string) => {
                                       from,
                                       to
                                   }: QueryParams): Promise<TimeEntry[]> => {
+        console.log(userId, from, to)
         const response = await api.get<GetTimeEntriesResponse>(`/time_entries?user_id=${userId}&from=${from}&to=${to}`);
         return response.data.time_entries;
     }
