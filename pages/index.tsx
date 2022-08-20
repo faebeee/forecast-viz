@@ -1,6 +1,6 @@
 import {getHarvest} from "../src/server/get-harvest";
 import uniq from "lodash/uniq";
-import {GetMe, GetProjectBudget, GetUser, TimeEntry} from "../src/server/harvest-types";
+import {GetMe, GetProjectBudget, TimeEntry} from "../src/server/harvest-types";
 import {useEffect, useState} from "react";
 import cookies from 'js-cookie';
 import {useRouter} from "next/router";
@@ -10,9 +10,6 @@ import {Card, CardContent, Grid, TextField, Typography} from "@mui/material";
 import {DataGrid} from '@mui/x-data-grid';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import {Container} from "@mui/system";
-import {VictoryContainer, VictoryPie} from "victory";
-import {VictoryLabel} from "victory-core/src/victory-label/victory-label";
 
 const DATE_FORMAT = 'yyyy-MM-dd';
 
@@ -147,12 +144,12 @@ export const Index = ({projectHoursSpent, from, to, activeAssignments}: EntriesP
                     <CardContent>
                         <Typography variant={'h2'}>Filters</Typography>
                         <DatePicker
-                            selectsRange={true}
+                            selectsRange
                             startDate={dateRange[0]}
                             endDate={dateRange[1]}
                             dateFormat={DATE_FORMAT}
                             customInput={<TextField variant={'filled'} fullWidth/>}
-                            onChange={setDateRange}
+                            onChange={(d) => setDateRange(d as [Date, Date])}
                         />
                     </CardContent>
                 </Card>

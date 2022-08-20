@@ -17,6 +17,7 @@ export interface Client {
 export interface Project {
     id: number;
     name: string;
+    code: string;
 }
 
 export interface Task {

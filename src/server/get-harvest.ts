@@ -64,7 +64,7 @@ export const getHarvest = (accessToken: string, accountId: number) => {
                                              userId,
                                              from,
                                              to
-                                         }: QueryParams): Promise<GetProjectAssignment.GetProjectAssignmentResponse> => {
+                                         }: QueryParams): Promise<GetProjectAssignment.ProjectAssignment[]> => {
         const response = await api.get<GetProjectAssignment.GetProjectAssignmentResponse>(`/users/me/project_assignments?from=${from}&to=${to}`)
         return response.data.project_assignments;
     }
