@@ -4,7 +4,7 @@ import {
     GetProjectReports,
     GetTaskReport,
     GetTimeEntriesResponse,
-    GetUser,
+    GetUser, GetUsersAPI,
     TimeEntry
 } from "./harvest-types";
 import axios from "axios";
@@ -37,6 +37,17 @@ export const getHarvest = (accessToken: string, accountId: number) => {
         }
     }
 
+    const getTimeEntriesForUsers = async(userIds: number[], {
+                                             from,
+                                             to
+                                         }: {from: string, to: string}) => {
+       const allLoaders = userIds.map((uid) => getTimeEntries({userId: uid, from, to}));
+       const responses = await Promise.all(allLoaders);
+       return responses.reduce((acc, resp) => {
+            acc.push(...resp);
+            return acc;
+        }, []);
+    }
 
     const getProjectBudget = async ({
                                          userId,
@@ -74,12 +85,24 @@ export const getHarvest = (accessToken: string, accountId: number) => {
         return response.data;
     }
 
+
+    const getUsers = async (): Promise<GetUsersAPI.Response | null> => {
+        try {
+            const response = await api.get(`/users`)
+            return response.data;
+        }catch(e){
+            return null
+        }
+    }
+
     return {
         getProjectBudget,
         getTimeEntries,
         getTasksReport,
         getMe,
+        getUsers,
         getProjectAssignments,
+        getTimeEntriesForUsers,
     }
 
 }

@@ -329,3 +329,44 @@ export namespace GetProjectBudget {
 
 }
 
+export namespace GetUsersAPI {
+
+    export interface User {
+        id: number;
+        first_name: string;
+        last_name: string;
+        email: string;
+        telephone: string;
+        timezone: string;
+        has_access_to_all_future_projects: boolean;
+        is_contractor: boolean;
+        is_active: boolean;
+        created_at: Date;
+        updated_at: Date;
+        weekly_capacity: number;
+        default_hourly_rate: number;
+        cost_rate: number;
+        roles: string[];
+        avatar_url: string;
+    }
+
+    export interface Links {
+        first: string;
+        next?: any;
+        previous?: any;
+        last: string;
+    }
+
+    export interface Response {
+        users: User[];
+        per_page: number;
+        total_pages: number;
+        total_entries: number;
+        next_page?: any;
+        previous_page?: any;
+        page: number;
+        links: Links;
+    }
+
+}
+
