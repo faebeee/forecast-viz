@@ -22,6 +22,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {DATE_FORMAT, DateRangeWidget} from "../src/components/date-range-widget";
 import {Header} from "../src/components/header";
+import {getTeamHours, getTeamProjectHours} from "../src/server/utils";
 
 type TeamEntry = {
     userId: number;
@@ -60,38 +61,8 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const entries = await api.getTimeEntries({userId: userId, from, to});
     const teamEntries = await api.getTimeEntriesForUsers([1903105, 1903105], {from, to})
 
-    const teamHours = teamEntries.reduce((acc, entry) => {
-        if (!acc[entry.user.id]) {
-            acc[entry.user.id] = {
-                user: entry.user.name,
-                projects: {}
-            }
-        }
-
-        if (!acc[entry.user.id].projects[entry.project.id]) {
-            acc[entry.user.id].projects[entry.project.id] = {
-                name: !!entry.project.code ? entry.project.code : entry.project.name,
-                hours: 0
-            };
-        }
-
-        acc[entry.user.id].projects[entry.project.id].hours += entry.hours;
-
-        return acc;
-    }, {})
-
-    const teamProjectHours = teamEntries.reduce((acc, entry) => {
-        if (!acc[entry.project.id]) {
-            acc[entry.project.id] = {
-                name: !!entry.project.code ? entry.project.code : entry.project.name,
-                hours: 0
-            };
-        }
-
-        acc[entry.project.id].hours += entry.hours;
-
-        return acc;
-    }, {})
+    const teamHours = getTeamHours(teamEntries);
+    const teamProjectHours = getTeamProjectHours(teamEntries);
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
@@ -128,7 +99,7 @@ export type EntriesProps = {
     to: string;
     projectHoursSpent: { projectId: number, projectName: string, hours: number }[];
     teamHours: { user: string, projects: Record<string, { name: string, hours: number }> }[]
-    teamProjectHours: Record<string, { name: string, hours: number }>
+    teamProjectHours: { name: string, hours: number }[]
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
@@ -208,11 +179,11 @@ export const Index = ({projectHoursSpent, from, to, teamHours, teamProjectHours}
 
                     <Typography variant={'h2'}>My Team</Typography>
                     <TableContainer>
-                        {teamHours.map((entry) => {
-                            return <Table>
+                        {teamHours.map((entry, index) => {
+                            return <Table key={index}>
                                 <TableBody>
-                                    {Object.values(entry.projects).map((e) => {
-                                        return <TableRow>
+                                    {Object.values(entry.projects).map((e, index) => {
+                                        return <TableRow key={index}>
                                             <TableCell align="left">{entry.user}</TableCell>
                                             <TableCell align="left">{e.name}</TableCell>
                                             <TableCell align="right">{e.hours}</TableCell>
