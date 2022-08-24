@@ -1,7 +1,7 @@
-import {TimeEntry} from "./harvest-types";
+import { TimeEntry } from "./harvest-types";
 
 export const getTeamHours = (teamEntries: TimeEntry[]) => {
-    return  teamEntries.reduce((acc, entry) => {
+    return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.user.id]) {
             acc[entry.user.id] = {
                 user: entry.user.name,
@@ -20,6 +20,21 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
 
         return acc;
     }, {} as Record<number, { user: string, projects: Record<string, { name: string, hours: number }> }>)
+}
+
+export const getTeamHoursEntries = (teamEntries: TimeEntry[]) => {
+    const teamHours = getTeamHours(teamEntries);
+    return Object.values(teamHours).reduce((acc, entry) => {
+        Object.values(entry.projects).forEach((project) => {
+            acc.push({
+                id: `${ entry.user }-${ project.name }`,
+                user: entry.user,
+                project: project.name,
+                hours: project.hours,
+            })
+        });
+        return acc;
+    }, [] as { id: string, user: string, project: string, hours: number }[]);
 }
 
 export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, { name: string, hours: number }> => {

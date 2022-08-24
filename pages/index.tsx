@@ -26,7 +26,8 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { getTeamHours, getTeamProjectHours } from "../src/server/utils";
+import { getTeamHours, getTeamHoursEntries, getTeamProjectHours } from "../src/server/utils";
+import { getForecast } from "../src/server/get-forecast";
 
 type TeamEntry = {
     userId: number;
@@ -64,6 +65,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 projectHoursSpent: [],
                 teamProjectHours: [],
                 teamHours: [],
+                teamProjectHourEntries: [],
                 teamAmountOfMembers: 0,
                 teamAmountOfProjects: 0,
                 teamAmountOfHours: 0,
@@ -76,11 +78,14 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const team = TEAMS.find((team) => team.key === teamId);
     const isMemberOfTeam = team?.members.includes(userId);
 
+    // await getForecast('2775656.pt.vhip6mO-tJxXf49xySCndEUb0a7HQmKeNJ2AbTsjzTP7EA4pXJL0kFmsBxGuGGEVX4cLe1WjC1j-RkkQ4xEfrA', 89149).getAssignments()
+
     const entries = await api.getTimeEntries({ userId: userId, from, to });
     const teamEntries = isMemberOfTeam && team ? await api.getTimeEntriesForUsers(team.members, { from, to }) : []
 
     const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
+    const teamProjectHourEntries = getTeamHoursEntries(teamEntries);
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
@@ -110,6 +115,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             teamAmountOfMembers: team?.members.length ?? 0,
             teamAmountOfProjects: 0,
             teamAmountOfHours: 0,
+            teamProjectHourEntries,
         }
     }
 }
@@ -124,12 +130,20 @@ export type EntriesProps = {
     teamAmountOfMembers: number;
     teamAmountOfProjects: number;
     teamAmountOfHours: number;
+    teamProjectHourEntries: { id: string, user: string, project: string, hours: number }[];
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 
-export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours }: EntriesProps) => {
+export const Index = ({
+                          projectHoursSpent,
+                          from,
+                          to,
+                          teamHours,
+                          teamProjectHours,
+                          teamProjectHourEntries
+                      }: EntriesProps) => {
     const router = useRouter();
     const [ selectedTeam, setTeam ] = useState<string | null>(null);
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
@@ -201,7 +215,7 @@ export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours
                                 getRowId={ (r) => r.projectId }
                                 rows={ projectHoursSpent }
                                 columns={ [
-                                    { field: 'projectId', headerName: 'ID', width: 90 },
+                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
                                     { field: 'projectName', headerName: 'Project Name', flex: 1 },
                                     { field: 'hours', headerName: 'Hours', flex: 1 },
                                 ] }
@@ -225,30 +239,23 @@ export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours
                                     { field: 'hours', headerName: 'Hours', flex: 1 },
                                 ] }
                                 disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }
-                            />
+                                experimentalFeatures={ { newEditingApi: true } }/>
                         </CardContent>
                     </Card>
 
                     <Card sx={ { mt: 2 } }>
                         <CardContent>
-                            { teamHours.length > 0 && <><Typography variant={ 'h2' }>My Team</Typography>
-                                <TableContainer>
-                                    { teamHours.map((entry, index) => {
-                                        return <Table key={ index }>
-                                            <TableBody>
-                                                { Object.values(entry.projects).map((e, index) => {
-                                                    return <TableRow key={ index }>
-                                                        <TableCell align="left">{ entry.user }</TableCell>
-                                                        <TableCell align="left">{ e.name }</TableCell>
-                                                        <TableCell align="right">{ e.hours }</TableCell>
-                                                    </TableRow>
-                                                }) }
-                                            </TableBody>
-                                        </Table>
-                                    }) }
-                                </TableContainer>
-                            </> }
+                            <Typography variant={ 'h2' }>Team Hours</Typography>
+                            <DataGrid
+                                autoHeight
+                                rows={ teamProjectHourEntries }
+                                columns={ [
+                                    { field: 'user', headerName: 'User', flex: 1 },
+                                    { field: 'project', headerName: 'Project Name', flex: 1 },
+                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }/>
                         </CardContent>
                     </Card>
                 </Grid>
