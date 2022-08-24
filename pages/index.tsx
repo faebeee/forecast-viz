@@ -178,7 +178,8 @@ export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours
                                     value={ selectedTeam }
                                     label="Team"
                                     onChange={ (e) => setTeam(e.target.value) }>
-                                    { TEAMS.map((team) => <MenuItem value={ team.key }>{ team.name }</MenuItem>) }
+                                    { TEAMS.map((team) => <MenuItem key={ team.key }
+                                        value={ team.key }>{ team.name }</MenuItem>) }
 
                                 </Select>
                             </FormControl>
