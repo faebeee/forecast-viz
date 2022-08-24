@@ -6,10 +6,15 @@ import { useRouter } from "next/router";
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { NextApiRequest, NextApiResponse } from "next";
 import {
-    Button, Card, CardContent,
+    Button,
+    Card,
+    CardContent,
     Container,
+    FormControl,
     Grid,
-    Paper,
+    InputLabel,
+    MenuItem,
+    Select,
     Table,
     TableBody,
     TableCell,
@@ -31,10 +36,23 @@ type TeamEntry = {
     hours: number
 }
 
+const FABS = 1903105;
+const THIBI = 2977071;
+const VALESKA = 3837962;
+
+const TEAMS = [
+    {
+        name: "Team Drüü",
+        key: 'team3',
+        members: [ VALESKA, THIBI, FABS ]
+    }
+];
+
 export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse): Promise<{ props: EntriesProps }> => {
     const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.query.token as string;
+    const teamId = !!req.query.team ? req.query.team as string : null;
     const account = parseInt(req.query.account as string);
 
     if (!token || !account) {
@@ -46,16 +64,20 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 projectHoursSpent: [],
                 teamProjectHours: [],
                 teamHours: [],
+                teamAmountOfMembers: 0,
+                teamAmountOfProjects: 0,
+                teamAmountOfHours: 0,
             }
         }
     }
     const api = getHarvest(token, account);
     const userData = await api.getMe();
     const userId = userData.id;
-    const teamIds = [ 1903105 ]
+    const team = TEAMS.find((team) => team.key === teamId);
+    const isMemberOfTeam = team?.members.includes(userId);
 
     const entries = await api.getTimeEntries({ userId: userId, from, to });
-    const teamEntries = await api.getTimeEntriesForUsers(teamIds, { from, to })
+    const teamEntries = isMemberOfTeam && team ? await api.getTimeEntriesForUsers(team.members, { from, to }) : []
 
     const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
@@ -85,6 +107,9 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             teamEntries,
             teamHours: Object.values(teamHours),
             teamProjectHours: Object.values(teamProjectHours),
+            teamAmountOfMembers: team?.members.length ?? 0,
+            teamAmountOfProjects: 0,
+            teamAmountOfHours: 0,
         }
     }
 }
@@ -95,7 +120,10 @@ export type EntriesProps = {
     to: string;
     projectHoursSpent: { projectId: number, projectName: string, hours: number }[];
     teamHours: { user: string, projects: Record<string, { name: string, hours: number }> }[]
-    teamProjectHours: { name: string, hours: number }[]
+    teamProjectHours: { name: string, hours: number }[];
+    teamAmountOfMembers: number;
+    teamAmountOfProjects: number;
+    teamAmountOfHours: number;
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
@@ -103,6 +131,7 @@ const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 
 export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours }: EntriesProps) => {
     const router = useRouter();
+    const [ selectedTeam, setTeam ] = useState<string | null>(null);
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
@@ -116,9 +145,9 @@ export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours
     }, [ harvestAccountId ]);
 
     const refreshRoute = useCallback(() => {
-        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }`
+        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&team=${ selectedTeam }`
         router.push(url, url)
-    }, [ dateRange, harvestToken, harvestAccountId ]);
+    }, [ dateRange, harvestToken, harvestAccountId, selectedTeam ]);
 
     return <>
         <Container>
@@ -142,6 +171,18 @@ export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours
                                     onChange={ (e) => setHarvestAccountId(e.target.value) }/>
                             </div>
                             <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+
+                            <FormControl fullWidth>
+                                <InputLabel id="demo-simple-select-label">Team</InputLabel>
+                                <Select
+                                    value={ selectedTeam }
+                                    label="Team"
+                                    onChange={ (e) => setTeam(e.target.value) }>
+                                    { TEAMS.map((team) => <MenuItem value={ team.key }>{ team.name }</MenuItem>) }
+
+                                </Select>
+                            </FormControl>
+
                             <Button color={ 'primary' }
                                 size={ 'large' }
                                 variant={ 'contained' }
