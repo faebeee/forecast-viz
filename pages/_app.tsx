@@ -2,11 +2,20 @@ import '../styles/globals.css'
 import type { AppProps } from 'next/app'
 import { LocalizationProvider } from '@mui/x-date-pickers-pro';
 import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
-import {Header} from "../src/components/header";
+import { ThemeProvider } from "@mui/system";
+import { createTheme } from "@mui/material";
+
+const theme = createTheme({
+    palette: {
+        mode: 'dark',
+    },
+});
 
 function MyApp({ Component, pageProps }: AppProps) {
     return <LocalizationProvider dateAdapter={ AdapterDateFns }>
-        <Component { ...pageProps } />
+        <ThemeProvider theme={ theme }>
+            <Component { ...pageProps } />
+        </ThemeProvider>
     </LocalizationProvider>
 }
 

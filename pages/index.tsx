@@ -1,28 +1,27 @@
-import {getHarvest} from "../src/server/get-harvest";
-import uniq from "lodash/uniq";
-import {GetMe, GetProjectBudget, TimeEntry} from "../src/server/harvest-types";
-import {useCallback, useEffect, useState} from "react";
+import { getHarvest } from "../src/server/get-harvest";
+import { TimeEntry } from "../src/server/harvest-types";
+import { useCallback, useEffect, useState } from "react";
 import cookies from 'js-cookie';
-import {useRouter} from "next/router";
-import {endOfWeek, format, startOfWeek} from 'date-fns';
-import {NextApiRequest, NextApiResponse} from "next";
+import { useRouter } from "next/router";
+import { endOfWeek, format, startOfWeek } from 'date-fns';
+import { NextApiRequest, NextApiResponse } from "next";
 import {
-    Card,
-    CardContent, Container,
+    Button, Card, CardContent,
+    Container,
     Grid,
-    Table, TableBody, TableCell,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
     TableContainer,
-    TableHead,
     TableRow,
     TextField,
     Typography
 } from "@mui/material";
-import {DataGrid} from '@mui/x-data-grid';
-import DatePicker from "react-datepicker";
+import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import {DATE_FORMAT, DateRangeWidget} from "../src/components/date-range-widget";
-import {Header} from "../src/components/header";
-import {getTeamHours, getTeamProjectHours} from "../src/server/utils";
+import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
+import { getTeamHours, getTeamProjectHours } from "../src/server/utils";
 
 type TeamEntry = {
     userId: number;
@@ -32,7 +31,7 @@ type TeamEntry = {
     hours: number
 }
 
-export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse) => {
+export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse): Promise<{ props: EntriesProps }> => {
     const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.query.token as string;
@@ -41,25 +40,22 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     if (!token || !account) {
         return {
             props: {
-                entries: [],
-                hoursTotal: 0,
-                totalEntries: 0,
-                projects: [],
-                totalProjects: 0,
                 from,
                 to,
+                teamEntries: [],
                 projectHoursSpent: [],
-                activeAssignments: [],
+                teamProjectHours: [],
+                teamHours: [],
             }
         }
     }
     const api = getHarvest(token, account);
     const userData = await api.getMe();
     const userId = userData.id;
+    const teamIds = [ 1903105 ]
 
-
-    const entries = await api.getTimeEntries({userId: userId, from, to});
-    const teamEntries = await api.getTimeEntriesForUsers([1903105, 1903105], {from, to})
+    const entries = await api.getTimeEntries({ userId: userId, from, to });
+    const teamEntries = await api.getTimeEntriesForUsers(teamIds, { from, to })
 
     const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
@@ -105,94 +101,114 @@ export type EntriesProps = {
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 
-export const Index = ({projectHoursSpent, from, to, teamHours, teamProjectHours}: EntriesProps) => {
+export const Index = ({ projectHoursSpent, from, to, teamHours, teamProjectHours }: EntriesProps) => {
     const router = useRouter();
-    const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([new Date(from), new Date(to)]);
-    const [harvestToken, setHarvestToken] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
-    const [harvestAccountId, setHarvestAccountId] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
+    const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
+    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
+    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
-    }, [harvestToken])
+    }, [ harvestToken ])
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
-    }, [harvestAccountId]);
+    }, [ harvestAccountId ]);
 
-    const changeDateRange = useCallback(() => {
-        const url = `/?from=${format(dateRange[0] ?? new Date(), DATE_FORMAT)}&to=${format(dateRange[1] ?? new Date(), DATE_FORMAT)}&token=${harvestToken}&account=${harvestAccountId}`
+    const refreshRoute = useCallback(() => {
+        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }`
         router.push(url, url)
-    }, [dateRange, harvestToken, harvestAccountId]);
+    }, [ dateRange, harvestToken, harvestAccountId ]);
 
     return <>
-
         <Container>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
-                    <Typography variant={'h2'}>Settings</Typography>
-                    <div>
-                        <TextField variant={'filled'}
-                                   label={'Harvest Access Token'}
-                                   fullWidth
-                                   value={harvestToken}
-                                   onChange={(e) => setHarvestToken(e.target.value)}/>
-                    </div>
-                    <div>
-                        <TextField variant={'filled'}
-                                   fullWidth
-                                   label={'Harvest Account Id'}
-                                   value={harvestAccountId}
-                                   onChange={(e) => setHarvestAccountId(e.target.value)}/>
-                    </div>
-                    <DateRangeWidget dateRange={dateRange} onClose={changeDateRange} onChange={setDateRange}/>
+            <Grid container spacing={ 2 }>
+                <Grid item xs={ 12 }>
+                    <Card>
+                        <CardContent>
+                            <Typography variant={ 'h2' }>Settings</Typography>
+                            <div>
+                                <TextField variant={ 'outlined' }
+                                    label={ 'Harvest Access Token' }
+                                    fullWidth
+                                    value={ harvestToken }
+                                    onChange={ (e) => setHarvestToken(e.target.value) }/>
+                            </div>
+                            <div>
+                                <TextField variant={ 'outlined' }
+                                    fullWidth
+                                    label={ 'Harvest Account Id' }
+                                    value={ harvestAccountId }
+                                    onChange={ (e) => setHarvestAccountId(e.target.value) }/>
+                            </div>
+                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+                            <Button color={ 'primary' }
+                                size={ 'large' }
+                                variant={ 'contained' }
+                                onClick={ refreshRoute }>Search</Button>
+                        </CardContent>
+                    </Card>
                 </Grid>
 
-                <Grid item xs={6}>
-                    <Typography variant={'h2'}>My Hours</Typography>
-                    <DataGrid
-                        autoHeight
-                        getRowId={(r) => r.projectId}
-                        rows={projectHoursSpent}
-                        columns={[
-                            {field: 'projectId', headerName: 'ID', width: 90},
-                            {field: 'projectName', headerName: 'Project Name', flex: 1},
-                            {field: 'hours', headerName: 'Hours', flex: 1},
-                        ]}
-                        disableSelectionOnClick
-                        experimentalFeatures={{newEditingApi: true}}
-                    />
+                <Grid item xs={ 6 }>
+                    <Card>
+                        <CardContent>
+                            <Typography variant={ 'h2' }>My Hours</Typography>
+                            <DataGrid
+                                autoHeight
+                                getRowId={ (r) => r.projectId }
+                                rows={ projectHoursSpent }
+                                columns={ [
+                                    { field: 'projectId', headerName: 'ID', width: 90 },
+                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }
+                            />
+                        </CardContent>
+                    </Card>
                 </Grid>
 
-                <Grid item xs={6}>
-                    <Typography variant={'h2'}>Team Projects</Typography>
-                    <DataGrid
-                        autoHeight
-                        getRowId={(r) => r.name}
-                        rows={teamProjectHours}
-                        columns={[
-                            {field: 'name', headerName: 'Project Name', flex: 1},
-                            {field: 'hours', headerName: 'Hours', flex: 1},
-                        ]}
-                        disableSelectionOnClick
-                        experimentalFeatures={{newEditingApi: true}}
-                    />
+                <Grid item xs={ 6 }>
+                    <Card>
+                        <CardContent>
+                            <Typography variant={ 'h2' }>Team Projects</Typography>
+                            <DataGrid
+                                autoHeight
+                                getRowId={ (r) => r.name }
+                                rows={ teamProjectHours }
+                                columns={ [
+                                    { field: 'name', headerName: 'Project Name', flex: 1 },
+                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }
+                            />
+                        </CardContent>
+                    </Card>
 
-                    <Typography variant={'h2'}>My Team</Typography>
-                    <TableContainer>
-                        {teamHours.map((entry, index) => {
-                            return <Table key={index}>
-                                <TableBody>
-                                    {Object.values(entry.projects).map((e, index) => {
-                                        return <TableRow key={index}>
-                                            <TableCell align="left">{entry.user}</TableCell>
-                                            <TableCell align="left">{e.name}</TableCell>
-                                            <TableCell align="right">{e.hours}</TableCell>
-                                        </TableRow>
-                                    })}
-                                </TableBody>
-                            </Table>
-                        })}
-                    </TableContainer>
+                    <Card sx={ { mt: 2 } }>
+                        <CardContent>
+                            { teamHours.length > 0 && <><Typography variant={ 'h2' }>My Team</Typography>
+                                <TableContainer>
+                                    { teamHours.map((entry, index) => {
+                                        return <Table key={ index }>
+                                            <TableBody>
+                                                { Object.values(entry.projects).map((e, index) => {
+                                                    return <TableRow key={ index }>
+                                                        <TableCell align="left">{ entry.user }</TableCell>
+                                                        <TableCell align="left">{ e.name }</TableCell>
+                                                        <TableCell align="right">{ e.hours }</TableCell>
+                                                    </TableRow>
+                                                }) }
+                                            </TableBody>
+                                        </Table>
+                                    }) }
+                                </TableContainer>
+                            </> }
+                        </CardContent>
+                    </Card>
                 </Grid>
             </Grid>
         </Container>

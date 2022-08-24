@@ -18,7 +18,7 @@ export const DateRangeWidget = ({dateRange, onChange, onClose}: DateRangeWidgetP
                 startDate={dateRange[0]}
                 endDate={dateRange[1]}
                 dateFormat={DATE_FORMAT}
-                customInput={<TextField variant={'filled'} label={'Date range'} fullWidth/>}
+                customInput={<TextField variant={'outlined'} label={'Date range'} fullWidth/>}
                 onCalendarClose={onClose}
                 onChange={(d) => onChange(d as [Date, Date])}
             />
