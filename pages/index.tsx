@@ -26,7 +26,7 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { getTeamHours, getTeamHoursEntries, getTeamProjectHours } from "../src/server/utils";
+import { findAssignment, getTeamHours, getTeamHoursEntries, getTeamProjectHours } from "../src/server/utils";
 import { getForecast } from "../src/server/get-forecast";
 
 type TeamEntry = {
@@ -53,8 +53,10 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.query.token as string;
+    const forecastToken = req.query.ftoken as string;
     const teamId = !!req.query.team ? req.query.team as string : null;
     const account = parseInt(req.query.account as string);
+    const forecastAccount = parseInt(req.query.faccount as string);
 
     if (!token || !account) {
         return {
@@ -73,36 +75,40 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
         }
     }
     const api = getHarvest(token, account);
+    const forecast = getForecast(forecastToken, forecastAccount);
     const userData = await api.getMe();
     const userId = userData.id;
     const team = TEAMS.find((team) => team.key === teamId);
     const isMemberOfTeam = team?.members.includes(userId);
 
-    // await getForecast('2775656.pt.vhip6mO-tJxXf49xySCndEUb0a7HQmKeNJ2AbTsjzTP7EA4pXJL0kFmsBxGuGGEVX4cLe1WjC1j-RkkQ4xEfrA', 89149).getAssignments()
+    const assignments = await forecast.getAssignments(from);
+
 
     const entries = await api.getTimeEntries({ userId: userId, from, to });
     const teamEntries = isMemberOfTeam && team ? await api.getTimeEntriesForUsers(team.members, { from, to }) : []
 
     const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
-    const teamProjectHourEntries = getTeamHoursEntries(teamEntries);
+    const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
         const projectId = entry.project.id;
+        const assignment = findAssignment(assignments, entry.project.id, entry.user.id);
 
         if (!acc[projectId]) {
             acc[projectId] = {
                 projectName,
                 projectId,
                 hours: 0,
+                hours_forecast: assignment?.allocation ?? 0,
             }
         }
 
         acc[projectId].hours += entry.hours;
 
         return acc;
-    }, {} as Record<string, { projectName: string, projectId: number, hours: number }>);
+    }, {} as Record<string, { projectName: string, projectId: number, hours: number, hours_forecast: number }>);
 
     return {
         props: {
@@ -124,17 +130,19 @@ export type EntriesProps = {
     teamEntries: TimeEntry[];
     from: string;
     to: string;
-    projectHoursSpent: { projectId: number, projectName: string, hours: number }[];
+    projectHoursSpent: { projectId: number, projectName: string, hours: number, hours_forecast: number }[];
     teamHours: { user: string, projects: Record<string, { name: string, hours: number }> }[]
     teamProjectHours: { name: string, hours: number }[];
     teamAmountOfMembers: number;
     teamAmountOfProjects: number;
     teamAmountOfHours: number;
-    teamProjectHourEntries: { id: string, user: string, project: string, hours: number }[];
+    teamProjectHourEntries: { id: string, user: string, project: string, hours: number, hours_forecast: number }[];
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
+const COOKIE_FORC_TOKEN_NAME = 'forecast-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
+const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
 export const Index = ({
                           projectHoursSpent,
@@ -148,7 +156,9 @@ export const Index = ({
     const [ selectedTeam, setTeam ] = useState<string | null>(null);
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(from), new Date(to) ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
+    const [ forecastToken, setForecastToken ] = useState<string>(cookies.get(COOKIE_FORC_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
+    const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
@@ -157,11 +167,18 @@ export const Index = ({
     useEffect(() => {
         cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
     }, [ harvestAccountId ]);
+    useEffect(() => {
+        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId)
+    }, [ forecastAccountId ])
+
+    useEffect(() => {
+        cookies.set(COOKIE_FORC_TOKEN_NAME, forecastToken)
+    }, [ forecastToken ]);
 
     const refreshRoute = useCallback(() => {
-        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&team=${ selectedTeam }`
+        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&ftoken=${ forecastToken }&faccount=${ forecastAccountId }&team=${ selectedTeam }`
         router.push(url, url)
-    }, [ dateRange, harvestToken, harvestAccountId, selectedTeam ]);
+    }, [ dateRange, harvestToken, harvestAccountId, selectedTeam, forecastAccountId, forecastToken, ]);
 
     return <>
         <Container>
@@ -183,6 +200,20 @@ export const Index = ({
                                     label={ 'Harvest Account Id' }
                                     value={ harvestAccountId }
                                     onChange={ (e) => setHarvestAccountId(e.target.value) }/>
+                            </div>
+                            <div>
+                                <TextField variant={ 'outlined' }
+                                    label={ 'Forecast Access Token' }
+                                    fullWidth
+                                    value={ forecastToken }
+                                    onChange={ (e) => setForecastToken(e.target.value) }/>
+                            </div>
+                            <div>
+                                <TextField variant={ 'outlined' }
+                                    fullWidth
+                                    label={ 'Forecast Account Id' }
+                                    value={ forecastAccountId }
+                                    onChange={ (e) => setForecastAccountId(e.target.value) }/>
                             </div>
                             <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
 
@@ -213,11 +244,13 @@ export const Index = ({
                             <DataGrid
                                 autoHeight
                                 getRowId={ (r) => r.projectId }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 rows={ projectHoursSpent }
                                 columns={ [
                                     { field: 'projectId', headerName: 'Project ID', width: 90 },
                                     { field: 'projectName', headerName: 'Project Name', flex: 1 },
                                     { field: 'hours', headerName: 'Hours', flex: 1 },
+                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
                                 ] }
                                 disableSelectionOnClick
                                 experimentalFeatures={ { newEditingApi: true } }
@@ -234,7 +267,9 @@ export const Index = ({
                                 autoHeight
                                 getRowId={ (r) => r.name }
                                 rows={ teamProjectHours }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
+                                    { field: 'id', headerName: 'Project ID', width: 90 },
                                     { field: 'name', headerName: 'Project Name', flex: 1 },
                                     { field: 'hours', headerName: 'Hours', flex: 1 },
                                 ] }
@@ -249,10 +284,12 @@ export const Index = ({
                             <DataGrid
                                 autoHeight
                                 rows={ teamProjectHourEntries }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
                                     { field: 'user', headerName: 'User', flex: 1 },
                                     { field: 'project', headerName: 'Project Name', flex: 1 },
                                     { field: 'hours', headerName: 'Hours', flex: 1 },
+                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
                                 ] }
                                 disableSelectionOnClick
                                 experimentalFeatures={ { newEditingApi: true } }/>
