@@ -63,7 +63,7 @@ declare module Forecast {
         roles: string[];
         updated_at: Date;
         updated_by_id?: number;
-        harvest_user_id?: number;
+        harvest_user_id: number;
         weekly_capacity: number;
         working_days: WorkingDays;
         color_blind: boolean;
@@ -132,6 +132,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
     }
 
     return {
-        getAssignments
+        getAssignments,
+        getPersons
     }
 }
