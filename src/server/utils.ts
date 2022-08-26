@@ -1,4 +1,4 @@
-import { TimeEntry } from "./harvest-types";
+import { Project, TimeEntry } from "./harvest-types";
 import { AssignmentEntry } from "./get-forecast";
 
 export const getTeamHours = (teamEntries: TimeEntry[]) => {
@@ -25,7 +25,7 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
     }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, name: string, hours: number }> }>)
 }
 
-export const findAssignment = (assignments: AssignmentEntry[], projectId: number, userId?: number):AssignmentEntry | null => {
+export const findAssignment = (assignments: AssignmentEntry[], projectId: number, userId?: number): AssignmentEntry | null => {
     return assignments.find((assignment) => {
         if (projectId && userId) {
             return assignment.project?.harvest_id === projectId && assignment.person?.harvest_user_id === userId;
@@ -65,4 +65,13 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, { 
 
         return acc;
     }, {} as Record<string, { id: number, name: string, hours: number }>)
+}
+
+export const getProjectsFromEntries = (entries: TimeEntry[]): Project[] => {
+    return Array.from(entries.reduce((acc, entry) => {
+        if (!acc.has(entry.project.id)) {
+            acc.set(entry.project.id, entry.project);
+        }
+        return acc;
+    }, new Map<number, Project>()).values());
 }

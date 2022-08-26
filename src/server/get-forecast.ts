@@ -11,6 +11,11 @@ export type AssignmentEntry = {
 
 declare module Forecast {
 
+    export interface Assignment {
+        project_id: number,
+        person_id: number,
+        allocation: number,
+    }
     export interface Project {
         id: number;
         name: string;
@@ -111,7 +116,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
 
         try {
-            const response = await api.get<{ future_scheduled_hours: AssignmentEntry[] }>(`/aggregate/future_scheduled_hours/${ from }`);
+            const response = await api.get<{ future_scheduled_hours: Forecast.Assignment[] }>(`/aggregate/future_scheduled_hours/${ from }`);
             const entries = response.data.future_scheduled_hours;
             return entries.map((e) => {
                 return {

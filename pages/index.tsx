@@ -1,5 +1,5 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { TimeEntry } from "../src/server/harvest-types";
+import { Project, TimeEntry } from "../src/server/harvest-types";
 import { useCallback, useEffect, useState } from "react";
 import cookies from 'js-cookie';
 import { useRouter } from "next/router";
@@ -26,7 +26,13 @@ import {
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { findAssignment, getTeamHours, getTeamHoursEntries, getTeamProjectHours } from "../src/server/utils";
+import {
+    findAssignment,
+    getProjectsFromEntries,
+    getTeamHours,
+    getTeamHoursEntries,
+    getTeamProjectHours
+} from "../src/server/utils";
 import { getForecast } from "../src/server/get-forecast";
 
 type TeamEntry = {
@@ -68,9 +74,10 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 teamProjectHours: [],
                 teamHours: [],
                 teamProjectHourEntries: [],
-                teamAmountOfMembers: 0,
+                totalTeamMembers: null,
                 teamAmountOfProjects: 0,
-                teamAmountOfHours: 0,
+                totalTeamHours: null,
+                teamProjects: [],
             }
         }
     }
@@ -87,9 +94,14 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const entries = await api.getTimeEntries({ userId: userId, from, to });
     const teamEntries = isMemberOfTeam && team ? await api.getTimeEntriesForUsers(team.members, { from, to }) : []
 
+    const allMyProjects = getProjectsFromEntries(entries);
+    const allTeamProjects = getProjectsFromEntries(teamEntries);
     const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
+    const totalTeamHours = Object.values(teamProjectHours).reduce((acc, entry) => {
+        return acc + entry.hours;
+    }, 0);
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
@@ -118,10 +130,11 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             teamEntries,
             teamHours: Object.values(teamHours),
             teamProjectHours: Object.values(teamProjectHours),
-            teamAmountOfMembers: team?.members.length ?? 0,
+            totalTeamMembers: team?.members.length ?? null,
             teamAmountOfProjects: 0,
-            teamAmountOfHours: 0,
+            totalTeamHours,
             teamProjectHourEntries,
+            teamProjects: allTeamProjects,
         }
     }
 }
@@ -133,10 +146,11 @@ export type EntriesProps = {
     projectHoursSpent: { projectId: number, projectName: string, hours: number, hours_forecast: number }[];
     teamHours: { user: string, projects: Record<string, { name: string, hours: number }> }[]
     teamProjectHours: { name: string, hours: number }[];
-    teamAmountOfMembers: number;
     teamAmountOfProjects: number;
-    teamAmountOfHours: number;
     teamProjectHourEntries: { id: string, user: string, project: string, hours: number, hours_forecast: number }[];
+    totalTeamMembers: number | null;
+    totalTeamHours: number | null;
+    teamProjects: Project[];
 }
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
@@ -150,7 +164,10 @@ export const Index = ({
                           to,
                           teamHours,
                           teamProjectHours,
-                          teamProjectHourEntries
+                          teamProjectHourEntries,
+                          totalTeamMembers,
+                          totalTeamHours,
+                          teamProjects,
                       }: EntriesProps) => {
     const router = useRouter();
     const [ selectedTeam, setTeam ] = useState<string | null>(null);
@@ -182,7 +199,7 @@ export const Index = ({
 
     return <>
         <Container>
-            <Grid container spacing={ 2 }>
+            <Grid container spacing={ 4 }>
                 <Grid item xs={ 12 }>
                     <Card>
                         <CardContent>
@@ -236,65 +253,94 @@ export const Index = ({
                         </CardContent>
                     </Card>
                 </Grid>
+                <Grid item xs={ 12 }>
+                    <Grid container item xs={ 12 } spacing={ 4 }>
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>Team Members</Typography>
+                                    { totalTeamMembers }
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>Team Hours</Typography>
+                                    { totalTeamHours }
+                                </CardContent>
+                            </Card>
+                        </Grid>
 
-                <Grid item xs={ 6 }>
-                    <Card>
-                        <CardContent>
-                            <Typography variant={ 'h2' }>My Hours</Typography>
-                            <DataGrid
-                                autoHeight
-                                getRowId={ (r) => r.projectId }
-                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                rows={ projectHoursSpent }
-                                columns={ [
-                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                ] }
-                                disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }
-                            />
-                        </CardContent>
-                    </Card>
-                </Grid>
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>Team Projects</Typography>
+                                    { teamProjects?.length }
+                                </CardContent>
+                            </Card>
+                        </Grid>
 
-                <Grid item xs={ 6 }>
-                    <Card>
-                        <CardContent>
-                            <Typography variant={ 'h2' }>Team Projects</Typography>
-                            <DataGrid
-                                autoHeight
-                                getRowId={ (r) => r.name }
-                                rows={ teamProjectHours }
-                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                columns={ [
-                                    { field: 'id', headerName: 'Project ID', width: 90 },
-                                    { field: 'name', headerName: 'Project Name', flex: 1 },
-                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                ] }
-                                disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }/>
-                        </CardContent>
-                    </Card>
-
-                    <Card sx={ { mt: 2 } }>
-                        <CardContent>
-                            <Typography variant={ 'h2' }>Team Hours</Typography>
-                            <DataGrid
-                                autoHeight
-                                rows={ teamProjectHourEntries }
-                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                columns={ [
-                                    { field: 'user', headerName: 'User', flex: 1 },
-                                    { field: 'project', headerName: 'Project Name', flex: 1 },
-                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                ] }
-                                disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }/>
-                        </CardContent>
-                    </Card>
+                        <Grid item xs={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>My Hours</Typography>
+                                    <DataGrid
+                                        autoHeight
+                                        getRowId={ (r) => r.projectId }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        rows={ projectHoursSpent }
+                                        columns={ [
+                                            { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+                                            { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }
+                                    />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>Team Projects</Typography>
+                                    <DataGrid
+                                        autoHeight
+                                        getRowId={ (r) => r.name }
+                                        rows={ teamProjectHours }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'id', headerName: 'Project ID', width: 90 },
+                                            { field: 'name', headerName: 'Project Name', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item xs={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h2' }>Team Hours</Typography>
+                                    <DataGrid
+                                        autoHeight
+                                        rows={ teamProjectHourEntries }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'user', headerName: 'User', flex: 1 },
+                                            { field: 'project', headerName: 'Project Name', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+                                            { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
                 </Grid>
             </Grid>
         </Container>
