@@ -12,9 +12,9 @@ import {
     Container,
     FormControl,
     Grid,
-    InputLabel,
+    InputLabel, Link,
     MenuItem,
-    Select,
+    Select, Stack,
     Table,
     TableBody,
     TableCell,
@@ -101,7 +101,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const allPeople = await forecast.getPersons();
     // @ts-ignore
     const isMemberOfTeam = !!teamId ? allPeople
-        .find(p => p.harvest_user_id === userId).roles.includes(teamId) : false;
+        .find(p => p.harvest_user_id === userId)?.roles?.includes(teamId) : false;
     const teamPeople = isMemberOfTeam ? allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id) : [];
@@ -219,40 +219,45 @@ export const Index = ({
                     <Card>
                         <CardContent>
                             <Typography variant={'h2'}>Settings</Typography>
-                            <div>
+                            <Typography variant={'body1'}>
+                                Create accesstokens <Link href={'https://id.getharvest.com/developers'}
+                                                          target={'_blank'}>
+                                here
+                            </Link>
+                            </Typography>
+                            <Stack spacing={2}>
                                 <TextField variant={'outlined'}
                                            label={'Harvest Access Token'}
                                            fullWidth
                                            value={harvestToken}
                                            onChange={(e) => setHarvestToken(e.target.value)}/>
-                            </div>
-                            <div>
+
                                 <TextField variant={'outlined'}
                                            fullWidth
                                            label={'Harvest Account Id'}
                                            value={harvestAccountId}
                                            onChange={(e) => setHarvestAccountId(e.target.value)}/>
-                            </div>
-                            <div>
+
                                 <TextField variant={'outlined'}
                                            fullWidth
                                            label={'Forecast Account Id'}
                                            value={forecastAccountId}
                                            onChange={(e) => setForecastAccountId(e.target.value)}/>
-                            </div>
-                            <DateRangeWidget dateRange={dateRange} onChange={setDateRange}/>
 
-                            <FormControl fullWidth>
-                                <InputLabel id="demo-simple-select-label">Team</InputLabel>
-                                <Select
-                                    value={selectedTeam}
-                                    label="Team"
-                                    onChange={(e) => setTeam(e.target.value)}>
-                                    {TEAMS.map((team) => <MenuItem key={team.key}
-                                                                   value={team.key}>{team.name}</MenuItem>)}
+                                <DateRangeWidget dateRange={dateRange} onChange={setDateRange}/>
 
-                                </Select>
-                            </FormControl>
+                                <FormControl fullWidth>
+                                    <InputLabel id="demo-simple-select-label">Team</InputLabel>
+                                    <Select
+                                        value={selectedTeam}
+                                        label="Team"
+                                        onChange={(e) => setTeam(e.target.value)}>
+                                        {TEAMS.map((team) => <MenuItem key={team.key}
+                                                                       value={team.key}>{team.name}</MenuItem>)}
+
+                                    </Select>
+                                </FormControl>
+                            </Stack>
                         </CardContent>
                         <CardActions>
                             <Button color={'primary'}
