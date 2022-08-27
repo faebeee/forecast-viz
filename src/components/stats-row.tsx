@@ -1,4 +1,4 @@
-import {Avatar, Box, Card, CardContent, Divider, Grid, Typography} from "@mui/material";
+import {Grid, Typography, Card, CardContent} from "@mui/material";
 
 export type StatsRowProps = {
     totalHours: number

@@ -1,5 +1,6 @@
 import { Project, TimeEntry } from "./harvest-types";
 import { AssignmentEntry } from "./get-forecast";
+import {SpentProjectHours} from "../../pages";
 
 export const getTeamHours = (teamEntries: TimeEntry[]) => {
     return teamEntries.reduce((acc, entry) => {
@@ -34,29 +35,30 @@ export const findAssignment = (assignments: AssignmentEntry[], projectId: number
     }) ?? null;
 }
 
-export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: AssignmentEntry[]) => {
+export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: AssignmentEntry[]): SpentProjectHours[]  => {
     const teamHours = getTeamHours(teamEntries);
     return Object.values(teamHours).reduce((acc, entry) => {
         Object.values(entry.projects).forEach((project) => {
             const assignment = findAssignment(assignments, project.projectId, entry.userId);
             acc.push({
                 id: `${ entry.user }-${ project.name }`,
+                projectId: project.projectId,
                 user: entry.user,
-                project: project.name,
+                projectName: project.name,
                 hours: project.hours,
                 hours_forecast: assignment?.allocation ?? 0,
             })
         });
         return acc;
-    }, [] as { id: string, user: string, project: string, hours: number, hours_forecast: number }[]);
+    }, [] as SpentProjectHours[]);
 }
 
-export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, { id: number, name: string, hours: number }> => {
+export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, { id: number, projectName: string, hours: number }> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.project.id]) {
             acc[entry.project.id] = {
                 id: entry.project.id,
-                name: !!entry.project.code ? entry.project.code : entry.project.name,
+                projectName: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0
             };
         }
@@ -64,7 +66,7 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, { 
         acc[entry.project.id].hours += entry.hours;
 
         return acc;
-    }, {} as Record<string, { id: number, name: string, hours: number }>)
+    }, {} as Record<string, { id: number, projectName: string, hours: number }>)
 }
 
 export const getProjectsFromEntries = (entries: TimeEntry[]): Project[] => {
