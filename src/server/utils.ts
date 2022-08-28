@@ -1,7 +1,27 @@
 import { Project, TimeEntry } from "./harvest-types";
 import { AssignmentEntry } from "./get-forecast";
-import { SpentProjectHours } from "../../pages";
 import { differenceInDays } from "date-fns";
+
+
+export type SpentProjectHours = {
+    id: string | number,
+    projectId: number,
+    user: string,
+    notes?: any,
+    projectName: string,
+    hours: number,
+    hours_forecast: number
+}
+
+
+export type MyEntries = {
+    id: number,
+    projectId: number,
+    projectCode: string,
+    hours: number,
+    notes: any,
+}
+
 
 export const getTeamHours = (teamEntries: TimeEntry[]) => {
     return teamEntries.reduce((acc, entry) => {

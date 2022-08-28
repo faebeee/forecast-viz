@@ -20,8 +20,10 @@ const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
-export type SettingsProps = {}
-
+export type SettingsProps = {
+    roles?: { key: string, name: string }[];
+    sub?:string;
+}
 
 const TEAMS = [
     {
@@ -38,7 +40,8 @@ const TEAMS = [
     },
 ];
 
-export const Settings = ({}: SettingsProps) => {
+
+export const Settings = ({ roles =  TEAMS, sub = '' }: SettingsProps) => {
     const router = useRouter();
     const [ selectedTeam, setTeam ] = useState<string | null>(router.query.team as string ?? '');
     const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ startOfWeek(new Date()), endOfWeek(new Date()) ]);
@@ -58,7 +61,7 @@ export const Settings = ({}: SettingsProps) => {
     }, [ forecastAccountId ])
 
     const refreshRoute = useCallback(() => {
-        const url = `/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&faccount=${ forecastAccountId }&team=${ selectedTeam }`
+        const url = `${sub}/?from=${ format(dateRange[0] ?? new Date(), DATE_FORMAT) }&to=${ format(dateRange[1] ?? new Date(), DATE_FORMAT) }&token=${ harvestToken }&account=${ harvestAccountId }&faccount=${ forecastAccountId }&team=${ selectedTeam }`
         router.push(url, url)
     }, [ dateRange, harvestToken, harvestAccountId, selectedTeam, forecastAccountId, ]);
 
@@ -100,9 +103,8 @@ export const Settings = ({}: SettingsProps) => {
                         value={ selectedTeam }
                         label="Team"
                         onChange={ (e) => setTeam(e.target.value) }>
-                        { TEAMS.map((team) => <MenuItem key={ team.key }
-                            value={ team.key }>{ team.name }</MenuItem>) }
-
+                        { roles.map((role) => <MenuItem key={ role.key }
+                            value={ role.key }>{ role.name }</MenuItem>) }
                     </Select>
                 </FormControl>
 

@@ -4,7 +4,7 @@ import {
     GetProjectReports,
     GetTaskReport,
     GetTimeEntriesResponse,
-    GetUser, GetUsersAPI,
+    GetUser, GetUsersAPI, RolesApi,
     TimeEntry
 } from "./harvest-types";
 import axios from "axios";
@@ -105,6 +105,20 @@ export const getHarvest = (accessToken: string, accountId: number) => {
         }
     }
 
+    const getRoles = async (): Promise<{ key: string, name: string }[]> => {
+        try {
+            const roles = await fetchAllPages<RolesApi.Role[]>(`/roles`, 'roles', []);
+            return roles.map((role) => {
+                return {
+                    key: role.name,
+                    name: role.name,
+                }
+            })
+        } catch {
+            return []
+        }
+    }
+
     return {
         getProjectBudget,
         getTimeEntries,
@@ -113,6 +127,7 @@ export const getHarvest = (accessToken: string, accountId: number) => {
         getUsers,
         getProjectAssignments,
         getTimeEntriesForUsers,
+        getRoles,
     }
 
 }

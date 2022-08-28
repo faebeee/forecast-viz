@@ -1,45 +1,16 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { Project, TimeEntry } from "../src/server/harvest-types";
-import { useCallback, useEffect, useState } from "react";
-import cookies from 'js-cookie';
-import { useRouter } from "next/router";
+import { Project } from "../src/server/harvest-types";
 import { differenceInDays, endOfWeek, format, startOfWeek } from 'date-fns';
 import { NextApiRequest, NextApiResponse } from "next";
-import {
-    Box,
-    Button,
-    Card, CardActions,
-    CardContent,
-    Container, Drawer,
-    FormControl,
-    Grid,
-    InputLabel, Link,
-    MenuItem,
-    Select, Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-    TextField,
-    Typography
-} from "@mui/material";
+import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import {
-    findAssignment, getHoursPerUser,
-    getProjectsFromEntries,
-    getTeamHours,
-    getTeamHoursEntries,
-    getTeamProjectHours
-} from "../src/server/utils";
+import { DATE_FORMAT } from "../src/components/date-range-widget";
+import { findAssignment, getProjectsFromEntries, MyEntries, SpentProjectHours } from "../src/server/utils";
 import { getForecast } from "../src/server/get-forecast";
-import { StatsRow } from "../src/components/stats-row";
-import { Settings } from "../src/components/settings";
 import { MyProjectsPie } from "../src/components/my-projects-pie";
 import { get } from "lodash";
-import { HoursPerUserPie } from "../src/components/hours-per-users-pie";
+import { Layout } from "../src/components/layout";
 
 type TeamEntry = {
     userId: number;
@@ -54,7 +25,6 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.query.token as string;
-    const teamId = !!req.query.team ? req.query.team as string : null;
     const account = parseInt(req.query.account as string);
     const forecastAccount = parseInt(req.query.faccount as string);
 
@@ -64,17 +34,10 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 from,
                 to,
                 entries: [],
-                teamEntries: [],
+                roles: [],
                 projectHoursSpent: [],
-                teamProjectHours: [],
-                teamProjectHourEntries: [],
-                totalTeamMembers: null,
-                teamAmountOfProjects: 0,
                 totalHours: 0,
-                totalTeamHours: null,
-                teamProjects: [],
                 myProjects: [],
-                hoursPerUser: [],
             }
         }
     }
@@ -83,18 +46,9 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const userData = await api.getMe();
     const userId = userData.id;
 
-    const allPeople = await forecast.getPersons();
-    // @ts-ignore
-    const isMemberOfTeam = !!teamId ? allPeople
-        .find(p => p.harvest_user_id === userId)?.roles?.includes(teamId) : false;
-    const teamPeople = isMemberOfTeam ? allPeople
-        .filter((p) => p.roles.includes(teamId!) && p.archived === false)
-        .map(p => p.harvest_user_id) : [];
-
     const assignments = await forecast.getAssignments(from, to);
 
     const entries = await api.getTimeEntries({ userId: userId, from, to });
-    const teamEntries = await api.getTimeEntriesForUsers(teamPeople, { from, to });
 
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const myProjects = getProjectsFromEntries(entries);
@@ -108,13 +62,6 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             notes: e.notes,
         }
     });
-    const allTeamProjects = getProjectsFromEntries(teamEntries);
-    const teamProjectHours = getTeamProjectHours(teamEntries);
-    const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
-    const hoursPerUser = getHoursPerUser(teamEntries);
-    const totalTeamHours = Object.values(teamProjectHours).reduce((acc, entry) => {
-        return acc + entry.hours;
-    }, 0);
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
@@ -134,10 +81,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 hours_forecast: assignmentHours,
             }
         }
-
-
         acc[projectId].hours += entry.hours;
-
         return acc;
     }, {} as Record<string, SpentProjectHours>);
 
@@ -147,80 +91,83 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             from,
             to,
             entries: myEntries,
-            teamEntries,
             myProjects,
-            hoursPerUser,
             totalHours,
-            teamProjectHours: Object.values(teamProjectHours),
-            totalTeamMembers: teamPeople.length ?? null,
-            teamAmountOfProjects: 0,
-            totalTeamHours,
-            teamProjectHourEntries,
-            teamProjects: allTeamProjects,
         }
     }
 }
 
-export type MyEntries = {
-    id: number,
-    projectId: number,
-    projectCode: string,
-    hours: number,
-    notes: any,
-}
-
-export type SpentProjectHours = {
-    id: string | number,
-    projectId: number,
-    user: string,
-    notes?: any,
-    projectName: string,
-    hours: number,
-    hours_forecast: number
-}
 
 export type EntriesProps = {
-    teamEntries: TimeEntry[];
     entries: MyEntries[];
     myProjects: Project[];
     from: string;
     to: string;
     totalHours: number;
     projectHoursSpent: SpentProjectHours[];
-    teamProjectHours: SpentProjectHours[];
-    teamAmountOfProjects: number;
-    teamProjectHourEntries: SpentProjectHours[];
-    totalTeamMembers: number | null;
-    totalTeamHours: number | null;
-    teamProjects: Project[];
-    hoursPerUser: { user: string, hours: number }[]
+    roles?: { key: string, name: string }[]
 }
-
-const drawerWidth = 340;
 
 
 export const Index = ({
                           projectHoursSpent,
-                          teamProjectHours,
-                          teamProjectHourEntries,
-                          totalTeamMembers,
-                          totalTeamHours,
-                          teamProjects,
                           totalHours,
                           myProjects,
                           entries,
-                          hoursPerUser,
                       }: EntriesProps) => {
     return <>
-        <Box sx={ { display: 'flex' } }>
+        <Layout>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <Grid container spacing={ 4 }>
-                        <StatsRow totalHours={ totalHours } totalProjects={ myProjects.length }
-                            totalTeamHours={ totalTeamHours ?? 0 }
-                            teamProjects={ teamProjects.length }
-                            totalTeamMembers={ totalTeamMembers ?? 0 }/>
+                        <Grid item container spacing={ 2 }>
+                            <Grid item xs={ 6 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>My Hours</Typography>
+                                        <Typography variant={ 'body1' }>{ totalHours }</Typography>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={ 6 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>My Projects</Typography>
+                                        <Typography variant={ 'body1' }>{ myProjects.length }</Typography>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                        </Grid>
+
                         <Grid container spacing={ 2 } item xs={ 12 }>
+                            <Grid item xs={ 12 } md={ 8 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>My Hours</Typography>
+
+                                        <DataGrid
+                                            autoHeight
+                                            getRowId={ (r) => r.projectId }
+                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                            rows={ projectHoursSpent }
+                                            columns={ [
+                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'notes', headerName: 'Notes', flex: 1 },
+                                                { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                            ] }
+                                            disableSelectionOnClick
+                                            experimentalFeatures={ { newEditingApi: true } }
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={ 12 } md={ 4 }>
+                                <Box sx={ { position: 'sticky', top: 10 } }>
+                                    <MyProjectsPie entries={ projectHoursSpent }/>
+                                </Box>
+                            </Grid>
                             <Grid item xs={ 12 }>
                                 <Card>
                                     <CardContent>
@@ -258,96 +205,12 @@ export const Index = ({
                                     </CardContent>
                                 </Card>
                             </Grid>
-                            <Grid item xs={ 12 } md={ 8 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>My Hours</Typography>
 
-                                        <DataGrid
-                                            autoHeight
-                                            getRowId={ (r) => r.projectId }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            rows={ projectHoursSpent }
-                                            columns={ [
-                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'notes', headerName: 'Notes', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Box sx={ { position: 'sticky', top: 10 } }>
-                                    <MyProjectsPie entries={ projectHoursSpent }/>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={ 12 } md={ 8 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>Team Projects</Typography>
-                                        <DataGrid
-                                            autoHeight
-                                            getRowId={ (r) => r.projectName }
-                                            rows={ teamProjectHours }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Box sx={ { position: 'sticky', top: 10 } }>
-                                    <MyProjectsPie entries={ teamProjectHours }/>
-                                    <HoursPerUserPie entries={ hoursPerUser }/>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={ 12 } md={ 12 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>Team Hours</Typography>
-                                        <DataGrid
-                                            autoHeight
-                                            rows={ teamProjectHourEntries }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'user', headerName: 'User', flex: 1 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
                         </Grid>
                     </Grid>
                 </Box>
             </Box>
-            <Drawer
-                open
-                anchor={ 'right' }
-                variant={ 'permanent' }
-                PaperProps={ {
-                    sx: { width: drawerWidth }
-                } }
-                sx={ {
-                    width: drawerWidth,
-                    flexShrink: 0,
-                } }>
-                <Settings/>
-            </Drawer>
-        </Box>
+        </Layout>
     </>;
 }
 export default Index;

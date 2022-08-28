@@ -370,3 +370,33 @@ export namespace GetUsersAPI {
 
 }
 
+export namespace RolesApi {
+
+    export interface Role {
+        id: number;
+        name: string;
+        created_at: Date;
+        updated_at: Date;
+        user_ids: number[];
+    }
+
+    export interface Links {
+        first: string;
+        next?: any;
+        previous?: any;
+        last: string;
+    }
+
+    export interface Response {
+        roles: Role[];
+        per_page: number;
+        total_pages: number;
+        total_entries: number;
+        next_page?: any;
+        previous_page?: any;
+        page: number;
+        links: Links;
+    }
+
+}
+
