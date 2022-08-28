@@ -156,7 +156,7 @@ export type EntriesProps = {
     to: string;
     totalHours: number;
     projectHoursSpent: SpentProjectHours[];
-    teamProjectHours: { projectName: string, hours: number }[];
+    teamProjectHours: SpentProjectHours[];
     teamAmountOfProjects: number;
     teamProjectHourEntries: SpentProjectHours[];
     totalTeamMembers: number | null;
