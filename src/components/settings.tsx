@@ -13,15 +13,14 @@ import {
 } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
 import cookies from "js-cookie";
-import { format } from "date-fns";
+import { endOfWeek, format, startOfWeek } from "date-fns";
 import { useRouter } from "next/router";
 
 const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
-export type SettingsProps = {
-}
+export type SettingsProps = {}
 
 
 const TEAMS = [
@@ -39,10 +38,10 @@ const TEAMS = [
     },
 ];
 
-export const Settings = ({  }: SettingsProps) => {
+export const Settings = ({}: SettingsProps) => {
     const router = useRouter();
     const [ selectedTeam, setTeam ] = useState<string | null>(router.query.team as string ?? '');
-    const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ new Date(router.query.from as string ?? ''), new Date(router.query.to as string ?? '') ]);
+    const [ dateRange, setDateRange ] = useState<[ Date | null, Date | null ]>([ startOfWeek(new Date()), endOfWeek(new Date()) ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? router.query.token as string ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? router.query.account as string ?? '');
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? router.query.faccount as string ?? '');

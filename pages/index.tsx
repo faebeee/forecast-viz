@@ -38,6 +38,7 @@ import { getForecast } from "../src/server/get-forecast";
 import { StatsRow } from "../src/components/stats-row";
 import { Settings } from "../src/components/settings";
 import { MyProjectsPie } from "../src/components/my-projects-pie";
+import { get } from "lodash";
 
 type TeamEntry = {
     userId: number;
@@ -61,6 +62,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             props: {
                 from,
                 to,
+                entries: [],
                 teamEntries: [],
                 projectHoursSpent: [],
                 teamProjectHours: [],
@@ -94,6 +96,16 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
 
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const myProjects = getProjectsFromEntries(entries);
+    const myEntries:MyEntries[] = entries.map((e) => {
+        return {
+            id: e.id,
+            projectId: e.project.id,
+            projectName: e.project.name,
+            projectCode: e.project.code,
+            hours: e.hours,
+            notes: e.notes,
+        }
+    });
     const allTeamProjects = getProjectsFromEntries(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
@@ -131,6 +143,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             projectHoursSpent: Object.values(projectHoursSpent),
             from,
             to,
+            entries: myEntries,
             teamEntries,
             myProjects,
             totalHours,
@@ -142,6 +155,14 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             teamProjects: allTeamProjects,
         }
     }
+}
+
+export type MyEntries = {
+    id: number,
+    projectId: number,
+    projectCode: string,
+    hours: number,
+    notes: any,
 }
 
 export type SpentProjectHours = {
@@ -156,6 +177,7 @@ export type SpentProjectHours = {
 
 export type EntriesProps = {
     teamEntries: TimeEntry[];
+    entries: MyEntries[];
     myProjects: Project[];
     from: string;
     to: string;
@@ -181,6 +203,7 @@ export const Index = ({
                           teamProjects,
                           totalHours,
                           myProjects,
+                          entries,
                       }: EntriesProps) => {
     return <>
         <Box sx={ { display: 'flex' } }>
@@ -192,6 +215,43 @@ export const Index = ({
                             teamProjects={ teamProjects.length }
                             totalTeamMembers={ totalTeamMembers ?? 0 }/>
                         <Grid container spacing={ 2 } item xs={ 12 }>
+                            <Grid item xs={ 12 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>My Entries</Typography>
+
+                                        <DataGrid
+                                            autoHeight
+                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                            rows={ entries }
+                                            columns={ [
+                                                {
+                                                    field: 'projectId',
+                                                    headerName: 'Project ID',
+                                                    width: 90,
+                                                    renderCell: ({ row, field }) => get(row, field)
+                                                },
+                                                {
+                                                    field: 'projectCode',
+                                                    headerName: 'Project Code',
+                                                    width: 90,
+                                                    renderCell: ({ row, field }) => get(row, field)
+                                                },
+                                                {
+                                                    field: 'projectName',
+                                                    headerName: 'Project Name',
+                                                    flex: 1,
+                                                    renderCell: ({ row, field }) => get(row, field)
+                                                },
+                                                { field: 'notes', headerName: 'Notes', flex: 1 },
+                                                { field: 'hours', headerName: 'Hours', flex: 1 },
+                                            ] }
+                                            disableSelectionOnClick
+                                            experimentalFeatures={ { newEditingApi: true } }
+                                        />
+                                    </CardContent>
+                                </Card>
+                            </Grid>
                             <Grid item xs={ 12 } md={ 8 }>
                                 <Card>
                                     <CardContent>
