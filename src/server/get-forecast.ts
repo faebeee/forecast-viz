@@ -1,9 +1,6 @@
 import axios from "axios";
 
-export type AssignmentEntry = {
-    project_id: number,
-    person_id: number,
-    allocation: number,
+export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
     project?: Forecast.Project,
 }
@@ -11,10 +8,20 @@ export type AssignmentEntry = {
 
 declare module Forecast {
 
+
     export interface Assignment {
-        project_id: number,
-        person_id: number,
-        allocation: number,
+        id: number;
+        start_date: string;
+        end_date: string;
+        allocation?: any;
+        notes?: any;
+        updated_at: Date;
+        updated_by_id: number;
+        project_id: number;
+        person_id: number;
+        placeholder_id?: any;
+        repeated_assignment_set_id: number;
+        active_on_days_off: boolean;
     }
     export interface Project {
         id: number;
@@ -101,7 +108,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
         return [];
     }
 
-    const getAssignments = async (from: string): Promise<AssignmentEntry[]> => {
+    const getAssignments = async (from: string, to: string): Promise<AssignmentEntry[]> => {
         const projects = await getProjects();
         const persons = await getPersons();
         const projectMap = new Map<number, Forecast.Project>();
@@ -116,15 +123,16 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
 
         try {
-            const response = await api.get<{ future_scheduled_hours: Forecast.Assignment[] }>(`/aggregate/future_scheduled_hours/${ from }`);
-            const entries = response.data.future_scheduled_hours;
-            return entries.map((e) => {
+            const response = await api.get<{ assignments: Forecast.Assignment[] }>(`/assignments?start_date=${ from }&end_date=${to}`);
+            const entries = response.data.assignments;
+            const r = entries.map((e) => {
                 return {
                     ...e,
                     project: projectMap.get(e.project_id),
                     person: personMap.get(e.person_id),
                 }
             })
+            return r;
         } catch (e) {
             console.error(e);
         }

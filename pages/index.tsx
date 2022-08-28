@@ -3,7 +3,7 @@ import { Project, TimeEntry } from "../src/server/harvest-types";
 import { useCallback, useEffect, useState } from "react";
 import cookies from 'js-cookie';
 import { useRouter } from "next/router";
-import { endOfWeek, format, startOfWeek } from 'date-fns';
+import { differenceInDays, endOfWeek, format, startOfWeek } from 'date-fns';
 import { NextApiRequest, NextApiResponse } from "next";
 import {
     Box,
@@ -87,7 +87,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id) : [];
 
-    const assignments = await forecast.getAssignments(from);
+    const assignments = await forecast.getAssignments(from, to);
 
     const entries = await api.getTimeEntries({ userId: userId, from, to });
     const teamEntries = await api.getTimeEntriesForUsers(teamPeople, { from, to });
@@ -95,7 +95,6 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const myProjects = getProjectsFromEntries(entries);
     const allTeamProjects = getProjectsFromEntries(teamEntries);
-    const teamHours = getTeamHours(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
     const totalTeamHours = Object.values(teamProjectHours).reduce((acc, entry) => {
@@ -105,8 +104,11 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
         const projectId = entry.project.id;
-        const assignment = findAssignment(assignments, entry.project.id, entry.user.id);
-
+        const _assignments = findAssignment(assignments, entry.project.id, entry.user.id);
+        const assignmentHours = _assignments.reduce((acc, assignment) => {
+            const days = (!!assignment?.start_date && !!assignment?.end_date) ? differenceInDays(new Date(assignment?.end_date), new Date(assignment?.start_date)) : 0;
+            return acc + (days + 1) * (assignment?.allocation / 60 / 60)
+        }, 0)
         if (!acc[projectId]) {
             acc[projectId] = {
                 id: entry.user.id,
@@ -114,9 +116,10 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 user: entry.user.name,
                 projectName,
                 hours: 0,
-                hours_forecast: assignment?.allocation ?? 0,
+                hours_forecast: assignmentHours,
             }
         }
+
 
         acc[projectId].hours += entry.hours;
 
@@ -145,6 +148,7 @@ export type SpentProjectHours = {
     id: string | number,
     projectId: number,
     user: string,
+    notes?: any,
     projectName: string,
     hours: number,
     hours_forecast: number
@@ -201,6 +205,7 @@ export const Index = ({
                                             columns={ [
                                                 { field: 'projectId', headerName: 'Project ID', width: 90 },
                                                 { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'notes', headerName: 'Notes', flex: 1 },
                                                 { field: 'hours', headerName: 'Hours', flex: 1 },
                                                 { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
                                             ] }
@@ -273,7 +278,7 @@ export const Index = ({
                     width: drawerWidth,
                     flexShrink: 0,
                 } }>
-                <Settings />
+                <Settings/>
             </Drawer>
         </Box>
     </>;
