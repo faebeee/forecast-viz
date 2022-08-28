@@ -28,7 +28,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import {
-    findAssignment,
+    findAssignment, getHoursPerUser,
     getProjectsFromEntries,
     getTeamHours,
     getTeamHoursEntries,
@@ -39,6 +39,7 @@ import { StatsRow } from "../src/components/stats-row";
 import { Settings } from "../src/components/settings";
 import { MyProjectsPie } from "../src/components/my-projects-pie";
 import { get } from "lodash";
+import { HoursPerUserPie } from "../src/components/hours-per-users-pie";
 
 type TeamEntry = {
     userId: number;
@@ -73,6 +74,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 totalTeamHours: null,
                 teamProjects: [],
                 myProjects: [],
+                hoursPerUser: [],
             }
         }
     }
@@ -96,7 +98,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
 
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const myProjects = getProjectsFromEntries(entries);
-    const myEntries:MyEntries[] = entries.map((e) => {
+    const myEntries: MyEntries[] = entries.map((e) => {
         return {
             id: e.id,
             projectId: e.project.id,
@@ -109,6 +111,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const allTeamProjects = getProjectsFromEntries(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
+    const hoursPerUser = getHoursPerUser(teamEntries);
     const totalTeamHours = Object.values(teamProjectHours).reduce((acc, entry) => {
         return acc + entry.hours;
     }, 0);
@@ -146,6 +149,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
             entries: myEntries,
             teamEntries,
             myProjects,
+            hoursPerUser,
             totalHours,
             teamProjectHours: Object.values(teamProjectHours),
             totalTeamMembers: teamPeople.length ?? null,
@@ -189,6 +193,7 @@ export type EntriesProps = {
     totalTeamMembers: number | null;
     totalTeamHours: number | null;
     teamProjects: Project[];
+    hoursPerUser: { user: string, hours: number }[]
 }
 
 const drawerWidth = 340;
@@ -204,6 +209,7 @@ export const Index = ({
                           totalHours,
                           myProjects,
                           entries,
+                          hoursPerUser,
                       }: EntriesProps) => {
     return <>
         <Box sx={ { display: 'flex' } }>
@@ -302,6 +308,7 @@ export const Index = ({
                             <Grid item xs={ 12 } md={ 4 }>
                                 <Box sx={ { position: 'sticky', top: 10 } }>
                                     <MyProjectsPie entries={ teamProjectHours }/>
+                                    <HoursPerUserPie entries={ hoursPerUser }/>
                                 </Box>
                             </Grid>
                             <Grid item xs={ 12 } md={ 12 }>
