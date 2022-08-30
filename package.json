@@ -2,6 +2,14 @@
   "name": "forecast-vis",
   "version": "0.1.0",
   "private": true,
+  "author": {
+    "email": "faebeee@gmail.com",
+    "name": "Fabio Gianini"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faebeee/forecast-viz"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
