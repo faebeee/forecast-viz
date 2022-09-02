@@ -96,6 +96,12 @@ export const getHarvest = (accessToken: string, accountId: number) => {
     }
 
 
+    const getUser = async (uid:number): Promise<GetMe.GetMeResponse> => {
+        const response = await api.get(`/users/${uid}`)
+        return response.data;
+    }
+
+
     const getUsers = async (): Promise<GetUsersAPI.Response | null> => {
         try {
             const response = await api.get(`/users`)
@@ -128,6 +134,7 @@ export const getHarvest = (accessToken: string, accountId: number) => {
         getProjectAssignments,
         getTimeEntriesForUsers,
         getRoles,
+        getUser,
     }
 
 }

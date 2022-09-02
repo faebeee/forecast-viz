@@ -46,6 +46,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const userData = await api.getMe();
     const userId = userData.id;
 
+
     const assignments = await forecast.getAssignments(from, to);
 
     const entries = await api.getTimeEntries({ userId: userId, from, to });

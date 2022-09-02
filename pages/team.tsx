@@ -28,7 +28,7 @@ type TeamEntry = {
 }
 
 
-export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse): Promise<{ props: EntriesProps }> => {
+export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse) => {
     const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.query.token as string;
@@ -59,12 +59,26 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const userId = userData.id;
 
     const allPeople = await forecast.getPersons();
+    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+
+    const hasTeamAccess = myDetails.roles.includes('Coach') || myDetails.roles.includes('Project Management');
+
     // @ts-ignore
     const isMemberOfTeam = !!teamId ? allPeople
         .find(p => p.harvest_user_id === userId)?.roles?.includes(teamId) : false;
     const teamPeople = isMemberOfTeam ? allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id) : [];
+
+    if (!hasTeamAccess || !isMemberOfTeam) {
+        return {
+            redirect: {
+                permanent: false,
+                destination: "/me"
+            }
+        }
+
+    }
 
     const assignments = await forecast.getAssignments(from, to);
     // const roles = await api.getRoles();
