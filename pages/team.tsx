@@ -1,11 +1,11 @@
-import { getHarvest } from "../src/server/get-harvest";
-import { Project, TimeEntry } from "../src/server/harvest-types";
-import { endOfWeek, format, startOfWeek } from 'date-fns';
-import { NextApiRequest, NextApiResponse } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
-import { DataGrid } from '@mui/x-data-grid';
+import {getHarvest} from "../src/server/get-harvest";
+import {Project, TimeEntry} from "../src/server/harvest-types";
+import {endOfWeek, format, startOfWeek} from 'date-fns';
+import {NextApiRequest, NextApiResponse} from "next";
+import {Box, Card, CardContent, Grid, Typography} from "@mui/material";
+import {DataGrid} from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
+import {DATE_FORMAT} from "../src/components/date-range-widget";
 import {
     getHoursPerUser,
     getProjectsFromEntries,
@@ -14,10 +14,10 @@ import {
     MyEntries,
     SpentProjectHours
 } from "../src/server/utils";
-import { getForecast } from "../src/server/get-forecast";
-import { MyProjectsPie } from "../src/components/my-projects-pie";
-import { HoursPerUserPie } from "../src/components/hours-per-users-pie";
-import { Layout } from "../src/components/layout";
+import {getForecast} from "../src/server/get-forecast";
+import {MyProjectsPie} from "../src/components/my-projects-pie";
+import {HoursPerUserPie} from "../src/components/hours-per-users-pie";
+import {Layout} from "../src/components/layout";
 
 type TeamEntry = {
     userId: number;
@@ -47,6 +47,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
                 teamProjectHourEntries: [],
                 totalTeamMembers: null,
                 teamAmountOfProjects: 0,
+                billableTotalHours: 0,
                 totalTeamHours: null,
                 teamProjects: [],
                 hoursPerUser: [],
@@ -83,7 +84,7 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
     const assignments = await forecast.getAssignments(from, to);
     // const roles = await api.getRoles();
 
-    const teamEntries = await api.getTimeEntriesForUsers(teamPeople, { from, to });
+    const teamEntries = await api.getTimeEntriesForUsers(teamPeople, {from, to});
 
     const allTeamProjects = getProjectsFromEntries(teamEntries);
     const teamProjectHours = getTeamProjectHours(teamEntries);
@@ -93,18 +94,24 @@ export const getServerSideProps = async (req: NextApiRequest, res: NextApiRespon
         return acc + entry.hours;
     }, 0);
 
+    const billableTotalHours = Object.values(teamProjectHours).filter(e => e.billable).reduce((acc, entry) => {
+        return acc + entry.hours;
+    }, 0);
+
     return {
         props: {
             from,
             to,
             teamEntries,
             hoursPerUser,
+            billableTotalHours,
             teamProjectHours: Object.values(teamProjectHours),
             totalTeamMembers: teamPeople.length ?? null,
             teamAmountOfProjects: 0,
             totalTeamHours,
             teamProjectHourEntries,
             teamProjects: allTeamProjects,
+            userName: userData.first_name,
         }
     }
 }
@@ -118,6 +125,8 @@ export type EntriesProps = {
     teamProjectHourEntries: SpentProjectHours[];
     totalTeamMembers: number | null;
     totalTeamHours: number | null;
+    billableTotalHours: number;
+    userName?: string;
     teamProjects: Project[];
     hoursPerUser: { user: string, hours: number }[]
     roles?: { key: string, name: string }[]
@@ -131,80 +140,83 @@ export const Index = ({
                           totalTeamHours,
                           teamProjects,
                           hoursPerUser,
+                          userName,
+                          billableTotalHours,
                       }: EntriesProps) => {
     return <>
-        <Layout sub={ '/team' }>
-            <Box sx={ { flexGrow: 1, } }>
-                <Box p={ 4 }>
-                    <Grid container spacing={ 4 }>
-                        <Grid item xs={ 4 }>
+        <Layout sub={'/team'} userName={userName}>
+            <Box sx={{flexGrow: 1,}}>
+                <Box p={4}>
+                    <Typography sx={{marginBottom: 4}} variant={"h3"}>Team Dashboard</Typography>
+                    <Grid container spacing={4}>
+                        <Grid item xs={4}>
                             <Card>
                                 <CardContent>
-                                    <Typography variant={ 'h5' }>Team Members</Typography>
-                                    <Typography variant={ 'body1' }>{ totalTeamMembers }</Typography>
+                                    <Typography variant={'h5'}>Team Members</Typography>
+                                    <Typography variant={'body1'}>{totalTeamMembers}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 4 }>
+                        <Grid item xs={4}>
                             <Card>
                                 <CardContent>
-                                    <Typography variant={ 'h5' }>Team Hours</Typography>
-                                    <Typography variant={ 'body1' }>{ totalTeamHours }</Typography>
+                                    <Typography variant={'h5'}>Team Hours</Typography>
+                                    <Typography variant={'body1'}>{totalTeamHours}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
-                        <Grid item xs={ 4 }>
+                        <Grid item xs={4}>
                             <Card>
                                 <CardContent>
-                                    <Typography variant={ 'h5' }>Team Projects</Typography>
-                                    <Typography variant={ 'body1' }>{ teamProjects.length }</Typography>
+                                    <Typography variant={'h5'}>Team Projects</Typography>
+                                    <Typography variant={'body1'}>{teamProjects.length}</Typography>
                                 </CardContent>
                             </Card>
                         </Grid>
 
-                        <Grid container spacing={ 2 } item xs={ 12 }>
-                            <Grid item xs={ 12 } md={ 8 }>
+                        <Grid container spacing={2} item xs={12}>
+                            <Grid item xs={12} md={8}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant={ 'h5' }>Team Projects</Typography>
+                                        <Typography variant={'h5'}>Team Projects</Typography>
                                         <DataGrid
                                             autoHeight
-                                            getRowId={ (r) => r.projectName }
-                                            rows={ teamProjectHours }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                            ] }
+                                            getRowId={(r) => r.projectName}
+                                            rows={teamProjectHours}
+                                            rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                                            columns={[
+                                                {field: 'projectId', headerName: 'Project ID', width: 90},
+                                                {field: 'projectName', headerName: 'Project Name', flex: 1},
+                                                {field: 'hours', headerName: 'Hours', flex: 1},
+                                            ]}
                                             disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
+                                            experimentalFeatures={{newEditingApi: true}}/>
                                     </CardContent>
                                 </Card>
                             </Grid>
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Box sx={ { position: 'sticky', top: 10 } }>
-                                    <MyProjectsPie entries={ teamProjectHours }/>
-                                    <HoursPerUserPie entries={ hoursPerUser }/>
+                            <Grid item xs={12} md={4}>
+                                <Box sx={{position: 'sticky', top: 10}}>
+                                    <MyProjectsPie entries={teamProjectHours}/>
+                                    <HoursPerUserPie entries={hoursPerUser}/>
                                 </Box>
                             </Grid>
-                            <Grid item xs={ 12 } md={ 12 }>
+                            <Grid item xs={12} md={12}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant={ 'h5' }>Team Hours</Typography>
+                                        <Typography variant={'h5'}>Team Hours</Typography>
                                         <DataGrid
                                             autoHeight
-                                            rows={ teamProjectHourEntries }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'user', headerName: 'User', flex: 1 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                            ] }
+                                            rows={teamProjectHourEntries}
+                                            rowsPerPageOptions={[5, 10, 20, 50, 100]}
+                                            columns={[
+                                                {field: 'user', headerName: 'User', flex: 1},
+                                                {field: 'projectName', headerName: 'Project Name', flex: 1},
+                                                {field: 'hours', headerName: 'Hours', flex: 1},
+                                                {field: 'hours_forecast', headerName: 'Forecast', flex: 1},
+                                            ]}
                                             disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
+                                            experimentalFeatures={{newEditingApi: true}}/>
                                     </CardContent>
                                 </Card>
                             </Grid>

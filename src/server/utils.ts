@@ -10,7 +10,8 @@ export type SpentProjectHours = {
     notes?: any,
     projectName: string,
     hours: number,
-    hours_forecast: number
+    hours_forecast: number,
+    billable?:boolean
 }
 
 
@@ -20,6 +21,7 @@ export type MyEntries = {
     projectCode: string,
     hours: number,
     notes: any,
+    billable:boolean
 }
 
 
@@ -36,6 +38,7 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
         if (!acc[entry.user.id].projects[entry.project.id]) {
             acc[entry.user.id].projects[entry.project.id] = {
                 projectId: entry.project.id,
+                billable:entry.billable,
                 name: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0
             };
@@ -44,7 +47,7 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
         acc[entry.user.id].projects[entry.project.id].hours += entry.hours;
 
         return acc;
-    }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, name: string, hours: number }> }>)
+    }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, billable:boolean, name: string, hours: number }> }>)
 }
 
 export const findAssignment = (assignments: AssignmentEntry[], projectId: number, userId?: number): AssignmentEntry[] => {
@@ -69,6 +72,7 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
                 id: `${ entry.user }-${ project.name }`,
                 projectId: project.projectId,
                 user: entry.user,
+                billable:project.billable,
                 projectName: project.name,
                 hours: project.hours,
                 hours_forecast: plannedHours,
@@ -104,6 +108,7 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
                 projectId: entry.project.id,
                 projectName: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0,
+                billable:entry.billable,
                 hours_forecast: 0,
             };
         }
