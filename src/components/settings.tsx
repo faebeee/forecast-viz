@@ -16,9 +16,9 @@ import cookies from "js-cookie";
 import { endOfWeek, format, startOfWeek } from "date-fns";
 import { useRouter } from "next/router";
 
-const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
-const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
-const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
+export const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
+export const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
+export const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
 export type SettingsProps = {
     roles?: { key: string, name: string }[];

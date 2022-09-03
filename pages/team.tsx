@@ -1,7 +1,7 @@
 import {getHarvest} from "../src/server/get-harvest";
 import {Project, TimeEntry} from "../src/server/harvest-types";
 import {endOfWeek, format, startOfWeek} from 'date-fns';
-import {NextApiRequest, NextApiResponse} from "next";
+import {GetServerSideProps, NextApiRequest, NextApiResponse} from "next";
 import {Box, Card, CardContent, Grid, Typography} from "@mui/material";
 import {DataGrid} from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
@@ -18,6 +18,11 @@ import {getForecast} from "../src/server/get-forecast";
 import {MyProjectsPie} from "../src/components/my-projects-pie";
 import {HoursPerUserPie} from "../src/components/hours-per-users-pie";
 import {Layout} from "../src/components/layout";
+import {
+    COOKIE_FORC_ACCOUNTID_NAME,
+    COOKIE_HARV_ACCOUNTID_NAME,
+    COOKIE_HARV_TOKEN_NAME
+} from "../src/components/settings";
 
 type TeamEntry = {
     userId: number;
@@ -28,13 +33,13 @@ type TeamEntry = {
 }
 
 
-export const getServerSideProps = async (req: NextApiRequest, res: NextApiResponse) => {
-    const from = req.query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
-    const to = req.query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
-    const token = req.query.token as string;
-    const teamId = !!req.query.team ? req.query.team as string : null;
-    const account = parseInt(req.query.account as string);
-    const forecastAccount = parseInt(req.query.faccount as string);
+export const getServerSideProps: GetServerSideProps = async ({query, req}) => {
+    const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
+    const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
+    const teamId = !!query.team ? query.team as string : null;
+    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
+    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
+    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
 
     if (!token || !account) {
         return {
