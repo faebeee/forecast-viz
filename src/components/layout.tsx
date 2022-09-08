@@ -1,10 +1,11 @@
 import {AppBar, Box, Button, Drawer, Toolbar, Typography} from "@mui/material";
 import {Settings} from "./settings";
-import {PropsWithChildren, useMemo} from "react";
+import {PropsWithChildren, useMemo, useState} from "react";
 import Link from "next/link";
 import {useRouter} from "next/router";
 import qs from 'qs';
 import {version, name} from "../../package.json"
+import {Menu} from "@mui/icons-material";
 
 export type LayoutProps = PropsWithChildren<{
     sub?: string;
@@ -14,6 +15,7 @@ const drawerWidth = 340;
 
 export const Layout = ({children, sub, userName}: LayoutProps) => {
     const router = useRouter();
+    const [showSidebar, setShowSidebar] = useState(true);
 
     const routeQuery = useMemo(() => {
         return qs.stringify(router.query);
@@ -34,7 +36,9 @@ export const Layout = ({children, sub, userName}: LayoutProps) => {
                         </Button>
                     </Link>
                 </Box>
-                {userName}
+                <Button onClick={() => setShowSidebar(!showSidebar)} variant={'text'} color={'secondary'} endIcon={<Menu/>}>
+                    {userName}
+                </Button>
             </Toolbar>
         </AppBar>
         <Box sx={{display: 'flex'}}>
@@ -42,9 +46,9 @@ export const Layout = ({children, sub, userName}: LayoutProps) => {
                 {children}
             </Box>
             <Drawer
-                open
+                open={showSidebar}
                 anchor={'right'}
-                variant={'permanent'}
+                variant={'temporary'}
                 PaperProps={{
                     sx: {width: drawerWidth, paddingTop: 10}
                 }}

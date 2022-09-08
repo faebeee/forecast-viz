@@ -16,6 +16,10 @@ import {
     COOKIE_HARV_ACCOUNTID_NAME,
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
+import {HoursPerDay} from "../src/type";
+import {Bar, CartesianGrid, ResponsiveContainer, XAxis, YAxis, BarChart, Tooltip} from "recharts";
+import {useTheme} from "@mui/system";
+import {COLORS} from "../src/config";
 
 type TeamEntry = {
     userId: number;
@@ -44,6 +48,8 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
                 totalHours: 0,
                 billableTotalHours: 0,
                 myProjects: [],
+                listOfProjectNames: [],
+                hoursPerDay: [],
             }
         }
     }
@@ -71,6 +77,24 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
             notes: e.notes,
         }
     });
+
+    const listOfProjectNames = entries.reduce((acc, entry) => {
+        if (!acc.includes(entry.project.name)) {
+            acc.push(entry.project.name);
+        }
+        return acc;
+    }, [] as string[]);
+    const hoursPerDay = entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = {};
+        }
+        if (!acc[entry.spent_date][entry.project.name]) {
+            acc[entry.spent_date][entry.project.name] = 0;
+        }
+
+        acc[entry.spent_date][entry.project.name] += entry.hours;
+        return acc;
+    }, {} as HoursPerDay)
 
     const projectHoursSpent = entries.reduce((acc, entry) => {
         const projectName = !!entry.project.code ? entry.project.code : entry.project.name;
@@ -105,6 +129,13 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
             totalHours,
             billableTotalHours,
             userName: userData.first_name,
+            listOfProjectNames,
+            hoursPerDay: Object.entries(hoursPerDay).map(([key, value]) => {
+                return {
+                    date: key,
+                    ...value
+                }
+            }).reverse(),
         }
     }
 }
@@ -119,7 +150,9 @@ export type EntriesProps = {
     totalHours: number;
     billableTotalHours: number;
     projectHoursSpent: SpentProjectHours[];
-    roles?: { key: string, name: string }[]
+    roles?: { key: string, name: string }[];
+    hoursPerDay: { [key: string]: number, date: string }[],
+    listOfProjectNames: string[];
 }
 
 
@@ -130,7 +163,10 @@ export const Index = ({
                           myProjects,
                           entries,
                           userName,
+                          hoursPerDay,
+                          listOfProjectNames,
                       }: EntriesProps) => {
+
     return <>
         <Layout userName={userName}>
 
@@ -158,10 +194,10 @@ export const Index = ({
                         </Grid>
 
                         <Grid container spacing={2} item xs={12}>
-                            <Grid item xs={12} md={8}>
+                            <Grid item xs={12} md={6}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant={'h5'}>My Hours</Typography>
+                                        <Typography mb={2} variant={'h5'}>My Hours</Typography>
 
                                         <DataGrid
                                             autoHeight
@@ -180,7 +216,7 @@ export const Index = ({
                                     </CardContent>
                                 </Card>
                             </Grid>
-                            <Grid item xs={12} md={4}>
+                            <Grid item xs={12} md={6}>
                                 <Box sx={{position: 'sticky', top: 10}}>
                                     <MyProjectsPie entries={projectHoursSpent}/>
                                 </Box>
@@ -188,7 +224,27 @@ export const Index = ({
                             <Grid item xs={12}>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant={'h5'}>My Entries</Typography>
+                                        <Typography mb={2} variant={'h5'}>My hours per day</Typography>
+                                        <ResponsiveContainer width="100%" height={400}>
+                                            <BarChart
+                                                height={400}
+                                                data={hoursPerDay}
+                                            >
+                                                <Tooltip/>
+                                                <CartesianGrid strokeDasharray="6 6"/>
+                                                <XAxis dataKey="date"/>
+                                                <YAxis/>
+                                                {listOfProjectNames.map((projectName, index) => (
+                                                    <Bar key={projectName} dataKey={projectName} stackId="a" fill={COLORS[index]}/>))}
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Card>
+                                    <CardContent>
+                                        <Typography mb={2} variant={'h5'}>My Entries</Typography>
 
                                         <DataGrid
                                             autoHeight
