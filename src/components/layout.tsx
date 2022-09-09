@@ -9,7 +9,7 @@ import {Menu} from "@mui/icons-material";
 
 export type LayoutProps = PropsWithChildren<{
     sub?: string;
-    userName?: string;
+    userName?: string | null;
 }>;
 const drawerWidth = 340;
 

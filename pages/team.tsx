@@ -67,7 +67,7 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}) => {
     const allPeople = await forecast.getPersons();
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
-    const hasTeamAccess = myDetails.roles.includes('Coach') || myDetails.roles.includes('Project Management');
+    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
 
     // @ts-ignore
     const isMemberOfTeam = !!teamId ? allPeople
