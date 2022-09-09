@@ -7,25 +7,27 @@ export type FilterContextValueType = {
     teamId: string | null;
     setTeamId: (id: string) => void;
 
-    from: string;
-    to: string;
-    setDateRange:(from: string, to:string) => void;
+    dateRange: [ Date, Date ];
+    setDateRange: (range: [ Date, Date ]) => void;
 
     harvestAccountId: string | null;
-    setHarvestAccountId:(value: string) => void;
+    setHarvestAccountId: (value: string) => void;
 
     harvestToken: string | null;
-    setHarvestToken:(value: string) => void;
+    setHarvestToken: (value: string) => void;
 
     forecastAccountId: string | null;
-    setForecastAccountId:(value: string) => void;
+    setForecastAccountId: (value: string) => void;
+
+    executeSearch: () => void;
+
+    queryString: string;
 }
 
 export const filterContextValue: FilterContextValueType = {
     teamId: null,
     setTeamId: noop,
-    from: format(startOfWeek(new Date()), DATE_FORMAT),
-    to: format(endOfWeek(new Date()), DATE_FORMAT),
+    dateRange: [ startOfWeek(new Date()), endOfWeek(new Date()) ],
     setDateRange: noop,
     harvestAccountId: null,
     setHarvestAccountId: noop,
@@ -33,6 +35,8 @@ export const filterContextValue: FilterContextValueType = {
     setHarvestToken: noop,
     forecastAccountId: null,
     setForecastAccountId: noop,
+    executeSearch: noop,
+    queryString:''
 }
 
 export const FilterContext = React.createContext<FilterContextValueType>(filterContextValue);

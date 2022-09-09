@@ -1,25 +1,29 @@
-import {getHarvest} from "../src/server/get-harvest";
-import {Project} from "../src/server/harvest-types";
-import {differenceInDays, endOfWeek, format, startOfWeek} from 'date-fns';
-import {GetServerSideProps, NextApiRequest, NextApiResponse} from "next";
-import {Box, Card, CardContent, Grid, Typography} from "@mui/material";
-import {DataGrid} from '@mui/x-data-grid';
+import { getHarvest } from "../src/server/get-harvest";
+import { Project } from "../src/server/harvest-types";
+import { differenceInDays, endOfWeek, format, parse, startOfWeek } from 'date-fns';
+import { GetServerSideProps } from "next";
+import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import {DATE_FORMAT} from "../src/components/date-range-widget";
-import {findAssignment, getProjectsFromEntries, MyEntries, SpentProjectHours} from "../src/server/utils";
-import {getForecast} from "../src/server/get-forecast";
-import {MyProjectsPie} from "../src/components/my-projects-pie";
-import {get} from "lodash";
-import {Layout} from "../src/components/layout";
+import { DATE_FORMAT } from "../src/components/date-range-widget";
+import { findAssignment, getProjectsFromEntries, MyEntries, SpentProjectHours } from "../src/server/utils";
+import { getForecast } from "../src/server/get-forecast";
+import { MyProjectsPie } from "../src/components/my-projects-pie";
+import { get } from "lodash";
+import { Layout } from "../src/components/layout";
 import {
     COOKIE_FORC_ACCOUNTID_NAME,
     COOKIE_HARV_ACCOUNTID_NAME,
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
-import {HoursPerDay, HoursPerDayCollectionItem} from "../src/type";
-import {Bar, CartesianGrid, ResponsiveContainer, XAxis, YAxis, BarChart, Tooltip} from "recharts";
-import {useTheme} from "@mui/system";
-import {COLORS} from "../src/config";
+import { HoursPerDay, HoursPerDayCollectionItem } from "../src/type";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { COLORS } from "../src/config";
+import { FilterContext } from "../src/context/filter-context";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import cookies from "js-cookie";
+import qs from "qs";
+import { useRouter } from "next/router";
 
 type TeamEntry = {
     userId: number;
@@ -30,12 +34,13 @@ type TeamEntry = {
 }
 
 
-export const getServerSideProps: GetServerSideProps = async ({query, req}): Promise<{ props: EntriesProps }> => {
+export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
     const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
+    const teamId = !!query.team ? query.team as string : null;
 
     if (!token || !account) {
         return {
@@ -44,13 +49,14 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
                 to,
                 entries: [],
                 roles: [],
+                selectedTeamId: teamId,
                 projectHoursSpent: [],
                 totalHours: 0,
                 billableTotalHours: 0,
                 myProjects: [],
                 listOfProjectNames: [],
                 hoursPerDay: [],
-                userName:null,
+                userName: null,
             }
         }
     }
@@ -62,7 +68,7 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
 
     const assignments = await forecast.getAssignments(from, to);
 
-    const entries = await api.getTimeEntries({userId: userId, from, to});
+    const entries = await api.getTimeEntries({ userId: userId, from, to });
 
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const billableTotalHours = entries.filter(e => e.billable).reduce((acc, entry) => acc + entry.hours, 0);
@@ -128,10 +134,11 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
             entries: myEntries,
             myProjects,
             totalHours,
+            selectedTeamId: teamId,
             billableTotalHours,
             userName: userData.first_name,
             listOfProjectNames,
-            hoursPerDay: Object.entries(hoursPerDay).map(([key, value]) => {
+            hoursPerDay: Object.entries(hoursPerDay).map(([ key, value ]) => {
                 return {
                     date: key,
                     ...value
@@ -147,6 +154,7 @@ export type EntriesProps = {
     myProjects: Project[];
     from: string;
     to: string;
+    selectedTeamId?: string | null;
     userName?: string | null;
     totalHours: number;
     billableTotalHours: number;
@@ -166,126 +174,174 @@ export const Index = ({
                           userName,
                           hoursPerDay,
                           listOfProjectNames,
+                          selectedTeamId,
+                          from,
+                          to,
                       }: EntriesProps) => {
+    const router = useRouter();
+    const [ teamId, setTeamId ] = useState<string>(selectedTeamId ?? '');
+    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([ !!from ? parse(from, DATE_FORMAT, new Date()) : startOfWeek(new Date()), !!to ? parse(to, DATE_FORMAT, new Date()) : endOfWeek(new Date()) ]);
+    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
+    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
+    const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
+
+    useEffect(() => {
+        cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
+    }, [ harvestToken ])
+
+    useEffect(() => {
+        cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
+    }, [ harvestAccountId ]);
+    useEffect(() => {
+        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId)
+    }, [ forecastAccountId ])
+
+    const query = useMemo(() => qs.stringify({
+        from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
+        to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
+        token: harvestToken,
+        account: harvestAccountId,
+        faccount: forecastAccountId,
+        team: teamId,
+    }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, teamId, ]);
+
+    const executeSearch = useCallback(() => {
+        const url = `me/?${ query }`;
+        router.push(url, url)
+    }, [ router, query ]);
 
     return <>
-        <Layout userName={userName}>
-
-            <Box sx={{flexGrow: 1,}}>
-                <Box p={4}>
-                    <Typography sx={{marginBottom: 4}} variant={"h3"}>My Dashboard</Typography>
-                    <Grid container spacing={4}>
-                        <Grid item container spacing={2}>
-                            <Grid item xs={6}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={'h5'}>My Hours</Typography>
-                                        <Typography variant={'body1'}>{totalHours}</Typography>
-                                    </CardContent>
-                                </Card>
+        <FilterContext.Provider value={ {
+            teamId,
+            setTeamId,
+            dateRange,
+            setDateRange,
+            harvestAccountId,
+            setHarvestAccountId,
+            forecastAccountId,
+            setForecastAccountId,
+            harvestToken,
+            setHarvestToken,
+            executeSearch,
+            queryString: query,
+        } }>
+            <Layout userName={ userName } active={ 'me' }>
+                <Box sx={ { flexGrow: 1, } }>
+                    <Box p={ 4 }>
+                        <Typography sx={ { marginBottom: 4 } } variant={ "h3" }>My Dashboard</Typography>
+                        <Grid container spacing={ 4 }>
+                            <Grid item container spacing={ 2 }>
+                                <Grid item xs={ 6 }>
+                                    <Card>
+                                        <CardContent>
+                                            <Typography variant={ 'h5' }>My Hours</Typography>
+                                            <Typography variant={ 'body1' }>{ totalHours }</Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                                <Grid item xs={ 6 }>
+                                    <Card>
+                                        <CardContent>
+                                            <Typography variant={ 'h5' }>My Projects</Typography>
+                                            <Typography variant={ 'body1' }>{ myProjects.length }</Typography>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
                             </Grid>
-                            <Grid item xs={6}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={'h5'}>My Projects</Typography>
-                                        <Typography variant={'body1'}>{myProjects.length}</Typography>
-                                    </CardContent>
-                                </Card>
+
+                            <Grid container spacing={ 2 } item xs={ 12 }>
+                                <Grid item xs={ 12 } md={ 6 }>
+                                    <Card>
+                                        <CardContent>
+                                            <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
+
+                                            <DataGrid
+                                                autoHeight
+                                                getRowId={ (r) => r.projectId }
+                                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                                rows={ projectHoursSpent }
+                                                columns={ [
+                                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                                ] }
+                                                disableSelectionOnClick
+                                                experimentalFeatures={ { newEditingApi: true } }
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                                <Grid item xs={ 12 } md={ 6 }>
+                                    <Box sx={ { position: 'sticky', top: 10 } }>
+                                        <MyProjectsPie entries={ projectHoursSpent }/>
+                                    </Box>
+                                </Grid>
+                                <Grid item xs={ 12 }>
+                                    <Card>
+                                        <CardContent>
+                                            <Typography mb={ 2 } variant={ 'h5' }>My hours per day</Typography>
+                                            <ResponsiveContainer width="100%" height={ 400 }>
+                                                <BarChart
+                                                    height={ 400 }
+                                                    data={ hoursPerDay }
+                                                >
+                                                    <Tooltip/>
+                                                    <CartesianGrid strokeDasharray="6 6"/>
+                                                    <XAxis dataKey="date"/>
+                                                    <YAxis/>
+                                                    { listOfProjectNames.map((projectName, index) => (
+                                                        <Bar key={ projectName } dataKey={ projectName } stackId="a"
+                                                            fill={ COLORS[index] }/>)) }
+                                                </BarChart>
+                                            </ResponsiveContainer>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                                <Grid item xs={ 12 }>
+                                    <Card>
+                                        <CardContent>
+                                            <Typography mb={ 2 } variant={ 'h5' }>My Entries</Typography>
+
+                                            <DataGrid
+                                                autoHeight
+                                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                                rows={ entries }
+                                                columns={ [
+                                                    {
+                                                        field: 'projectId',
+                                                        headerName: 'Project ID',
+                                                        width: 90,
+                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    {
+                                                        field: 'projectCode',
+                                                        headerName: 'Project Code',
+                                                        width: 90,
+                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    {
+                                                        field: 'projectName',
+                                                        headerName: 'Project Name',
+                                                        flex: 1,
+                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    { field: 'notes', headerName: 'Notes', flex: 1 },
+                                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                ] }
+                                                disableSelectionOnClick
+                                                experimentalFeatures={ { newEditingApi: true } }
+                                            />
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+
                             </Grid>
                         </Grid>
-
-                        <Grid container spacing={2} item xs={12}>
-                            <Grid item xs={12} md={6}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography mb={2} variant={'h5'}>My Hours</Typography>
-
-                                        <DataGrid
-                                            autoHeight
-                                            getRowId={(r) => r.projectId}
-                                            rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                                            rows={projectHoursSpent}
-                                            columns={[
-                                                {field: 'projectId', headerName: 'Project ID', width: 90},
-                                                {field: 'projectName', headerName: 'Project Name', flex: 1},
-                                                {field: 'hours', headerName: 'Hours', flex: 1},
-                                                {field: 'hours_forecast', headerName: 'Forecast', flex: 1},
-                                            ]}
-                                            disableSelectionOnClick
-                                            experimentalFeatures={{newEditingApi: true}}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={12} md={6}>
-                                <Box sx={{position: 'sticky', top: 10}}>
-                                    <MyProjectsPie entries={projectHoursSpent}/>
-                                </Box>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography mb={2} variant={'h5'}>My hours per day</Typography>
-                                        <ResponsiveContainer width="100%" height={400}>
-                                            <BarChart
-                                                height={400}
-                                                data={hoursPerDay}
-                                            >
-                                                <Tooltip/>
-                                                <CartesianGrid strokeDasharray="6 6"/>
-                                                <XAxis dataKey="date"/>
-                                                <YAxis/>
-                                                {listOfProjectNames.map((projectName, index) => (
-                                                    <Bar key={projectName} dataKey={projectName} stackId="a"
-                                                         fill={COLORS[index]}/>))}
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={12}>
-                                <Card>
-                                    <CardContent>
-                                        <Typography mb={2} variant={'h5'}>My Entries</Typography>
-
-                                        <DataGrid
-                                            autoHeight
-                                            rowsPerPageOptions={[5, 10, 20, 50, 100]}
-                                            rows={entries}
-                                            columns={[
-                                                {
-                                                    field: 'projectId',
-                                                    headerName: 'Project ID',
-                                                    width: 90,
-                                                    renderCell: ({row, field}) => get(row, field)
-                                                },
-                                                {
-                                                    field: 'projectCode',
-                                                    headerName: 'Project Code',
-                                                    width: 90,
-                                                    renderCell: ({row, field}) => get(row, field)
-                                                },
-                                                {
-                                                    field: 'projectName',
-                                                    headerName: 'Project Name',
-                                                    flex: 1,
-                                                    renderCell: ({row, field}) => get(row, field)
-                                                },
-                                                {field: 'notes', headerName: 'Notes', flex: 1},
-                                                {field: 'hours', headerName: 'Hours', flex: 1},
-                                            ]}
-                                            disableSelectionOnClick
-                                            experimentalFeatures={{newEditingApi: true}}
-                                        />
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-
-                        </Grid>
-                    </Grid>
+                    </Box>
                 </Box>
-            </Box>
-        </Layout>
+            </Layout>
+        </FilterContext.Provider>
     </>;
 }
 export default Index;
