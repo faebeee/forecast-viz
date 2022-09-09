@@ -16,7 +16,7 @@ import {
     COOKIE_HARV_ACCOUNTID_NAME,
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
-import {HoursPerDay} from "../src/type";
+import {HoursPerDay, HoursPerDayCollectionItem} from "../src/type";
 import {Bar, CartesianGrid, ResponsiveContainer, XAxis, YAxis, BarChart, Tooltip} from "recharts";
 import {useTheme} from "@mui/system";
 import {COLORS} from "../src/config";
@@ -50,6 +50,7 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
                 myProjects: [],
                 listOfProjectNames: [],
                 hoursPerDay: [],
+                userName:null,
             }
         }
     }
@@ -135,7 +136,7 @@ export const getServerSideProps: GetServerSideProps = async ({query, req}): Prom
                     date: key,
                     ...value
                 }
-            }).reverse(),
+            }).reverse() as HoursPerDayCollectionItem[],
         }
     }
 }
@@ -146,12 +147,12 @@ export type EntriesProps = {
     myProjects: Project[];
     from: string;
     to: string;
-    userName?: string;
+    userName?: string | null;
     totalHours: number;
     billableTotalHours: number;
     projectHoursSpent: SpentProjectHours[];
     roles?: { key: string, name: string }[];
-    hoursPerDay: { [key: string]: number, date: string }[],
+    hoursPerDay: HoursPerDayCollectionItem[],
     listOfProjectNames: string[];
 }
 
@@ -235,7 +236,8 @@ export const Index = ({
                                                 <XAxis dataKey="date"/>
                                                 <YAxis/>
                                                 {listOfProjectNames.map((projectName, index) => (
-                                                    <Bar key={projectName} dataKey={projectName} stackId="a" fill={COLORS[index]}/>))}
+                                                    <Bar key={projectName} dataKey={projectName} stackId="a"
+                                                         fill={COLORS[index]}/>))}
                                             </BarChart>
                                         </ResponsiveContainer>
                                     </CardContent>
