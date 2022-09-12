@@ -18,27 +18,10 @@ export const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 export const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
 export type SettingsProps = {
-    roles?: { key: string, name: string }[];
-    sub?: string;
 }
 
-const TEAMS = [
-    {
-        name: "Team Eis",
-        key: 'Projektteam 1',
-    },
-    {
-        name: "Team Zwei",
-        key: 'Projektteam 2',
-    },
-    {
-        name: "Team Drüü",
-        key: 'Projektteam 3',
-    },
-];
 
-
-export const Settings = ({ roles = TEAMS, }: SettingsProps) => {
+export const Settings = ({}: SettingsProps) => {
     const filterContext = useFilterContext();
 
     return <div>
@@ -69,19 +52,6 @@ export const Settings = ({ roles = TEAMS, }: SettingsProps) => {
                     label={ 'Forecast Account Id' }
                     value={ filterContext.forecastAccountId }
                     onChange={ (e) => filterContext.setForecastAccountId(e.target.value) }/>
-
-                <DateRangeWidget dateRange={ filterContext.dateRange } onChange={ filterContext.setDateRange }/>
-
-                <FormControl fullWidth>
-                    <InputLabel id="demo-simple-select-label">Team</InputLabel>
-                    <Select
-                        value={ filterContext.teamId }
-                        label="Team"
-                        onChange={ (e) => filterContext.setTeamId(e.target.value as string) }>
-                        { roles.map((role) => <MenuItem key={ role.key }
-                            value={ role.key }>{ role.name }</MenuItem>) }
-                    </Select>
-                </FormControl>
 
                 <Button color={ 'primary' }
                     fullWidth

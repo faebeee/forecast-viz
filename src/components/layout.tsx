@@ -13,37 +13,36 @@ import { useFilterContext } from "../context/filter-context";
 export type LayoutProps = PropsWithChildren<{
     active?: string;
     userName?: string | null;
+    hasTeamAccess?: boolean;
 }>;
 const drawerWidth = 340;
 
-export const Layout = ({ children, active, userName }: LayoutProps) => {
+export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProps) => {
     const theme = useTheme();
-    const [ showSidebar, setShowSidebar ] = useState(true);
     const context = useFilterContext();
+    const [ showSidebar, setShowSidebar ] = useState(!context.forecastAccountId || !context.harvestAccountId || !context.harvestToken);
 
     return <>
         <AppBar position="fixed" sx={ { zIndex: (theme) => theme.zIndex.drawer + 1 } }>
             <Toolbar color={ 'black.200' }>
                 <Box sx={ { flexGrow: 1, display: { xs: 'none', md: 'flex' } } }>
                     <Link href={ `/?${ context.queryString }` }>
-                        <Button sx={ { display: 'block' } }
+                        <Button sx={ { mr: 2 } }
                             component={ 'a' }
-                            variant={ 'text' }
-                            color={ "secondary" }
-                        >
+                            variant={ active === 'me' ? 'contained' : 'text' }
+                            color={ "secondary" }>
                             Me
                         </Button>
                     </Link>
-                    <Link href={ `/team?${ context.queryString }` }>
-                        <Button sx={ { display: 'block' } }
-                            component={ 'a' }
-                            variant={ 'text' }
-                            color={ "secondary" }
-                            disabled={ !context.teamId }
-                        >
-                            Team
-                        </Button>
-                    </Link>
+                    { hasTeamAccess &&
+                        <Link href={ `/team?${ context.queryString }` }>
+                            <Button sx={ {} }
+                                component={ 'a' }
+                                variant={ active === 'team' ? 'contained' : 'text' }
+                                color={ "secondary" }>
+                                Team
+                            </Button>
+                        </Link> }
                 </Box>
                 <Button onClick={ () => setShowSidebar(!showSidebar) } variant={ 'text' } color={ 'secondary' }
                     endIcon={ <Menu/> }>

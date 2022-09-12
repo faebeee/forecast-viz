@@ -4,9 +4,6 @@ import { DATE_FORMAT } from "../components/date-range-widget";
 import { noop } from "lodash";
 
 export type FilterContextValueType = {
-    teamId: string | null;
-    setTeamId: (id: string) => void;
-
     dateRange: [ Date, Date ];
     setDateRange: (range: [ Date, Date ]) => void;
 
@@ -25,8 +22,6 @@ export type FilterContextValueType = {
 }
 
 export const filterContextValue: FilterContextValueType = {
-    teamId: null,
-    setTeamId: noop,
     dateRange: [ startOfWeek(new Date()), endOfWeek(new Date()) ],
     setDateRange: noop,
     harvestAccountId: null,

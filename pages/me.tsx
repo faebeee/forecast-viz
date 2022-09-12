@@ -5,7 +5,7 @@ import { GetServerSideProps } from "next";
 import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
+import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import { findAssignment, getProjectsFromEntries, MyEntries, SpentProjectHours } from "../src/server/utils";
 import { getForecast } from "../src/server/get-forecast";
 import { MyProjectsPie } from "../src/components/my-projects-pie";
@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import cookies from "js-cookie";
 import qs from "qs";
 import { useRouter } from "next/router";
+import { ContentHeader } from "../src/components/content-header";
 
 type TeamEntry = {
     userId: number;
@@ -65,11 +66,11 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
     const userData = await api.getMe();
     const userId = userData.id;
 
-
     const assignments = await forecast.getAssignments(from, to);
-
+    const allPeople = await forecast.getPersons();
+    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
     const entries = await api.getTimeEntries({ userId: userId, from, to });
-
+    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const billableTotalHours = entries.filter(e => e.billable).reduce((acc, entry) => acc + entry.hours, 0);
     const myProjects = getProjectsFromEntries(entries);
@@ -82,6 +83,8 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
             billable: e.billable,
             hours: e.hours,
             notes: e.notes,
+            isRunning: e.is_running,
+            date: e.spent_date,
         }
     });
 
@@ -138,6 +141,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
             billableTotalHours,
             userName: userData.first_name,
             listOfProjectNames,
+            hasTeamAccess,
             hoursPerDay: Object.entries(hoursPerDay).map(([ key, value ]) => {
                 return {
                     date: key,
@@ -162,6 +166,7 @@ export type EntriesProps = {
     roles?: { key: string, name: string }[];
     hoursPerDay: HoursPerDayCollectionItem[],
     listOfProjectNames: string[];
+    hasTeamAccess?: boolean
 }
 
 
@@ -177,6 +182,7 @@ export const Index = ({
                           selectedTeamId,
                           from,
                           to,
+                          hasTeamAccess,
                       }: EntriesProps) => {
     const router = useRouter();
     const [ teamId, setTeamId ] = useState<string>(selectedTeamId ?? '');
@@ -210,10 +216,12 @@ export const Index = ({
         router.push(url, url)
     }, [ router, query ]);
 
+    useEffect(() => {
+        executeSearch()
+    }, [ dateRange ]);
+
     return <>
         <FilterContext.Provider value={ {
-            teamId,
-            setTeamId,
             dateRange,
             setDateRange,
             harvestAccountId,
@@ -225,10 +233,15 @@ export const Index = ({
             executeSearch,
             queryString: query,
         } }>
-            <Layout userName={ userName } active={ 'me' }>
+            <Layout hasTeamAccess={ hasTeamAccess } userName={ userName } active={ 'me' }>
                 <Box sx={ { flexGrow: 1, } }>
                     <Box p={ 4 }>
-                        <Typography sx={ { marginBottom: 4 } } variant={ "h3" }>My Dashboard</Typography>
+                        <ContentHeader title={ 'My Dashboard' }>
+                            <Box sx={ { width: 280 } }>
+                                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+                            </Box>
+                        </ContentHeader>
+
                         <Grid container spacing={ 4 }>
                             <Grid item container spacing={ 2 }>
                                 <Grid item xs={ 6 }>
@@ -327,6 +340,8 @@ export const Index = ({
                                                         renderCell: ({ row, field }) => get(row, field)
                                                     },
                                                     { field: 'notes', headerName: 'Notes', flex: 1 },
+                                                    { field: 'isRunning', headerName: 'Running', flex: 1 },
+                                                    { field: 'date', headerName: 'Date', flex: 1 },
                                                     { field: 'hours', headerName: 'Hours', flex: 1 },
                                                 ] }
                                                 disableSelectionOnClick

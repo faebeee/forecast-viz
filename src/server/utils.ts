@@ -12,6 +12,7 @@ export type SpentProjectHours = {
     hours: number,
     hours_forecast: number,
     billable?:boolean
+    date?:string
 }
 
 
@@ -21,7 +22,8 @@ export type MyEntries = {
     projectCode: string,
     hours: number,
     notes: any,
-    billable:boolean
+    billable:boolean;
+    isRunning:boolean;
 }
 
 

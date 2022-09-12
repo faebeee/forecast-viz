@@ -2,10 +2,21 @@ import { getHarvest } from "../src/server/get-harvest";
 import { Project, TimeEntry } from "../src/server/harvest-types";
 import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import {
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    Typography
+} from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
+import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import {
     getHoursPerUser,
     getProjectsFromEntries,
@@ -27,6 +38,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import cookies from "js-cookie";
 import qs from "qs";
 import { FilterContext } from "../src/context/filter-context";
+import { ContentHeader } from "../src/components/content-header";
 
 type TeamEntry = {
     userId: number;
@@ -36,11 +48,24 @@ type TeamEntry = {
     hours: number
 }
 
+const TEAMS = [
+    {
+        name: "Team Eis",
+        key: 'Projektteam 1',
+    },
+    {
+        name: "Team Zwei",
+        key: 'Projektteam 2',
+    },
+    {
+        name: "Team Drüü",
+        key: 'Projektteam 3',
+    },
+];
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
-    const teamId = !!query.team ? query.team as string : null;
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
     const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
@@ -51,14 +76,13 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
                 from,
                 to,
                 teamEntries: [],
-                roles: [],
+                roles: TEAMS,
                 teamProjectHours: [],
                 teamProjectHourEntries: [],
                 totalTeamMembers: null,
                 teamAmountOfProjects: 0,
                 billableTotalHours: 0,
                 totalTeamHours: null,
-                selectedTeamId: teamId,
                 teamProjects: [],
                 hoursPerUser: [],
             }
@@ -72,24 +96,34 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
     const allPeople = await forecast.getPersons();
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
+    const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
     const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
 
-    // @ts-ignore
-    const isMemberOfTeam = !!teamId ? allPeople
-        .find(p => p.harvest_user_id === userId)?.roles?.includes(teamId) : false;
-    const teamPeople = isMemberOfTeam ? allPeople
-        .filter((p) => p.roles.includes(teamId!) && p.archived === false)
-        .map(p => p.harvest_user_id) : [];
 
-    if (!hasTeamAccess || !isMemberOfTeam) {
+    if (!myTeamEntry) {
         return {
-            redirect: {
-                permanent: false,
-                destination: "/me"
+            props: {
+                from,
+                to,
+                hasTeamAccess,
+                teamEntries: [],
+                roles: TEAMS,
+                teamProjectHours: [],
+                teamProjectHourEntries: [],
+                totalTeamMembers: null,
+                teamAmountOfProjects: 0,
+                billableTotalHours: 0,
+                totalTeamHours: null,
+                teamProjects: [],
+                hoursPerUser: [],
             }
         }
-
     }
+    const teamId = myTeamEntry.key;
+
+    const teamPeople = allPeople
+        .filter((p) => p.roles.includes(teamId!) && p.archived === false)
+        .map(p => p.harvest_user_id);
 
     const assignments = await forecast.getAssignments(from, to);
     // const roles = await api.getRoles();
@@ -122,7 +156,8 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             teamProjectHourEntries,
             teamProjects: allTeamProjects,
             userName: userData.first_name,
-            selectedTeamId: teamId
+            teamId,
+            hasTeamAccess,
         }
     }
 }
@@ -140,8 +175,9 @@ export type EntriesProps = {
     userName?: string;
     selectedTeamId?: string | null;
     teamProjects: Project[];
-    hoursPerUser: { user: string, hours: number }[]
-    roles?: { key: string, name: string }[]
+    hoursPerUser: { user: string, hours: number }[];
+    teamId?: '';
+    hasTeamAccess?: boolean
 }
 
 
@@ -156,10 +192,11 @@ export const Index = ({
                           billableTotalHours,
                           selectedTeamId,
                           from,
-                          to
+                          to,
+                          hasTeamAccess,
+                          teamId = '',
                       }: EntriesProps) => {
     const router = useRouter();
-    const [ teamId, setTeamId ] = useState<string>(selectedTeamId ?? '');
     const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([ !!from ? parse(from, DATE_FORMAT, new Date()) : startOfWeek(new Date()), !!to ? parse(to, DATE_FORMAT, new Date()) : endOfWeek(new Date()) ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
@@ -186,15 +223,16 @@ export const Index = ({
     }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, teamId, ]);
 
     const executeSearch = useCallback(() => {
-        const url = `me/?${ query }`;
+        const url = `team/?${ query }`;
         router.push(url, url)
     }, [ router, query ]);
 
+    useEffect(() => {
+        executeSearch()
+    }, [ dateRange ]);
 
     return <>
         <FilterContext.Provider value={ {
-            teamId,
-            setTeamId,
             dateRange,
             setDateRange,
             harvestAccountId,
@@ -206,10 +244,15 @@ export const Index = ({
             executeSearch,
             queryString: query,
         } }>
-            <Layout active={ 'team' } userName={ userName }>
+            <Layout active={ 'team' } hasTeamAccess={ hasTeamAccess } userName={ userName }>
                 <Box sx={ { flexGrow: 1, } }>
                     <Box p={ 4 }>
-                        <Typography sx={ { marginBottom: 4 } } variant={ "h3" }>Team Dashboard</Typography>
+                        <ContentHeader title={ teamId }>
+                            <Box sx={ { width: 280 } }>
+                                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+                            </Box>
+                        </ContentHeader>
+
                         <Grid container spacing={ 4 }>
                             <Grid item xs={ 4 }>
                                 <Card>
