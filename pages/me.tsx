@@ -1,13 +1,20 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { Project } from "../src/server/harvest-types";
-import { differenceInDays, endOfWeek, format, parse, startOfWeek } from 'date-fns';
+import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
+import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { findAssignment, getProjectsFromEntries, MyEntries, SpentProjectHours } from "../src/server/utils";
-import { getForecast } from "../src/server/get-forecast";
+import {
+    findAssignment,
+    getMyAssignments,
+    getProjectsFromEntries,
+    MyEntries,
+    SpentProjectHours
+} from "../src/server/utils";
+import { AssignmentEntry, getForecast } from "../src/server/get-forecast";
 import { MyProjectsPie } from "../src/components/my-projects-pie";
 import { get } from "lodash";
 import { Layout } from "../src/components/layout";
@@ -17,8 +24,6 @@ import {
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
 import { HoursPerDay, HoursPerDayCollectionItem } from "../src/type";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { COLORS } from "../src/config";
 import { FilterContext } from "../src/context/filter-context";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import cookies from "js-cookie";
@@ -26,22 +31,12 @@ import qs from "qs";
 import { useRouter } from "next/router";
 import { ContentHeader } from "../src/components/content-header";
 
-type TeamEntry = {
-    userId: number;
-    userName: string;
-    projectName: string;
-    projectId: number;
-    hours: number
-}
-
-
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
     const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
     const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
-    const teamId = !!query.team ? query.team as string : null;
 
     if (!token || !account) {
         return {
@@ -50,7 +45,6 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
                 to,
                 entries: [],
                 roles: [],
-                selectedTeamId: teamId,
                 projectHoursSpent: [],
                 totalHours: 0,
                 billableTotalHours: 0,
@@ -58,6 +52,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
                 listOfProjectNames: [],
                 hoursPerDay: [],
                 userName: null,
+                totalPlannedHours: 0,
             }
         }
     }
@@ -88,6 +83,8 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
         }
     });
 
+    const myAssignments = getMyAssignments(assignments, userId);
+    const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
     const listOfProjectNames = entries.reduce((acc, entry) => {
         if (!acc.includes(entry.project.name)) {
             acc.push(entry.project.name);
@@ -111,8 +108,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
         const projectId = entry.project.id;
         const _assignments = findAssignment(assignments, entry.project.id, entry.user.id);
         const assignmentHours = _assignments.reduce((acc, assignment) => {
-            const days = (!!assignment?.start_date && !!assignment?.end_date) ? differenceInDays(new Date(assignment?.end_date), new Date(assignment?.start_date)) : 0;
-            return acc + (days + 1) * (assignment?.allocation / 60 / 60)
+            return acc + (assignment.totalHours ?? 0);
         }, 0)
         if (!acc[projectId]) {
             acc[projectId] = {
@@ -129,6 +125,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
         return acc;
     }, {} as Record<string, SpentProjectHours>);
 
+
     return {
         props: {
             projectHoursSpent: Object.values(projectHoursSpent),
@@ -137,11 +134,12 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
             entries: myEntries,
             myProjects,
             totalHours,
-            selectedTeamId: teamId,
             billableTotalHours,
             userName: userData.first_name,
             listOfProjectNames,
             hasTeamAccess,
+            totalPlannedHours,
+            myAssignments,
             hoursPerDay: Object.entries(hoursPerDay).map(([ key, value ]) => {
                 return {
                     date: key,
@@ -158,7 +156,6 @@ export type EntriesProps = {
     myProjects: Project[];
     from: string;
     to: string;
-    selectedTeamId?: string | null;
     userName?: string | null;
     totalHours: number;
     billableTotalHours: number;
@@ -166,7 +163,9 @@ export type EntriesProps = {
     roles?: { key: string, name: string }[];
     hoursPerDay: HoursPerDayCollectionItem[],
     listOfProjectNames: string[];
-    hasTeamAccess?: boolean
+    hasTeamAccess?: boolean;
+    totalPlannedHours: number;
+    myAssignments?: AssignmentEntry[];
 }
 
 
@@ -179,13 +178,13 @@ export const Index = ({
                           userName,
                           hoursPerDay,
                           listOfProjectNames,
-                          selectedTeamId,
                           from,
                           to,
                           hasTeamAccess,
+                          totalPlannedHours,
+                          myAssignments,
                       }: EntriesProps) => {
     const router = useRouter();
-    const [ teamId, setTeamId ] = useState<string>(selectedTeamId ?? '');
     const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([ !!from ? parse(from, DATE_FORMAT, new Date()) : startOfWeek(new Date()), !!to ? parse(to, DATE_FORMAT, new Date()) : endOfWeek(new Date()) ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
@@ -205,11 +204,7 @@ export const Index = ({
     const query = useMemo(() => qs.stringify({
         from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
         to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
-        token: harvestToken,
-        account: harvestAccountId,
-        faccount: forecastAccountId,
-        team: teamId,
-    }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, teamId, ]);
+    }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, ]);
 
     const executeSearch = useCallback(() => {
         const url = `me/?${ query }`;
@@ -242,28 +237,57 @@ export const Index = ({
                             </Box>
                         </ContentHeader>
 
-                        <Grid container spacing={ 4 }>
-                            <Grid item container spacing={ 2 }>
-                                <Grid item xs={ 6 }>
-                                    <Card>
+                        <Grid container spacing={ 10 }>
+                            <Grid item container spacing={ 10 }>
+                                <Grid item xs={ 4 }>
+                                    <Card sx={ {
+                                        position: 'relative',
+                                        minHeight: '200px',
+                                    } }
+                                    >
                                         <CardContent>
-                                            <Typography variant={ 'h5' }>My Hours</Typography>
-                                            <Typography variant={ 'body1' }>{ totalHours }</Typography>
+                                            <Typography variant={ 'body1' }>My Hours</Typography>
+                                            <Typography variant={ 'h2' }>{ totalHours }</Typography>
+                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                                <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
+                                            </Box>
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item xs={ 6 }>
-                                    <Card>
+                                <Grid item xs={ 4 }>
+                                    <Card sx={ {
+                                        position: 'relative',
+                                        minHeight: '200px',
+                                    } }
+                                    >
                                         <CardContent>
-                                            <Typography variant={ 'h5' }>My Projects</Typography>
-                                            <Typography variant={ 'body1' }>{ myProjects.length }</Typography>
+                                            <Typography variant={ 'body1' }>Planned Hours</Typography>
+                                            <Typography variant={ 'h2' }>{ totalPlannedHours }</Typography>
+                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                                <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+                                <Grid item xs={ 4 }>
+                                    <Card sx={ {
+                                        position: 'relative',
+                                        minHeight: 200
+                                    } }
+                                    >
+                                        <CardContent>
+                                            <Typography variant={ 'body1' }>My Projects</Typography>
+                                            <Typography variant={ 'h2' }>{ myProjects.length }</Typography>
+                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                                <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                            </Box>
                                         </CardContent>
                                     </Card>
                                 </Grid>
                             </Grid>
 
-                            <Grid container spacing={ 2 } item xs={ 12 }>
-                                <Grid item xs={ 12 } md={ 6 }>
+                            <Grid container spacing={ 10 } item xs={ 12 }>
+                                <Grid item xs={ 12 } md={ 8 }>
                                     <Card>
                                         <CardContent>
                                             <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
@@ -285,32 +309,68 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item xs={ 12 } md={ 6 }>
+                                <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie entries={ projectHoursSpent }/>
+                                        <MyProjectsPie<SpentProjectHours> entries={ projectHoursSpent } value={ 'hours' }
+                                            label={ 'projectName' }/>
                                     </Box>
                                 </Grid>
-                                <Grid item xs={ 12 }>
+                                <Grid item xs={ 12 } md={ 8 }>
                                     <Card>
                                         <CardContent>
-                                            <Typography mb={ 2 } variant={ 'h5' }>My hours per day</Typography>
-                                            <ResponsiveContainer width="100%" height={ 400 }>
-                                                <BarChart
-                                                    height={ 400 }
-                                                    data={ hoursPerDay }
-                                                >
-                                                    <Tooltip/>
-                                                    <CartesianGrid strokeDasharray="6 6"/>
-                                                    <XAxis dataKey="date"/>
-                                                    <YAxis/>
-                                                    { listOfProjectNames.map((projectName, index) => (
-                                                        <Bar key={ projectName } dataKey={ projectName } stackId="a"
-                                                            fill={ COLORS[index] }/>)) }
-                                                </BarChart>
-                                            </ResponsiveContainer>
+                                            <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
+
+                                            <DataGrid
+                                                autoHeight
+                                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                                rows={ myAssignments ?? [] }
+                                                columns={ [
+                                                    {
+                                                        field: 'project.id',
+                                                        headerName: 'Project ID',
+                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    {
+                                                        field: 'project.name',
+                                                        headerName: 'Project Name',
+                                                        flex: 1,
+                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    {
+                                                        field: 'days',
+                                                        headerName: 'Days',
+                                                    },
+                                                    {
+                                                        field: 'hoursPerDay',
+                                                        headerName: 'hoursPerDay',
+                                                    },
+                                                    {
+                                                        field: 'totalHours',
+                                                        headerName: 'totalHours',
+                                                    },
+                                                    {
+                                                        field: 'start_date',
+                                                        headerName: 'Start Date',
+                                                    },
+                                                    {
+                                                        field: 'end_date',
+                                                        headerName: 'End Date',
+                                                    },
+                                                ] }
+                                                disableSelectionOnClick
+                                                experimentalFeatures={ { newEditingApi: true } }
+                                            />
                                         </CardContent>
                                     </Card>
                                 </Grid>
+                                <Grid item xs={ 12 } md={ 4 }>
+                                    <Box sx={ { position: 'sticky', top: 10 } }>
+                                        <MyProjectsPie<AssignmentEntry> entries={ myAssignments ?? [] }
+                                            value={ 'totalHours' }
+                                            label={ (payload) => (!!payload.project?.code ? payload.project?.code : payload.project?.name) ?? '???' }/>
+                                    </Box>
+                                </Grid>
+
                                 <Grid item xs={ 12 }>
                                     <Card>
                                         <CardContent>
@@ -350,7 +410,6 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-
                             </Grid>
                         </Grid>
                     </Box>

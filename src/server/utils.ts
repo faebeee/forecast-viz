@@ -11,8 +11,8 @@ export type SpentProjectHours = {
     projectName: string,
     hours: number,
     hours_forecast: number,
-    billable?:boolean
-    date?:string
+    billable?: boolean
+    date?: string
 }
 
 
@@ -22,8 +22,8 @@ export type MyEntries = {
     projectCode: string,
     hours: number,
     notes: any,
-    billable:boolean;
-    isRunning:boolean;
+    billable: boolean;
+    isRunning: boolean;
 }
 
 
@@ -40,7 +40,7 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
         if (!acc[entry.user.id].projects[entry.project.id]) {
             acc[entry.user.id].projects[entry.project.id] = {
                 projectId: entry.project.id,
-                billable:entry.billable,
+                billable: entry.billable,
                 name: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0
             };
@@ -49,7 +49,7 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
         acc[entry.user.id].projects[entry.project.id].hours += entry.hours;
 
         return acc;
-    }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, billable:boolean, name: string, hours: number }> }>)
+    }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, billable: boolean, name: string, hours: number }> }>)
 }
 
 export const findAssignment = (assignments: AssignmentEntry[], projectId: number, userId?: number): AssignmentEntry[] => {
@@ -61,20 +61,23 @@ export const findAssignment = (assignments: AssignmentEntry[], projectId: number
     });
 }
 
+export const getMyAssignments = (assignments: AssignmentEntry[], userId?: number): AssignmentEntry[] => {
+    return assignments.filter((assignment) => assignment.person?.harvest_user_id === userId);
+}
+
 export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: AssignmentEntry[]): SpentProjectHours[] => {
     const teamHours = getTeamHours(teamEntries);
     return Object.values(teamHours).reduce((acc, entry) => {
         Object.values(entry.projects).forEach((project) => {
             const _assignments = findAssignment(assignments, project.projectId, entry.userId);
             const plannedHours = _assignments.reduce((acc, assignment) => {
-                const days = (!!assignment?.start_date && !!assignment?.end_date) ? differenceInDays(new Date(assignment?.end_date), new Date(assignment?.start_date)) : 0;
-                return acc + (days + 1) * (assignment?.allocation / 60 / 60) ?? 0;
+                return acc + (assignment.totalHours ?? 0);
             }, 0);
             acc.push({
                 id: `${ entry.user }-${ project.name }`,
                 projectId: project.projectId,
                 user: entry.user,
-                billable:project.billable,
+                billable: project.billable,
                 projectName: project.name,
                 hours: project.hours,
                 hours_forecast: plannedHours,
@@ -85,7 +88,7 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
 }
 
 export const getHoursPerUser = (entries: TimeEntry[]): { user: string, hours: number }[] => {
-    const list =  entries.reduce((acc, entry) => {
+    const list = entries.reduce((acc, entry) => {
         if (!acc[entry.user.id]) {
             acc[entry.user.id] = {
                 user: entry.user.name,
@@ -110,7 +113,7 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
                 projectId: entry.project.id,
                 projectName: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0,
-                billable:entry.billable,
+                billable: entry.billable,
                 hours_forecast: 0,
             };
         }

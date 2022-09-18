@@ -7,8 +7,8 @@ export type ContentHeaderProps = PropsWithChildren<{
 }>;
 
 export const ContentHeader = ({ children, title }: ContentHeaderProps) => {
-    return <Box sx={ { display: 'flex', justifyContent: 'space-between' } }>
-        <Typography sx={ { marginBottom: 4, flexGrow: 1 } } variant={ "h3" }>
+    return <Box sx={ { display: 'flex', justifyContent: 'space-between', mb: 7, mt: 5 } }>
+        <Typography sx={ { marginBottom: 4, flexGrow: 1 } } variant={ "h3" } color={ 'textSecondary' }>
             { title }
         </Typography>
         <Box sx={ { width: 280 } }>

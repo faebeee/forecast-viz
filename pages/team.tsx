@@ -11,7 +11,7 @@ import {
     Grid,
     InputLabel,
     MenuItem,
-    Select,
+    Select, Stack,
     Typography
 } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -39,14 +39,7 @@ import cookies from "js-cookie";
 import qs from "qs";
 import { FilterContext } from "../src/context/filter-context";
 import { ContentHeader } from "../src/components/content-header";
-
-type TeamEntry = {
-    userId: number;
-    userName: string;
-    projectName: string;
-    projectId: number;
-    hours: number
-}
+import Image from "next/image";
 
 const TEAMS = [
     {
@@ -216,10 +209,6 @@ export const Index = ({
     const query = useMemo(() => qs.stringify({
         from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
         to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
-        token: harvestToken,
-        account: harvestAccountId,
-        faccount: forecastAccountId,
-        team: teamId,
     }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, teamId, ]);
 
     const executeSearch = useCallback(() => {
@@ -253,77 +242,99 @@ export const Index = ({
                             </Box>
                         </ContentHeader>
 
-                        <Grid container spacing={ 4 }>
+                        <Grid container spacing={ 10 }>
                             <Grid item xs={ 4 }>
-                                <Card>
+                                <Card sx={ {
+                                    minHeight: 200,
+                                    position: 'relative'
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography variant={ 'h5' }>Team Members</Typography>
-                                        <Typography variant={ 'body1' }>{ totalTeamMembers }</Typography>
+                                        <Typography variant={ 'body1' }>Team Members</Typography>
+                                        <Typography variant={ 'h2' }>{ totalTeamMembers }</Typography>
                                     </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
                                 </Card>
                             </Grid>
 
                             <Grid item xs={ 4 }>
-                                <Card>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: 200
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography variant={ 'h5' }>Team Hours</Typography>
-                                        <Typography variant={ 'body1' }>{ totalTeamHours }</Typography>
+                                        <Typography variant={ 'body1' }>Team Hours</Typography>
+                                        <Typography variant={ 'h2' }>{ totalTeamHours }</Typography>
                                     </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
                                 </Card>
                             </Grid>
                             <Grid item xs={ 4 }>
-                                <Card>
+                                <Card sx={ {
+                                    minHeight: 200,
+                                    position: 'relative'
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography variant={ 'h5' }>Team Projects</Typography>
-                                        <Typography variant={ 'body1' }>{ teamProjects.length }</Typography>
+                                        <Typography variant={ 'body1' }>Team Projects</Typography>
+                                        <Typography variant={ 'h2' }>{ teamProjects.length }</Typography>
                                     </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
                                 </Card>
                             </Grid>
 
-                            <Grid container spacing={ 2 } item xs={ 12 }>
+                            <Grid container spacing={ 10 } item xs={ 12 }>
                                 <Grid item xs={ 12 } md={ 8 }>
-                                    <Card>
-                                        <CardContent>
-                                            <Typography variant={ 'h5' }>Team Projects</Typography>
-                                            <DataGrid
-                                                autoHeight
-                                                getRowId={ (r) => r.projectName }
-                                                rows={ teamProjectHours }
-                                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                                columns={ [
-                                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                ] }
-                                                disableSelectionOnClick
-                                                experimentalFeatures={ { newEditingApi: true } }/>
-                                        </CardContent>
-                                    </Card>
+                                    <Stack spacing={ 10 }>
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant={ 'h5' }>Team Projects</Typography>
+                                                <DataGrid
+                                                    autoHeight
+                                                    getRowId={ (r) => r.projectName }
+                                                    rows={ teamProjectHours }
+                                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                                    columns={ [
+                                                        { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                        { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                    ] }
+                                                    disableSelectionOnClick
+                                                    experimentalFeatures={ { newEditingApi: true } }/>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card>
+                                            <CardContent>
+                                                <Typography variant={ 'h5' }>Team Hours</Typography>
+                                                <DataGrid
+                                                    autoHeight
+                                                    rows={ teamProjectHourEntries }
+                                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                                    columns={ [
+                                                        { field: 'user', headerName: 'User', flex: 1 },
+                                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                        { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                        { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                                    ] }
+                                                    disableSelectionOnClick
+                                                    experimentalFeatures={ { newEditingApi: true } }/>
+                                            </CardContent>
+                                        </Card>
+                                    </Stack>
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie entries={ teamProjectHours }/>
+                                        <MyProjectsPie entries={ teamProjectHours } label={'projectName'} value={'hours'}/>
                                         <HoursPerUserPie entries={ hoursPerUser }/>
                                     </Box>
-                                </Grid>
-                                <Grid item xs={ 12 } md={ 12 }>
-                                    <Card>
-                                        <CardContent>
-                                            <Typography variant={ 'h5' }>Team Hours</Typography>
-                                            <DataGrid
-                                                autoHeight
-                                                rows={ teamProjectHourEntries }
-                                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                                columns={ [
-                                                    { field: 'user', headerName: 'User', flex: 1 },
-                                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                    { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                                ] }
-                                                disableSelectionOnClick
-                                                experimentalFeatures={ { newEditingApi: true } }/>
-                                        </CardContent>
-                                    </Card>
                                 </Grid>
                             </Grid>
                         </Grid>

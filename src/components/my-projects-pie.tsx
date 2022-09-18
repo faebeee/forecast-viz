@@ -1,19 +1,22 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { COLORS } from "../config";
 import { SpentProjectHours } from "../server/utils";
+import { get } from "lodash";
 
-export type MyProjectsPieProps = {
-    entries: SpentProjectHours[]
+export type MyProjectsPieProps<T> = {
+    entries: T[];
+    value: string;
+    label: string | ((payload: T) => string);
 }
 
-export const MyProjectsPie = ({ entries }: MyProjectsPieProps) => {
+export function MyProjectsPie<T>({ entries, value, label }: MyProjectsPieProps<T>) {
     return <ResponsiveContainer width={ '100%' } height={ 400 }>
         <PieChart height={ 400 }>
             <Pie
-                dataKey="hours"
+                dataKey={ value }
                 isAnimationActive={ false }
                 data={ entries }
-                label={ (e) => e.payload.projectName }
+                label={ (e) => typeof label === 'function' ? label(e.payload) : get(e.payload, label) }
                 cx="50%"
                 cy="50%"
                 outerRadius={ 100 }

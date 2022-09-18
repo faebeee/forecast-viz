@@ -24,7 +24,7 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
 
     return <>
         <AppBar position="fixed" sx={ { zIndex: (theme) => theme.zIndex.drawer + 1 } }>
-            <Toolbar color={ 'black.200' }>
+            <Toolbar sx={ { background: 'linear-gradient(to right, #141e30, #243b55)' } }>
                 <Box sx={ { flexGrow: 1, display: { xs: 'none', md: 'flex' } } }>
                     <Link href={ `/?${ context.queryString }` }>
                         <Button sx={ { mr: 2 } }

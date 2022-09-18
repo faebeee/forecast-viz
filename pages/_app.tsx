@@ -13,13 +13,18 @@ const theme = createTheme({
         },
         secondary: {
             main: '#ffe290',
-        }
+        },
     },
     components: {
         MuiCard: {
             defaultProps: {
-                elevation: 0,
-                variant: 'outlined',
+                elevation: 12,
+                variant: 'elevation',
+            },
+            styleOverrides: {
+                root: {
+                    // background: 'linear-gradient(to right, #e0eafc, #cfdef3)',
+                }
             }
         }
     }
@@ -29,7 +34,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     return <LocalizationProvider dateAdapter={ AdapterDateFns }>
         <ThemeProvider theme={ theme }>
             <CssBaseline/>
-            <GlobalStyles styles={ { body: { background: 'white' } } }/>
+            <GlobalStyles styles={ { body: { background: 'rgba(255, 255, 255, 0.9)' } } }/>
             <Component { ...pageProps } />
         </ThemeProvider>
     </LocalizationProvider>

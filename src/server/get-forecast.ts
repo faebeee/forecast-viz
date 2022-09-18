@@ -1,8 +1,12 @@
 import axios from "axios";
+import { differenceInDays, isAfter, isBefore } from "date-fns";
 
 export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
     project?: Forecast.Project,
+    hoursPerDay?: number;
+    totalHours?: number;
+    days?: number;
 }
 
 
@@ -23,6 +27,7 @@ declare module Forecast {
         repeated_assignment_set_id: number;
         active_on_days_off: boolean;
     }
+
     export interface Project {
         id: number;
         name: string;
@@ -109,6 +114,8 @@ export const getForecast = (accessToken: string, accountId: number) => {
     }
 
     const getAssignments = async (from: string, to: string): Promise<AssignmentEntry[]> => {
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
         const projects = await getProjects();
         const persons = await getPersons();
         const projectMap = new Map<number, Forecast.Project>();
@@ -123,16 +130,23 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
 
         try {
-            const response = await api.get<{ assignments: Forecast.Assignment[] }>(`/assignments?start_date=${ from }&end_date=${to}`);
+            const response = await api.get<{ assignments: Forecast.Assignment[] }>(`/assignments?start_date=${ from }&end_date=${ to }`);
             const entries = response.data.assignments;
             const r = entries.map((e) => {
+                const startDate = isBefore(new Date(e?.start_date), fromDate) ? fromDate : new Date(e?.start_date);
+                const endDate = isAfter(new Date(e?.end_date), toDate) ? toDate : new Date(e?.end_date);
+                const days = (!!e?.start_date && !!e?.end_date) ? differenceInDays(endDate, startDate) : 0;
+
                 return {
                     ...e,
+                    days: days + 1,
+                    hoursPerDay: (e?.allocation / 60 / 60),
+                    totalHours: (days + 1) * (e?.allocation / 60 / 60),
                     project: projectMap.get(e.project_id),
                     person: personMap.get(e.person_id),
                 }
             })
-            return r;
+            return r.filter((entry) => !entry.project?.archived);
         } catch (e) {
             console.error(e);
         }
