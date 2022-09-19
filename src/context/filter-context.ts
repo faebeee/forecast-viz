@@ -15,10 +15,6 @@ export type FilterContextValueType = {
 
     forecastAccountId: string | null;
     setForecastAccountId: (value: string) => void;
-
-    executeSearch: () => void;
-
-    queryString: string;
 }
 
 export const filterContextValue: FilterContextValueType = {
@@ -30,8 +26,6 @@ export const filterContextValue: FilterContextValueType = {
     setHarvestToken: noop,
     forecastAccountId: null,
     setForecastAccountId: noop,
-    executeSearch: noop,
-    queryString:''
 }
 
 export const FilterContext = React.createContext<FilterContextValueType>(filterContextValue);
