@@ -26,7 +26,7 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
         <AppBar position="fixed" sx={ { zIndex: (theme) => theme.zIndex.drawer + 1 } }>
             <Toolbar sx={ { background: 'linear-gradient(to right, #141e30, #243b55)' } }>
                 <Box sx={ { flexGrow: 1, display: { xs: 'none', md: 'flex' } } }>
-                    <Link href={ `/?${ context.queryString }` }>
+                    <Link href={ `/` }>
                         <Button sx={ { mr: 2 } }
                             component={ 'a' }
                             variant={ active === 'me' ? 'contained' : 'text' }
@@ -35,7 +35,7 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
                         </Button>
                     </Link>
                     { hasTeamAccess &&
-                        <Link href={ `/team?${ context.queryString }` }>
+                        <Link href={ `/team` }>
                             <Button sx={ {} }
                                 component={ 'a' }
                                 variant={ active === 'team' ? 'contained' : 'text' }
