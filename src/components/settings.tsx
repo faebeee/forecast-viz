@@ -17,8 +17,7 @@ export const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 export const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
 export const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
-export type SettingsProps = {
-}
+export type SettingsProps = {}
 
 
 export const Settings = ({}: SettingsProps) => {
@@ -57,7 +56,7 @@ export const Settings = ({}: SettingsProps) => {
                     fullWidth
                     size={ 'large' }
                     variant={ 'contained' }
-                    onClick={ filterContext.executeSearch }>Search</Button>
+                >Search</Button>
             </Stack>
 
         </Box>
