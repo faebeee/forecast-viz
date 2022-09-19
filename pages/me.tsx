@@ -27,6 +27,7 @@ import { useStats } from "../src/hooks/use-stats";
 import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import { ProjectHours } from "./api/me/hours";
+import { GetAssignmentsHandlerEntry } from "./api/me/assignments";
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -208,7 +209,7 @@ export const Index = ({
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
                                         <MyProjectsPie<ProjectHours> entries={ hoursApi.hours ?? [] }
-                                            value={ 'hours' }
+                                            value={ 'hoursSpent' }
                                             label={ 'name' }/>
                                     </Box>
                                 </Grid>
@@ -223,15 +224,18 @@ export const Index = ({
                                                 rows={ assignmentsApi.assignments ?? [] }
                                                 columns={ [
                                                     {
-                                                        field: 'project.id',
+                                                        field: 'id',
                                                         headerName: 'Project ID',
-                                                        renderCell: ({ row, field }) => get(row, field)
                                                     },
                                                     {
-                                                        field: 'project.name',
+                                                        field: 'name',
                                                         headerName: 'Project Name',
                                                         flex: 1,
-                                                        renderCell: ({ row, field }) => get(row, field)
+                                                    },
+                                                    {
+                                                        field: 'code',
+                                                        headerName: 'Project Code',
+                                                        flex: 1,
                                                     },
                                                     {
                                                         field: 'days',
@@ -246,11 +250,11 @@ export const Index = ({
                                                         headerName: 'totalHours',
                                                     },
                                                     {
-                                                        field: 'start_date',
+                                                        field: 'startDate',
                                                         headerName: 'Start Date',
                                                     },
                                                     {
-                                                        field: 'end_date',
+                                                        field: 'endDate',
                                                         headerName: 'End Date',
                                                     },
                                                 ] }
@@ -262,9 +266,10 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie<AssignmentEntry> entries={ assignmentsApi.assignments ?? [] }
+                                        <MyProjectsPie<GetAssignmentsHandlerEntry>
+                                            entries={ assignmentsApi.assignments ?? [] }
                                             value={ 'totalHours' }
-                                            label={ (payload) => (!!payload.project?.code ? payload.project?.code : payload.project?.name) ?? '???' }/>
+                                            label={ (payload) => payload.name }/>
                                     </Box>
                                 </Grid>
 
