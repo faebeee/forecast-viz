@@ -269,7 +269,7 @@ export const Index = ({
                                         <MyProjectsPie<GetAssignmentsHandlerEntry>
                                             entries={ assignmentsApi.assignments ?? [] }
                                             value={ 'totalHours' }
-                                            label={ (payload) => payload.name }/>
+                                            label={ 'name' }/>
                                     </Box>
                                 </Grid>
 
