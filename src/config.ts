@@ -9,3 +9,18 @@ export const COLORS = [
     '#757575',
     '#BDBDBD',
 ];
+
+export const TEAMS = [
+    {
+        name: "Team Eis",
+        key: 'Projektteam 1',
+    },
+    {
+        name: "Team Zwei",
+        key: 'Projektteam 2',
+    },
+    {
+        name: "Team Drüü",
+        key: 'Projektteam 3',
+    },
+];

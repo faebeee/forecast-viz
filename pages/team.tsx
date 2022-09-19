@@ -40,21 +40,9 @@ import qs from "qs";
 import { FilterContext } from "../src/context/filter-context";
 import { ContentHeader } from "../src/components/content-header";
 import Image from "next/image";
+import { useTeamStats } from "../src/hooks/use-team-stats";
+import { TEAMS } from "../src/config";
 
-const TEAMS = [
-    {
-        name: "Team Eis",
-        key: 'Projektteam 1',
-    },
-    {
-        name: "Team Zwei",
-        key: 'Projektteam 2',
-    },
-    {
-        name: "Team Drüü",
-        key: 'Projektteam 3',
-    },
-];
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -93,26 +81,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
     const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
 
 
-    if (!myTeamEntry) {
-        return {
-            props: {
-                from,
-                to,
-                hasTeamAccess,
-                teamEntries: [],
-                roles: TEAMS,
-                teamProjectHours: [],
-                teamProjectHourEntries: [],
-                totalTeamMembers: null,
-                teamAmountOfProjects: 0,
-                billableTotalHours: 0,
-                totalTeamHours: null,
-                teamProjects: [],
-                hoursPerUser: [],
-            }
-        }
-    }
-    const teamId = myTeamEntry.key;
+    const teamId = myTeamEntry!.key;
 
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
@@ -143,7 +112,6 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             hoursPerUser,
             billableTotalHours,
             teamProjectHours: Object.values(teamProjectHours),
-            totalTeamMembers: teamPeople.length ?? null,
             teamAmountOfProjects: 0,
             totalTeamHours,
             teamProjectHourEntries,
@@ -162,8 +130,6 @@ export type EntriesProps = {
     teamProjectHours: SpentProjectHours[];
     teamAmountOfProjects: number;
     teamProjectHourEntries: SpentProjectHours[];
-    totalTeamMembers: number | null;
-    totalTeamHours: number | null;
     billableTotalHours: number;
     userName?: string;
     selectedTeamId?: string | null;
@@ -177,8 +143,6 @@ export type EntriesProps = {
 export const Index = ({
                           teamProjectHours,
                           teamProjectHourEntries,
-                          totalTeamMembers,
-                          totalTeamHours,
                           teamProjects,
                           hoursPerUser,
                           userName,
@@ -194,6 +158,8 @@ export const Index = ({
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
+
+    const teamStatsApi = useTeamStats();
 
     useEffect(() => {
         cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
@@ -217,7 +183,7 @@ export const Index = ({
     }, [ router, query ]);
 
     useEffect(() => {
-        executeSearch()
+        teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
     }, [ dateRange ]);
 
     return <>
@@ -230,8 +196,6 @@ export const Index = ({
             setForecastAccountId,
             harvestToken,
             setHarvestToken,
-            executeSearch,
-            queryString: query,
         } }>
             <Layout active={ 'team' } hasTeamAccess={ hasTeamAccess } userName={ userName }>
                 <Box sx={ { flexGrow: 1, } }>
@@ -251,7 +215,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Members</Typography>
-                                        <Typography variant={ 'h2' }>{ totalTeamMembers }</Typography>
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
                                     </CardContent>
                                     <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                         <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
@@ -267,7 +231,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Hours</Typography>
-                                        <Typography variant={ 'h2' }>{ totalTeamHours }</Typography>
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalHours }</Typography>
                                     </CardContent>
                                     <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                         <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
@@ -282,7 +246,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Projects</Typography>
-                                        <Typography variant={ 'h2' }>{ teamProjects.length }</Typography>
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
                                     </CardContent>
                                     <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                         <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
@@ -332,7 +296,8 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie entries={ teamProjectHours } label={'projectName'} value={'hours'}/>
+                                        <MyProjectsPie entries={ teamProjectHours } label={ 'projectName' }
+                                            value={ 'hours' }/>
                                         <HoursPerUserPie entries={ hoursPerUser }/>
                                     </Box>
                                 </Grid>
