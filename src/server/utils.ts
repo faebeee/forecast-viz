@@ -1,6 +1,7 @@
 import { Project, TimeEntry } from "./harvest-types";
 import { AssignmentEntry } from "./get-forecast";
 import { differenceInDays } from "date-fns";
+import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../components/settings";
 
 
 export type SpentProjectHours = {
@@ -132,3 +133,4 @@ export const getProjectsFromEntries = (entries: TimeEntry[]): Project[] => {
         return acc;
     }, new Map<number, Project>()).values());
 }
+
