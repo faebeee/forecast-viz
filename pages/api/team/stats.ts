@@ -1,14 +1,18 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
+import { getHoursPerUser, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
     totalHours: number;
-    totalProjects: number
+    totalProjects: number;
+    hoursPerUser: HoursPerUserItem[];
+}
+export type HoursPerUserItem = {
+    user: string, hours: number
 }
 
 export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamStatsHandlerResponse | null>) => {
@@ -45,15 +49,15 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
 
     const totalProjects = getProjectsFromEntries(entries).length;
+    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from:range.from, to:range.to });
 
-    const myAssignments = getMyAssignments(assignments, userId);
-    const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
-
+    const hoursPerUser = getHoursPerUser(teamEntries);
 
     res.send({
         totalHours,
         totalMembers: teamPeople.length,
-        totalProjects
+        totalProjects,
+        hoursPerUser,
     });
 }
 export default getTeamStatsHandler;
