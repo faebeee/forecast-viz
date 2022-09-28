@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
+import { filterActiveAssignments, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 
@@ -29,11 +29,15 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         await forecast.getAssignments(range.from, range.to),
         await forecast.getProjects(),
     ])
-    const myAssignments = getMyAssignments(assignments, userId);
+    const projectMap = forecast.getProjectsMap(projects);
+    const activeAssignments = filterActiveAssignments(projectMap, assignments);
+    const myAssignments = getMyAssignments(activeAssignments, userId);
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
-    const myProjects = getProjectsFromEntries(projects, entries, myAssignments);
+    const myProjects = getProjectsFromEntries(projectMap, entries, myAssignments);
     const totalProjects = myProjects.length;
+
     const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
+
     const hoursPerDay: { date: string, hours: number }[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
         if (!acc[entry.spent_date]) {
             acc[entry.spent_date] = { date: entry.spent_date, hours: 0 };

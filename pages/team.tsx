@@ -6,8 +6,6 @@ import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
-import { MyProjectsPie } from "../src/components/my-projects-pie";
-import { HoursPerUserPie } from "../src/components/hours-per-users-pie";
 import { Layout } from "../src/components/layout";
 import {
     COOKIE_FORC_ACCOUNTID_NAME,
@@ -28,6 +26,15 @@ import dynamic from "next/dynamic";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
+//@ts-ignore
+const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
+//@ts-ignore
+const RadialAreaChart = dynamic(() => import('reaviz').then(module => module.RadialAreaChart), { ssr: false });
+//@ts-ignore
+const RadialAreaSeries = dynamic(() => import('reaviz').then(module => module.RadialAreaSeries), { ssr: false });
+//@ts-ignore
+const RadialAxis = dynamic(() => import('reaviz').then(module => module.RadialAxis), { ssr: false });
+
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -220,15 +227,29 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <PieChart height={400} data={ teamHoursApi.hours?.map((h) => ({
-                                            key: h.projectName,
-                                            data: h.hours,
-                                        })) ?? [] }/>
+                                        <PieChart height={ 400 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ teamHoursApi.hours?.map((h) => ({
+                                                key: h.projectName,
+                                                data: h.hours,
+                                            })) ?? [] }/>
 
-                                        <PieChart height={400} data={ teamStatsApi.hoursPerUser?.map((h) => ({
-                                            key: h.user,
-                                            data: h.hours,
-                                        })) ?? [] }/>
+                                        <RadialAreaChart
+                                            data={ teamStatsApi.hoursPerUser?.map((h) => ({
+                                                key: h.user,
+                                                data: h.hours,
+                                            })) ?? [] }
+                                            height={ 400 }
+                                            series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                            axis={ <RadialAxis
+                                                // @ts-ignore
+                                                type="category"/> }
+                                        />
                                     </Box>
                                 </Grid>
                             </Grid>

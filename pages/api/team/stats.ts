@@ -1,7 +1,12 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { getHoursPerUser, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
+import {
+    getHoursPerUser,
+    getMyAssignments,
+    getProjectsFromEntries,
+    getTeamAssignments
+} from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
@@ -43,22 +48,24 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         .map(p => p.harvest_user_id);
 
 
-    const [ entries, assignments, projects ]:[ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
+    const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
+        harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to }),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
     ])
+    const teamAssignments = getTeamAssignments(assignments, teamPeople);
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
-
-    const totalProjects = getProjectsFromEntries(projects, entries, assignments).length;
-    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from:range.from, to:range.to });
+    const projectMap = forecast.getProjectsMap(projects);
+    const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
+    console.log(totalProjects);
+    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to });
 
     const hoursPerUser = getHoursPerUser(teamEntries);
 
     res.send({
         totalHours,
         totalMembers: teamPeople.length,
-        totalProjects,
+        totalProjects: totalProjects.length,
         hoursPerUser,
     });
 }

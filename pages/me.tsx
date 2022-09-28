@@ -6,9 +6,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { findAssignment, SpentProjectHours } from "../src/server/utils";
-import { AssignmentEntry, getForecast } from "../src/server/get-forecast";
-import { MyProjectsPie } from "../src/components/my-projects-pie";
+import { getForecast } from "../src/server/get-forecast";
 import { get } from "lodash";
 import { Layout } from "../src/components/layout";
 import {
@@ -26,8 +24,6 @@ import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
 import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
-import { ProjectHours } from "./api/me/hours";
-import { GetAssignmentsHandlerEntry } from "./api/me/assignments";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineChart";
@@ -36,6 +32,10 @@ import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineCh
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
 const BarSparklineChart = dynamic<BarSparklineChartProps>(() => import('reaviz').then(module => module.BarSparklineChart), { ssr: false });
+//@ts-ignore
+const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
+//@ts-ignore
+const LinearGauge = dynamic(() => import('reaviz').then(module => module.LinearGauge), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -179,6 +179,15 @@ export const Index = ({
                                                 <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
                                             </Box>
                                         </CardContent>
+                                        <CardActions>
+                                            <LinearGauge
+                                                height={ 4 }
+                                                data={ {
+                                                    key: 'Load',
+                                                    data: 100 / (statsApi.totalPlannedHours ?? 1) * (statsApi.totalHours ?? 0)
+                                                } }
+                                            />
+                                        </CardActions>
                                     </Card>
                                 </Grid>
                                 <Grid item xs={ 4 }>
@@ -224,10 +233,17 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <PieChart height={ 400 } data={ (hoursApi.hours ?? []).map((h) => ({
-                                            key: h.name ?? h.code  ?? '?',
-                                            data: h.hoursSpent
-                                        })) ?? [] }/>
+                                        <PieChart height={ 400 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (hoursApi.hours ?? []).map((h) => ({
+                                                key: h.name ?? h.code ?? '?',
+                                                data: h.hoursSpent
+                                            })) ?? [] }/>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 8 }>
@@ -283,10 +299,17 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10, } }>
-                                        <PieChart height={ 400 } data={( assignmentsApi.assignments?? []).map((h) => ({
-                                            key: h.name ?? h.code ?? '?',
-                                            data: h.totalHours ?? 0
-                                        })) ?? [] }/>
+                                        <PieChart height={ 400 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                                key: h.name ?? h.code ?? '?',
+                                                data: h.totalHours ?? 0
+                                            })) ?? [] }/>
                                     </Box>
                                 </Grid>
 

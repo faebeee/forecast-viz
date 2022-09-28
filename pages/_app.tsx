@@ -18,12 +18,12 @@ const theme = createTheme({
     components: {
         MuiCard: {
             defaultProps: {
-                elevation: 12,
+                elevation: 24,
                 variant: 'elevation',
             },
             styleOverrides: {
                 root: {
-                    // background: 'linear-gradient(to right, #e0eafc, #cfdef3)',
+                    border: 'none',
                 }
             }
         }

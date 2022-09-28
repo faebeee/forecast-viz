@@ -1,5 +1,5 @@
 import { Project, TimeEntry } from "./harvest-types";
-import { AssignmentEntry } from "./get-forecast";
+import { AssignmentEntry, Forecast } from "./get-forecast";
 import { differenceInDays } from "date-fns";
 import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../components/settings";
 
@@ -66,6 +66,12 @@ export const getMyAssignments = (assignments: AssignmentEntry[], userId?: number
     return assignments.filter((assignment) => assignment.person?.harvest_user_id === userId);
 }
 
+export const filterActiveAssignments = (projects: Map<number, Forecast.Project>, assignments: AssignmentEntry[]) => {
+    return assignments.filter((a) => {
+        return a.project?.harvest_id && projects.has(a.project?.harvest_id) && !projects.get(a.project?.harvest_id)!.archived;
+    });
+}
+
 export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: AssignmentEntry[]): SpentProjectHours[] => {
     const teamHours = getTeamHours(teamEntries);
     return Object.values(teamHours).reduce((acc, entry) => {
@@ -86,6 +92,10 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
         });
         return acc;
     }, [] as SpentProjectHours[]);
+}
+
+export const getTeamAssignments = (assignments:AssignmentEntry[], teamIds: number[]) => {
+    return assignments.filter((a) => teamIds.includes(a.person?.harvest_user_id!))
 }
 
 export const getHoursPerUser = (entries: TimeEntry[]): { user: string, hours: number }[] => {
@@ -125,18 +135,18 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
     }, {} as Record<string, SpentProjectHours>)
 }
 
-export const getProjectsFromEntries = (projects:Project[], entries: TimeEntry[], assignment: AssignmentEntry[]): Project[] => {
-    const map = new Map<number, Project>()
+export const getProjectsFromEntries = (projectsMap:Map<number, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
+    const map = new Map<number, Forecast.Project>()
     entries.reduce((acc, entry) => {
-        if (!acc.has(entry.project.id)) {
-            acc.set(entry.project.id, entry.project);
+        if (!acc.has(entry.project.id) && projectsMap.has(entry.project.id)) {
+            acc.set(entry.project.id,  projectsMap.get(entry.project.id)!);
         }
         return acc;
     }, map);
 
     assignment.reduce((acc, entry) => {
-        if (entry.project?.harvest_id && !acc.has(entry.project.harvest_id)) {
-            acc.set(entry.project.harvest_id, entry.project);
+        if (entry.project?.harvest_id && !acc.has(entry.project.harvest_id) && projectsMap.has(entry.project.harvest_id)) {
+            acc.set(entry.project.harvest_id,  projectsMap.get(entry.project.harvest_id)!);
         }
         return acc;
     }, map);

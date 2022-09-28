@@ -103,6 +103,16 @@ export const getForecast = (accessToken: string, accountId: number) => {
         return [];
     }
 
+
+    const getProjectsMap = (projects: Forecast.Project[]): Map<number, Forecast.Project> => {
+        return projects.reduce((map, project) => {
+            if (project.harvest_id && !map.has(project.harvest_id) && !project.archived) {
+                map.set(project.harvest_id, project);
+            }
+            return map;
+        }, new Map<number, Forecast.Project>())
+    }
+
     const getPersons = async (): Promise<Forecast.Person[]> => {
         try {
             const response = await api.get<Forecast.GetPeopleResponse>(`/people`);
@@ -157,5 +167,6 @@ export const getForecast = (accessToken: string, accountId: number) => {
         getAssignments,
         getPersons,
         getProjects,
+        getProjectsMap,
     }
 }
