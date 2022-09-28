@@ -1,5 +1,6 @@
 import axios from "axios";
 import { differenceInDays, isAfter, isBefore } from "date-fns";
+import { getMyAssignments } from "./utils";
 
 export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
@@ -10,9 +11,7 @@ export type AssignmentEntry = Forecast.Assignment & {
 }
 
 
-declare module Forecast {
-
-
+export declare module Forecast {
     export interface Assignment {
         id: number;
         start_date: string;
@@ -96,7 +95,8 @@ export const getForecast = (accessToken: string, accountId: number) => {
     const getProjects = async (): Promise<Forecast.Project[]> => {
         try {
             const response = await api.get<Forecast.GetProjectsResponse>(`/projects`);
-            return response.data.projects;
+            const projects: Forecast.Project[] = response.data.projects;
+            return projects.filter(p => !p.archived);
         } catch (e) {
             console.error(e);
         }
@@ -155,6 +155,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
     return {
         getAssignments,
-        getPersons
+        getPersons,
+        getProjects,
     }
 }

@@ -24,7 +24,9 @@ import { useTeamStats } from "../src/hooks/use-team-stats";
 import { TEAMS } from "../src/config";
 import { useTeamHours } from "../src/hooks/use-team-hours";
 import { useTeamEntries } from "../src/hooks/use-team-entries";
+import dynamic from "next/dynamic";
 
+const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -217,9 +219,15 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie entries={ teamHoursApi.hours ?? [] } label={ 'projectName' }
-                                            value={ 'hours' }/>
-                                        <HoursPerUserPie entries={ teamStatsApi.hoursPerUser ?? [] }/>
+                                        <PieChart height={400} data={ teamHoursApi.hours?.map((h) => ({
+                                            key: h.projectName,
+                                            data: h.hours,
+                                        })) ?? [] }/>
+
+                                        <PieChart height={400} data={ teamStatsApi.hoursPerUser?.map((h) => ({
+                                            key: h.user,
+                                            data: h.hours,
+                                        })) ?? [] }/>
                                     </Box>
                                 </Grid>
                             </Grid>

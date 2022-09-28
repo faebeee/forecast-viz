@@ -42,13 +42,14 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         .map(p => p.harvest_user_id);
 
 
-    const [ entries, assignments ] = await Promise.all([
-        await harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
-        await forecast.getAssignments(range.from, range.to)
+    const [ entries, assignments, projects ] = await Promise.all([
+        harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
+        forecast.getAssignments(range.from, range.to),
+        forecast.getProjects(),
     ])
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
 
-    const totalProjects = getProjectsFromEntries(entries).length;
+    const totalProjects = getProjectsFromEntries(projects, entries, assignments).length;
     const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from:range.from, to:range.to });
 
     const hoursPerUser = getHoursPerUser(teamEntries);

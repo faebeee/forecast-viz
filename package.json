@@ -40,6 +40,7 @@
     "react-charts": "^3.0.0-beta.47",
     "react-datepicker": "^4.8.0",
     "react-dom": "18.2.0",
+    "reaviz": "^13.1.9",
     "recharts": "2.1.12"
   },
   "devDependencies": {

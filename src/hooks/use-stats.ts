@@ -6,6 +6,7 @@ export const useStats = () => {
     const [ totalHours, setTotalHours ] = useState<number | null>(null);
     const [ totalPlannedHours, setTotalPlannedHours ] = useState<number | null>(null);
     const [ totalProjects, setTotalProjects ] = useState<number | null>(null);
+    const [ hoursPerDay, setHoursPerDay ] = useState<{ date: string, hours: number }[]>([]);
 
     const load = useCallback((from: string, to: string) => {
         getAxios().get<GetStatsHandlerResponse>(`/me/stats?from=${ from }&to=${ to }`)
@@ -13,6 +14,7 @@ export const useStats = () => {
                 setTotalHours(data.totalHours)
                 setTotalPlannedHours(data.totalPlannedHours)
                 setTotalProjects(data.totalProjects)
+                setHoursPerDay(data.hoursPerDay)
             });
     }, []);
 
@@ -20,6 +22,7 @@ export const useStats = () => {
         load,
         totalHours,
         totalPlannedHours,
-        totalProjects
+        totalProjects,
+        hoursPerDay,
     }
 }

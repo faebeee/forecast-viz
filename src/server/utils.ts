@@ -125,12 +125,21 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
     }, {} as Record<string, SpentProjectHours>)
 }
 
-export const getProjectsFromEntries = (entries: TimeEntry[]): Project[] => {
-    return Array.from(entries.reduce((acc, entry) => {
+export const getProjectsFromEntries = (projects:Project[], entries: TimeEntry[], assignment: AssignmentEntry[]): Project[] => {
+    const map = new Map<number, Project>()
+    entries.reduce((acc, entry) => {
         if (!acc.has(entry.project.id)) {
             acc.set(entry.project.id, entry.project);
         }
         return acc;
-    }, new Map<number, Project>()).values());
+    }, map);
+
+    assignment.reduce((acc, entry) => {
+        if (entry.project?.harvest_id && !acc.has(entry.project.harvest_id)) {
+            acc.set(entry.project.harvest_id, entry.project);
+        }
+        return acc;
+    }, map);
+    return Array.from(map.values());
 }
 

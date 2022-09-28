@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Card, CardActions, CardContent, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,6 +28,10 @@ import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import { ProjectHours } from "./api/me/hours";
 import { GetAssignmentsHandlerEntry } from "./api/me/assignments";
+import dynamic from "next/dynamic";
+
+const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
+const BarSparklineChart = dynamic(() => import('reaviz').then(module => module.BarSparklineChart), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -124,7 +128,7 @@ export const Index = ({
             harvestToken,
             setHarvestToken,
         } }>
-            <Layout hasTeamAccess={ hasTeamAccess } userName={ userName } active={ 'me' }>
+            <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'me' }>
                 <Box sx={ { flexGrow: 1, } }>
                     <Box p={ 4 }>
                         <ContentHeader title={ 'My Dashboard' }>
@@ -148,6 +152,13 @@ export const Index = ({
                                                 <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
                                             </Box>
                                         </CardContent>
+                                        <CardActions>
+                                            <BarSparklineChart width={ `calc(100% - 200px)` } height={ 35 }
+                                                data={ statsApi.hoursPerDay.map((entry) => ({
+                                                    key: entry.date,
+                                                    data: entry.hours
+                                                })) }/>
+                                        </CardActions>
                                     </Card>
                                 </Grid>
                                 <Grid item xs={ 4 }>
@@ -208,9 +219,10 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie<ProjectHours> entries={ hoursApi.hours ?? [] }
-                                            value={ 'hoursSpent' }
-                                            label={ 'name' }/>
+                                        <PieChart height={ 400 } data={ hoursApi.hours?.map((h) => ({
+                                            key: h.name,
+                                            data: h.hoursSpent
+                                        })) ?? [] }/>
                                     </Box>
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 8 }>
@@ -265,11 +277,11 @@ export const Index = ({
                                     </Card>
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
-                                    <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <MyProjectsPie<GetAssignmentsHandlerEntry>
-                                            entries={ assignmentsApi.assignments ?? [] }
-                                            value={ 'totalHours' }
-                                            label={ 'name' }/>
+                                    <Box sx={ { position: 'sticky', top: 10, } }>
+                                        <PieChart height={ 400 } data={ assignmentsApi.assignments.map((h) => ({
+                                            key: h.name,
+                                            data: h.totalHours
+                                        })) ?? [] }/>
                                     </Box>
                                 </Grid>
 
