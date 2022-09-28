@@ -26,6 +26,7 @@ import { useTeamHours } from "../src/hooks/use-team-hours";
 import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
 
+//@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {

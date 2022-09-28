@@ -29,9 +29,13 @@ import { useHours } from "../src/hooks/use-hours";
 import { ProjectHours } from "./api/me/hours";
 import { GetAssignmentsHandlerEntry } from "./api/me/assignments";
 import dynamic from "next/dynamic";
+import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
+import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineChart";
 
-const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
-const BarSparklineChart = dynamic(() => import('reaviz').then(module => module.BarSparklineChart), { ssr: false });
+//@ts-ignore
+const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
+//@ts-ignore
+const BarSparklineChart = dynamic<BarSparklineChartProps>(() => import('reaviz').then(module => module.BarSparklineChart), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
@@ -153,7 +157,8 @@ export const Index = ({
                                             </Box>
                                         </CardContent>
                                         <CardActions>
-                                            <BarSparklineChart width={ `calc(100% - 200px)` } height={ 35 }
+                                            {/*@ts-ignore*/ }
+                                            <BarSparklineChart width={ 300 } height={ 35 }
                                                 data={ statsApi.hoursPerDay.map((entry) => ({
                                                     key: entry.date,
                                                     data: entry.hours
@@ -219,8 +224,8 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <PieChart height={ 400 } data={ hoursApi.hours?.map((h) => ({
-                                            key: h.name,
+                                        <PieChart height={ 400 } data={ (hoursApi.hours ?? []).map((h) => ({
+                                            key: h.name ?? h.code  ?? '?',
                                             data: h.hoursSpent
                                         })) ?? [] }/>
                                     </Box>
@@ -278,9 +283,9 @@ export const Index = ({
                                 </Grid>
                                 <Grid item xs={ 12 } md={ 4 }>
                                     <Box sx={ { position: 'sticky', top: 10, } }>
-                                        <PieChart height={ 400 } data={ assignmentsApi.assignments.map((h) => ({
-                                            key: h.name,
-                                            data: h.totalHours
+                                        <PieChart height={ 400 } data={( assignmentsApi.assignments?? []).map((h) => ({
+                                            key: h.name ?? h.code ?? '?',
+                                            data: h.totalHours ?? 0
                                         })) ?? [] }/>
                                     </Box>
                                 </Grid>
