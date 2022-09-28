@@ -2,8 +2,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getHoursPerUser, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
-import { getForecast } from "../../../src/server/get-forecast";
+import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
+import { TimeEntry } from "../../../src/server/harvest-types";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -42,7 +43,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         .map(p => p.harvest_user_id);
 
 
-    const [ entries, assignments, projects ] = await Promise.all([
+    const [ entries, assignments, projects ]:[ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
         harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
