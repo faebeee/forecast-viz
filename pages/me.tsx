@@ -7,7 +7,7 @@ import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
-import { get } from "lodash";
+import { get, round } from "lodash";
 import { Layout } from "../src/components/layout";
 import {
     COOKIE_FORC_ACCOUNTID_NAME,
@@ -27,6 +27,7 @@ import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineChart";
+import { useCurrentStats } from "../src/hooks/use-current-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -93,6 +94,7 @@ export const Index = ({
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
     const { entries, load } = useEntries();
+    const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
@@ -118,6 +120,8 @@ export const Index = ({
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         assignmentsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         hoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+
+        currentStatsApi.load();
     }, [ dateRange ]);
 
 
@@ -143,7 +147,29 @@ export const Index = ({
 
                         <Grid container spacing={ 10 }>
                             <Grid item container spacing={ 10 }>
-                                <Grid item xs={ 4 }>
+                                <Grid item lg={ 6 } xl={ 2 }>
+                                    <Card sx={ {
+                                        position: 'relative',
+                                        minHeight: '200px',
+                                    } }
+                                    >
+                                        <CardContent>
+                                            <Typography variant={ 'body1' }>Todays Hours</Typography>
+                                            <Typography
+                                                variant={ 'h2' }>
+                                                { round(currentStatsApi.totalHours ?? 0, 1) }
+                                                <Typography variant={ 'body2' } component={ 'span' }>
+                                                    of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
+                                                </Typography>
+                                            </Typography>
+                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                                <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
+                                            </Box>
+                                        </CardContent>
+                                    </Card>
+                                </Grid>
+
+                                <Grid item lg={ 6 } xl={ 4 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -151,7 +177,8 @@ export const Index = ({
                                     >
                                         <CardContent>
                                             <Typography variant={ 'body1' }>My Hours</Typography>
-                                            <Typography variant={ 'h2' }>{ statsApi.totalHours }</Typography>
+                                            <Typography
+                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }</Typography>
                                             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                                 <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
                                             </Box>
@@ -166,7 +193,7 @@ export const Index = ({
                                         </CardActions>
                                     </Card>
                                 </Grid>
-                                <Grid item xs={ 4 }>
+                                <Grid item lg={ 6 } xl={ 4 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -174,7 +201,8 @@ export const Index = ({
                                     >
                                         <CardContent>
                                             <Typography variant={ 'body1' }>Planned Hours</Typography>
-                                            <Typography variant={ 'h2' }>{ statsApi.totalPlannedHours }</Typography>
+                                            <Typography
+                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
                                             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                                 <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
                                             </Box>
@@ -190,7 +218,7 @@ export const Index = ({
                                         </CardActions>
                                     </Card>
                                 </Grid>
-                                <Grid item xs={ 4 }>
+                                <Grid item lg={ 6 } xl={ 2 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: 200

@@ -23,6 +23,7 @@ import { TEAMS } from "../src/config";
 import { useTeamHours } from "../src/hooks/use-team-hours";
 import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
+import { round } from "lodash";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -138,7 +139,40 @@ export const Index = ({
                         </ContentHeader>
 
                         <Grid container spacing={ 10 }>
-                            <Grid item xs={ 4 }>
+
+                            <Grid item lg={ 6 } xl={ 4 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: 200
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Hours</Typography>
+                                        <Typography
+                                            variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </Card>
+                            </Grid>
+                            <Grid item lg={ 6 } xl={ 4 }>
+                                <Card sx={ {
+                                    minHeight: 200,
+                                    position: 'relative'
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Projects</Typography>
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </Card>
+                            </Grid>
+
+                            <Grid item lg={ 6 } xl={ 4 }>
                                 <Card sx={ {
                                     minHeight: 200,
                                     position: 'relative'
@@ -154,36 +188,6 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item xs={ 4 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: 200
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Team Hours</Typography>
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalHours }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={ 4 }>
-                                <Card sx={ {
-                                    minHeight: 200,
-                                    position: 'relative'
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Team Projects</Typography>
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
 
                             <Grid container spacing={ 10 } item xs={ 12 }>
                                 <Grid item xs={ 12 } md={ 8 }>
