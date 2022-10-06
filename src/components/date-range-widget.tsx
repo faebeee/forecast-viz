@@ -3,7 +3,7 @@ import DatePicker from "react-datepicker";
 import { useState } from "react";
 
 export type DateRangeWidgetProps = {
-    dateRange: [ Date | null, Date | null ]
+    dateRange: [ Date, Date ]
     onChange: (d: [ Date, Date ]) => void;
     onClose?: () => void;
 }
@@ -12,14 +12,19 @@ export const DATE_FORMAT = 'yyyy-MM-dd';
 
 
 export const DateRangeWidget = ({ dateRange, onChange, onClose }: DateRangeWidgetProps) => {
+    const [ range, setRange ] = useState<[ Date, Date ]>(dateRange);
+    const onCalendarClose = () => {
+        onClose?.();
+        onChange?.(range);
+    }
 
     return <DatePicker
         selectsRange
-        startDate={ dateRange[0] }
-        endDate={ dateRange[1] }
+        startDate={ range[0] }
+        endDate={ range[1] }
         dateFormat={ DATE_FORMAT }
         customInput={ <TextField variant={ 'outlined' } label={ 'Date range' } fullWidth/> }
-        onCalendarClose={ onClose }
-        onChange={ (d) => onChange(d as [ Date, Date ]) }
+        onCalendarClose={ onCalendarClose }
+        onChange={ (d) => setRange(d as [ Date, Date ]) }
     />
 }

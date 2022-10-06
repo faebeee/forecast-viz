@@ -36,13 +36,22 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
                     </Link>
                     { hasTeamAccess &&
                         <Link href={ `/team` }>
-                            <Button sx={ {} }
+                            <Button sx={ { mr: 2 } }
                                 component={ 'a' }
                                 variant={ active === 'team' ? 'contained' : 'text' }
                                 color={ "secondary" }>
                                 Team
                             </Button>
                         </Link> }
+
+                    <Link href={ `/company` }>
+                        <Button sx={ { mr: 2 } }
+                            component={ 'a' }
+                            variant={ active === 'company' ? 'contained' : 'text' }
+                            color={ "secondary" }>
+                            Company
+                        </Button>
+                    </Link>
                 </Box>
                 <Button onClick={ () => setShowSidebar(!showSidebar) } variant={ 'text' } color={ 'secondary' }
                     endIcon={ <Menu/> }>

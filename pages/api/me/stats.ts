@@ -4,12 +4,13 @@ import { getHarvest } from "../../../src/server/get-harvest";
 import { filterActiveAssignments, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
+import { HourPerDayEntry } from "../../../src/type";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
     totalPlannedHours: number;
     totalProjects: number
-    hoursPerDay: { date: string, hours: number }[]
+    hoursPerDay: HourPerDayEntry[]
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
@@ -38,13 +39,13 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
 
-    const hoursPerDay: { date: string, hours: number }[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+    const hoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
         if (!acc[entry.spent_date]) {
             acc[entry.spent_date] = { date: entry.spent_date, hours: 0 };
         }
         acc[entry.spent_date].hours += entry.hours;
         return acc;
-    }, {} as Record<string, { date: string, hours: number }>)).reverse();
+    }, {} as Record<string, HourPerDayEntry>)).reverse();
 
 
     res.send({

@@ -116,7 +116,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
     const getPersons = async (): Promise<Forecast.Person[]> => {
         try {
             const response = await api.get<Forecast.GetPeopleResponse>(`/people`);
-            return response.data.people;
+            return response.data.people.filter((p) => !p.archived && p.login === 'enabled');
         } catch (e) {
             console.error(e);
         }

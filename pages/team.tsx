@@ -188,74 +188,71 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
+                            <Grid item lg={ 6 } xl={ 6 }>
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ teamHoursApi.hours?.map((h) => ({
+                                        key: h.projectName,
+                                        data: h.hours,
+                                    })) ?? [] }/>
+                            </Grid>
 
-                            <Grid container spacing={ 10 } item xs={ 12 }>
-                                <Grid item xs={ 12 } md={ 8 }>
-                                    <Stack spacing={ 10 }>
-                                        <Card>
-                                            <CardContent>
-                                                <Typography variant={ 'h5' }>Team Projects</Typography>
-                                                <DataGrid
-                                                    autoHeight
-                                                    getRowId={ (r) => r.projectName }
-                                                    rows={ teamHoursApi.hours ?? [] }
-                                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                                    columns={ [
-                                                        { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                        { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                    ] }
-                                                    disableSelectionOnClick
-                                                    experimentalFeatures={ { newEditingApi: true } }/>
-                                            </CardContent>
-                                        </Card>
+                            <Grid item lg={ 6 } xl={ 6 }>
+                                <RadialAreaChart
+                                    data={ teamStatsApi.hoursPerUser?.map((h) => ({
+                                        key: h.user,
+                                        data: h.hours,
+                                    })) ?? [] }
+                                    height={ 600 }
+                                    series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                    axis={ <RadialAxis
+                                        // @ts-ignore
+                                        type="category"/> }
+                                />
+                            </Grid>
 
-                                        <Card>
-                                            <CardContent>
-                                                <Typography variant={ 'h5' }>Team Hours</Typography>
-                                                <DataGrid
-                                                    autoHeight
-                                                    rows={ teamEntriesApi.entries }
-                                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                                    columns={ [
-                                                        { field: 'user', headerName: 'User', flex: 1 },
-                                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                        { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                        { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
-                                                    ] }
-                                                    disableSelectionOnClick
-                                                    experimentalFeatures={ { newEditingApi: true } }/>
-                                            </CardContent>
-                                        </Card>
-                                    </Stack>
-                                </Grid>
-                                <Grid item xs={ 12 } md={ 4 }>
-                                    <Box sx={ { position: 'sticky', top: 10 } }>
-                                        <PieChart height={ 400 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ teamHoursApi.hours?.map((h) => ({
-                                                key: h.projectName,
-                                                data: h.hours,
-                                            })) ?? [] }/>
-
-                                        <RadialAreaChart
-                                            data={ teamStatsApi.hoursPerUser?.map((h) => ({
-                                                key: h.user,
-                                                data: h.hours,
-                                            })) ?? [] }
-                                            height={ 400 }
-                                            series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
-                                            axis={ <RadialAxis
-                                                // @ts-ignore
-                                                type="category"/> }
-                                        />
-                                    </Box>
-                                </Grid>
+                            <Grid item lg={ 12 } xl={ 6 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>Team Projects</Typography>
+                                        <DataGrid
+                                            autoHeight
+                                            getRowId={ (r) => r.projectName }
+                                            rows={ teamHoursApi.hours ?? [] }
+                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                            columns={ [
+                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'hours', headerName: 'Hours', flex: 1 },
+                                            ] }
+                                            disableSelectionOnClick
+                                            experimentalFeatures={ { newEditingApi: true } }/>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item lg={ 12 } xl={ 6 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>Team Hours</Typography>
+                                        <DataGrid
+                                            autoHeight
+                                            rows={ teamEntriesApi.entries }
+                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                            columns={ [
+                                                { field: 'user', headerName: 'User', flex: 1 },
+                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'hours', headerName: 'Hours', flex: 1 },
+                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
+                                            ] }
+                                            disableSelectionOnClick
+                                            experimentalFeatures={ { newEditingApi: true } }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
                         </Grid>
                     </Box>
