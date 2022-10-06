@@ -151,7 +151,7 @@ export const Index = ({
 
                         <Grid container spacing={ 10 }>
                             <Grid item container spacing={ 10 }>
-                                <Grid item lg={ 6 } xl={ 2 }>
+                                <Grid item lg={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -173,7 +173,7 @@ export const Index = ({
                                     </Card>
                                 </Grid>
 
-                                <Grid item lg={ 6 } xl={ 4 }>
+                                <Grid item lg={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -189,7 +189,7 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item lg={ 6 } xl={ 4 }>
+                                <Grid item lg={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -205,7 +205,7 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item lg={ 6 } xl={ 2 }>
+                                <Grid item lg={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: 200
