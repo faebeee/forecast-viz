@@ -58,7 +58,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
             }
         }
     }
-    const api = getHarvest(token, account);
+    const api = await getHarvest(token, account);
     const forecast = getForecast(token, forecastAccount);
     const userData = await api.getMe();
     const userId = userData.id;
@@ -151,7 +151,7 @@ export const Index = ({
 
                         <Grid container spacing={ 10 }>
                             <Grid item container spacing={ 10 }>
-                                <Grid item lg={ 6 } xl={ 3 }>
+                                <Grid item xs={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -173,7 +173,7 @@ export const Index = ({
                                     </Card>
                                 </Grid>
 
-                                <Grid item lg={ 6 } xl={ 3 }>
+                                <Grid item xs={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -189,7 +189,7 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item lg={ 6 } xl={ 3 }>
+                                <Grid item xs={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: '200px',
@@ -205,7 +205,7 @@ export const Index = ({
                                         </CardContent>
                                     </Card>
                                 </Grid>
-                                <Grid item lg={ 6 } xl={ 3 }>
+                                <Grid item xs={ 6 } xl={ 3 }>
                                     <Card sx={ {
                                         position: 'relative',
                                         minHeight: 200
@@ -223,42 +223,57 @@ export const Index = ({
                             </Grid>
 
                             <Grid item xs={ 12 } lg={ 4 }>
-                                <PieChart height={ 600 }
-                                    series={ <PieArcSeries
-                                        cornerRadius={ 4 }
-                                        padAngle={ 0.02 }
-                                        padRadius={ 200 }
-                                        doughnut={ true }
-                                    /> }
-                                    data={ (hoursApi.hours ?? []).map((h) => ({
-                                        key: h.name ?? h.code ?? '?',
-                                        data: h.hoursSpent
-                                    })) ?? [] }/>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours spent</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (hoursApi.hours ?? []).map((h) => ({
+                                                key: h.name ?? h.code ?? '?',
+                                                data: h.hoursSpent
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
 
                             <Grid item xs={ 12 } lg={ 4 }>
-                                <PieChart height={ 600 }
-                                    series={ <PieArcSeries
-                                        cornerRadius={ 4 }
-                                        padAngle={ 0.02 }
-                                        padRadius={ 200 }
-                                        doughnut={ true }
-                                    /> }
-                                    data={ (assignmentsApi.assignments ?? []).map((h) => ({
-                                        key: h.name ?? h.code ?? '?',
-                                        data: h.totalHours ?? 0
-                                    })) ?? [] }/>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours planned</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                                key: h.name ?? h.code ?? '?',
+                                                data: h.totalHours ?? 0
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
 
                             <Grid item xs={ 12 } lg={ 4 }>
-                                <BarChart
-                                    height={ 600 }
-                                    // @ts-ignore
-                                    gridlines={ <GridlineSeries line={ null }/> }
-                                    data={ statsApi.hoursPerDay.map((entry) => ({
-                                        key: entry.date,
-                                        data: entry.hours
-                                    })) }/>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours per day</Typography>
+                                        <BarChart
+                                            height={ 600 }
+                                            // @ts-ignore
+                                            gridlines={ <GridlineSeries line={ null }/> }
+                                            data={ statsApi.hoursPerDay.map((entry) => ({
+                                                key: entry.date,
+                                                data: entry.hours
+                                            })) }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
 
                             <Grid item lg={ 12 } xl={ 6 }>
@@ -341,6 +356,7 @@ export const Index = ({
                 </Box>
             </Layout>
         </FilterContext.Provider>
-    </>;
+    </>
+        ;
 }
 export default Index;

@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Card, CardContent, Container, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
@@ -24,6 +24,7 @@ import { useCompanyStats } from "../src/hooks/use-company-stats";
 import { useCompanyHours } from "../src/hooks/use-company-hours";
 import { GridlineSeriesProps } from "reaviz";
 import { useCompanyEntries } from "../src/hooks/use-company-entries";
+import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -50,7 +51,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
             }
         }
     }
-    const api = getHarvest(token, account);
+    const api = await getHarvest(token, account);
     const forecast = getForecast(token, forecastAccount);
     const userData = await api.getMe();
     const userId = userData.id;
@@ -90,10 +91,12 @@ export const Index = ({
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
     const statsApi = useCompanyStats();
     const hoursApi = useCompanyHours();
+    const teamsStats = useCompanyTeamsStats();
 
     useEffect(() => {
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         hoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+        teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
     }, [ dateRange ]);
 
     return <>
@@ -118,7 +121,8 @@ export const Index = ({
 
                         <Box pb={ 5 }>
                             <Typography variant={ 'caption' }>
-                                This dashboard consumes a lot of data from the API. Therefore you might reach the API
+                                This dashboard consumes a lot of data from the API. Therefore you might reach the
+                                API
                                 limit
                                 of req/sec.
                                 So be patient and retry you luck in 15mins.
@@ -126,7 +130,7 @@ export const Index = ({
                         </Box>
 
                         <Grid container spacing={ 10 }>
-                            <Grid item lg={ 4 } xl={ 4 }>
+                            <Grid item xs={ 12 } md={ 4 }>
                                 <Card sx={ {
                                     position: 'relative',
                                     minHeight: '200px',
@@ -142,7 +146,7 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item lg={ 4 } xl={ 4 }>
+                            <Grid item xs={ 12 } md={ 4 }>
                                 <Card sx={ {
                                     position: 'relative',
                                     minHeight: '200px',
@@ -157,7 +161,8 @@ export const Index = ({
                                     </Box>
                                 </Card>
                             </Grid>
-                            <Grid item lg={ 4 } xl={ 4 }>
+
+                            <Grid item xs={ 12 } md={ 4 }>
                                 <Card sx={ {
                                     position: 'relative',
                                     minHeight: '200px',
@@ -173,35 +178,70 @@ export const Index = ({
                                     </Box>
                                 </Card>
                             </Grid>
-                            <Grid item lg={ 12 } xl={ 6 }>
-                                <PieChart height={ 600 }
-                                    series={ <PieArcSeries
-                                        cornerRadius={ 4 }
-                                        padAngle={ 0.02 }
-                                        padRadius={ 200 }
-                                        doughnut={ true }
-                                    /> }
-                                    data={ (statsApi.hoursPerProject ?? []).map((h) => ({
-                                        key: h.name,
-                                        data: h.hours
-                                    })) ?? [] }/>
+
+                            <Grid item lg={ 12 } xl={ 4 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours per project</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                                key: h.name,
+                                                data: h.hours
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
 
-                            <Grid item lg={ 12 } xl={ 6 }>
-                                <BarChart
-                                    height={ 600 }
-                                    //@ts-ignore
-                                    gridlines={ <GridlineSeries line={ null }/> }
-                                    data={ statsApi.hoursPerDay.map((entry) => ({
-                                        key: entry.date,
-                                        data: entry.hours
-                                    })) }/>
+
+                            <Grid item lg={ 12 } xl={ 4 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours per team</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                                key: h.name,
+                                                data: h.hours
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+
+                            <Grid item lg={ 12 } xl={ 4 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours per roles</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                                key: h.name,
+                                                data: h.hours
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
                             </Grid>
                         </Grid>
                     </Box>
                 </Box>
             </Layout>
         </FilterContext.Provider>
-    </>;
+    </>
+        ;
 }
 export default Index;

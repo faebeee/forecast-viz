@@ -1,7 +1,7 @@
 import { Project, TimeEntry } from "./harvest-types";
 import { AssignmentEntry, Forecast } from "./get-forecast";
 import { differenceInDays } from "date-fns";
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../components/settings";
+import { COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME } from "../components/settings";
 
 
 export type SpentProjectHours = {
@@ -94,7 +94,7 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
     }, [] as SpentProjectHours[]);
 }
 
-export const getTeamAssignments = (assignments:AssignmentEntry[], teamIds: number[]) => {
+export const getTeamAssignments = (assignments: AssignmentEntry[], teamIds: number[]) => {
     return assignments.filter((a) => teamIds.includes(a.person?.harvest_user_id!))
 }
 
@@ -135,21 +135,29 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
     }, {} as Record<string, SpentProjectHours>)
 }
 
-export const getProjectsFromEntries = (projectsMap:Map<number, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
+export const getProjectsFromEntries = (projectsMap: Map<number, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
     const map = new Map<number, Forecast.Project>()
     entries.reduce((acc, entry) => {
         if (!acc.has(entry.project.id) && projectsMap.has(entry.project.id)) {
-            acc.set(entry.project.id,  projectsMap.get(entry.project.id)!);
+            acc.set(entry.project.id, projectsMap.get(entry.project.id)!);
         }
         return acc;
     }, map);
 
     assignment.reduce((acc, entry) => {
         if (entry.project?.harvest_id && !acc.has(entry.project.harvest_id) && projectsMap.has(entry.project.harvest_id)) {
-            acc.set(entry.project.harvest_id,  projectsMap.get(entry.project.harvest_id)!);
+            acc.set(entry.project.harvest_id, projectsMap.get(entry.project.harvest_id)!);
         }
         return acc;
     }, map);
     return Array.from(map.values());
 }
 
+export const getPersonsMap = (persons: Forecast.Person[]): Map<number, Forecast.Person> => {
+    return persons.reduce((map, person) => {
+        if (!map.has(person.harvest_user_id)) {
+        }
+        map.set(person.harvest_user_id, person);
+        return map;
+    }, new Map<number, Forecast.Person>);
+}

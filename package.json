@@ -41,7 +41,8 @@
     "react-datepicker": "^4.8.0",
     "react-dom": "18.2.0",
     "reaviz": "^13.1.9",
-    "recharts": "2.1.12"
+    "recharts": "2.1.12",
+    "redis": "^4.3.1"
   },
   "devDependencies": {
     "@types/node": "18.7.6",

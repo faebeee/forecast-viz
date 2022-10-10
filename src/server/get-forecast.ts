@@ -1,6 +1,8 @@
 import axios from "axios";
 import { differenceInDays, isAfter, isBefore } from "date-fns";
 import { getMyAssignments } from "./utils";
+import { getRedis } from "./redis";
+import { REDIS_CACHE_TTL } from "../config";
 
 export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
@@ -93,10 +95,18 @@ export const getForecast = (accessToken: string, accountId: number) => {
     })
 
     const getProjects = async (): Promise<Forecast.Project[]> => {
+        const redis = await getRedis();
         try {
+            const value = await redis.get('f:projects');
+            if (!!value) {
+                return JSON.parse(value);
+            }
             const response = await api.get<Forecast.GetProjectsResponse>(`/projects`);
             const projects: Forecast.Project[] = response.data.projects;
-            return projects.filter(p => !p.archived);
+            const activeProjects = projects.filter(p => !p.archived);
+            await redis.set('f:projects', JSON.stringify(activeProjects));
+            await redis.expire('f:projects', REDIS_CACHE_TTL);
+            return activeProjects;
         } catch (e) {
             console.error(e);
         }
@@ -114,9 +124,18 @@ export const getForecast = (accessToken: string, accountId: number) => {
     }
 
     const getPersons = async (): Promise<Forecast.Person[]> => {
+        const redis = await getRedis();
+        const value = await redis.get('f:persons');
+        if (!!value) {
+            return JSON.parse(value);
+        }
+
         try {
             const response = await api.get<Forecast.GetPeopleResponse>(`/people`);
-            return response.data.people.filter((p) => !p.archived && p.login === 'enabled');
+            const activePersons = response.data.people.filter((p) => !p.archived && p.login === 'enabled');
+            await redis.set('f:persons', JSON.stringify(activePersons));
+            await redis.expire('f:persons', REDIS_CACHE_TTL);
+            return activePersons;
         } catch (e) {
             console.error(e);
         }

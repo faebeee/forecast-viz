@@ -21,7 +21,7 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
     }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
-    const harvest = getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
+    const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const userData = await harvest.getMe();
     const userId = userData.id;
     const entries = await harvest.getTimeEntries({userId: userId, from: range.from, to: range.to});

@@ -21,7 +21,7 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
     }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
-    const harvest = getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
+    const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
     const allPeople = await forecast.getPersons();
     const userData = await harvest.getMe();

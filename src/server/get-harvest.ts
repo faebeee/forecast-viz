@@ -8,6 +8,9 @@ import {
     TimeEntry
 } from "./harvest-types";
 import axios from "axios";
+import { getRedis } from "./redis";
+import { REDIS_CACHE_TTL } from "../config";
+
 
 export type QueryParams = {
     userId: number;
@@ -16,7 +19,7 @@ export type QueryParams = {
 }
 
 
-export const getHarvest = (accessToken: string, accountId: number) => {
+export const getHarvest = async (accessToken: string, accountId: number) => {
     const api = axios.create({
         baseURL: 'https://api.harvestapp.com/v2',
         headers: {
@@ -26,12 +29,23 @@ export const getHarvest = (accessToken: string, accountId: number) => {
     })
 
     const fetchAllPages = async <RET>(url: string, key: string, results: RET): Promise<RET> => {
+        const redis = await getRedis();
+        const value = await redis.get(url) as string | null;
+        if (!!value && value.length > 0) {
+            return JSON.parse(value);
+        }
+
+        console.log('fetch', url);
         const response = await api.get<{ total_pages: number, page: number, links: { next: string | null } }>(url);
         // @ts-ignore
         const newResults: RET = [ ...results, ...response.data[key] ]
+
         if (response.data.links.next) {
             return fetchAllPages(response.data.links.next, key, newResults)
         }
+
+        await redis.set(url, JSON.stringify(newResults));
+        await redis.expire(url, REDIS_CACHE_TTL);
         return newResults;
     }
 

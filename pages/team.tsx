@@ -52,7 +52,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             }
         }
     }
-    const api = getHarvest(token, account);
+    const api = await getHarvest(token, account);
     const forecast = getForecast(token, forecastAccount);
     const userData = await api.getMe();
     const userId = userData.id;
@@ -139,8 +139,7 @@ export const Index = ({
                         </ContentHeader>
 
                         <Grid container spacing={ 10 }>
-
-                            <Grid item lg={ 6 } xl={ 4 }>
+                            <Grid item xs={ 12 } xl={ 4 }>
                                 <Card sx={ {
                                     position: 'relative',
                                     minHeight: 200
@@ -156,7 +155,8 @@ export const Index = ({
                                     </Box>
                                 </Card>
                             </Grid>
-                            <Grid item lg={ 6 } xl={ 4 }>
+
+                            <Grid item xs={ 12 } xl={ 4 }>
                                 <Card sx={ {
                                     minHeight: 200,
                                     position: 'relative'
@@ -172,7 +172,7 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item lg={ 6 } xl={ 4 }>
+                            <Grid item xs={ 12 } xl={ 4 }>
                                 <Card sx={ {
                                     minHeight: 200,
                                     position: 'relative'

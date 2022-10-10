@@ -1,4 +1,3 @@
-
 export const COLORS = [
     '#455A64',
     '#CFD8DC',
@@ -24,3 +23,5 @@ export const TEAMS = [
         key: 'Projektteam 3',
     },
 ];
+
+export const REDIS_CACHE_TTL = 60 * 5;

@@ -3,7 +3,7 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
     getHoursPerUser,
-    getMyAssignments,
+    getMyAssignments, getPersonsMap,
     getProjectsFromEntries,
     getTeamAssignments
 } from "../../../src/server/utils";
@@ -13,20 +13,21 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { orderBy } from "lodash";
 
-export type GetCompanyStatsHandlerResponse = {
-    totalMembers: number;
-    totalHours: number;
-    totalProjects: number;
-    hoursPerDay: HourPerDayEntry[];
-    hoursPerProject: HoursPerProjectEntry[];
+export type GetTeamsStatsHandlerResponse = {
+    teams: TeamStatsEntry[];
+    roles: TeamStatsEntry[];
 }
-
-export type HoursPerProjectEntry = {
-    name: string,
+export type TeamStatsEntry = {
+    name: string;
     hours: number;
+    members: number;
 }
 
-export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetCompanyStatsHandlerResponse | null>) => {
+const Teams = [ 'Projektteam 1', 'Projektteam 2', 'Projektteam 3' ];
+const Roles = [ 'UI', 'UX', 'Mobile', 'Backend', 'Web-Frontend', 'Project Management' ];
+
+
+export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamsStatsHandlerResponse | null>) => {
     if (!hasApiAccess(req)) {
         res.status(403).send(null);
         return;
@@ -38,44 +39,54 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     const allPeople = await forecast.getPersons();
     const peopleIds = allPeople.map((p) => p.harvest_user_id);
 
-
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
         harvest.getTimeEntriesForUsers(peopleIds, { from: range.from, to: range.to }),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
     ])
 
+    const personsMap = getPersonsMap(allPeople);
+
     const teamAssignments = getTeamAssignments(assignments, peopleIds);
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const projectMap = forecast.getProjectsMap(projects);
     const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
 
-    const hoursPerProject = entries.reduce((acc, entry) => {
-        if (!acc[entry.project.id]) {
-            acc[entry.project.id] = {
-                name: entry.project.code || entry.project.name || 'UNKNOWN',
+    const getMembersForTeam = (people: Forecast.Person[], team: string) => people.filter(p => p.roles.includes(team));
+
+    const getHoursFor = (teamList: string[]) => {
+        const teamMap = teamList.reduce((acc, name) => {
+            acc.set(name, {
                 hours: 0,
+                name,
+                members: getMembersForTeam(allPeople, name).length
+            })
+            return acc;
+        }, new Map<string, TeamStatsEntry>);
+
+
+        const hours = entries.reduce((hoursPerTeam, entry) => {
+            const person = personsMap.get(entry.user.id);
+            if (!person) {
+                return hoursPerTeam;
             }
-        }
-        acc[entry.project.id].hours += entry.hours;
-        return acc;
-    }, {} as Record<string, HoursPerProjectEntry>);
 
-    const hoursPerDay = entries.reduce((acc, entry) => {
-        if (!acc[entry.spent_date]) {
-            acc[entry.spent_date] = { date: entry.spent_date, hours: 0 };
-        }
-        acc[entry.spent_date].hours += entry.hours;
-        return acc;
-    }, {} as Record<string, HourPerDayEntry>);
+            const activeTeams = person.roles.filter(r => teamList.includes(r));
 
+            activeTeams.forEach((team) => {
+                const currentTeamStats = hoursPerTeam.get(team);
+                currentTeamStats!.hours += entry.hours;
+                hoursPerTeam.set(team, currentTeamStats!);
+            })
+
+            return hoursPerTeam;
+        }, teamMap);
+        return Array.from(hours.values());
+    }
 
     res.send({
-        totalHours,
-        hoursPerProject: Object.values(hoursPerProject),
-        hoursPerDay: orderBy(Object.values(hoursPerDay), 'date'),
-        totalMembers: peopleIds.length,
-        totalProjects: totalProjects.length,
+        teams: getHoursFor(Teams),
+        roles: getHoursFor(Roles),
     });
 }
 export default getCompanyStatsHandler;

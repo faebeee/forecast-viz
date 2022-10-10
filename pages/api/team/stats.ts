@@ -28,7 +28,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
-    const harvest = getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
+    const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
     const allPeople = await forecast.getPersons();
     const userData = await harvest.getMe();
@@ -57,7 +57,6 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const projectMap = forecast.getProjectsMap(projects);
     const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
-    console.log(totalProjects);
     const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to });
 
     const hoursPerUser = getHoursPerUser(teamEntries);

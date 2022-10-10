@@ -16,16 +16,15 @@ const theme = createTheme({
         },
     },
     components: {
+        MuiContainer: {
+            defaultProps: {
+                maxWidth: false
+            },
+        },
         MuiCard: {
             defaultProps: {
-                elevation: 24,
-                variant: 'elevation',
+                variant: 'outlined',
             },
-            styleOverrides: {
-                root: {
-                    border: 'none',
-                }
-            }
         }
     }
 });

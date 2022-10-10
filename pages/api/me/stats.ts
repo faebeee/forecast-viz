@@ -20,7 +20,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
     }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
-    const harvest = getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
+    const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
 
     const userData = await harvest.getMe();
