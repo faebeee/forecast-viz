@@ -199,7 +199,44 @@ export const Index = ({
                             </Grid>
 
 
+
                             <Grid item lg={ 12 } xl={ 4 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Hours per roles</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                                key: h.name,
+                                                data: h.hours
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item lg={ 12 } xl={ 4 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Members per role</Typography>
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                                key: h.name,
+                                                data: h.members
+                                            })) ?? [] }/>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item lg={ 12 } xl={ 6 }>
                                 <Card>
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Hours per team</Typography>
@@ -218,10 +255,11 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item lg={ 12 } xl={ 4 }>
+
+                            <Grid item lg={ 12 } xl={ 6 }>
                                 <Card>
                                     <CardContent>
-                                        <Typography variant={ 'body1' }>Hours per roles</Typography>
+                                        <Typography variant={ 'body1' }>Members per team</Typography>
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
                                                 cornerRadius={ 4 }
@@ -229,9 +267,9 @@ export const Index = ({
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                            data={ (teamsStats.teamStats ?? []).map((h) => ({
                                                 key: h.name,
-                                                data: h.hours
+                                                data: h.members
                                             })) ?? [] }/>
                                     </CardContent>
                                 </Card>

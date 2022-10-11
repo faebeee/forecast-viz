@@ -23,7 +23,7 @@ export type TeamStatsEntry = {
     members: number;
 }
 
-const Teams = [ 'Projektteam 1', 'Projektteam 2', 'Projektteam 3' ];
+const Teams = [ 'Projektteam 1', 'Projektteam 2', 'Projektteam 3', 'A-Team', 'v-team' ];
 const Roles = [ 'UI', 'UX', 'Mobile', 'Backend', 'Web-Frontend', 'Project Management' ];
 
 
