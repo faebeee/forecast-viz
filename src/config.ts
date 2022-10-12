@@ -24,4 +24,4 @@ export const TEAMS = [
     },
 ];
 
-export const REDIS_CACHE_TTL = 60 * 5;
+export const REDIS_CACHE_TTL = !!process.env.REDIS_CACHE_TTL ? parseInt(process.env.REDIS_CACHE_TTL) : (60 * 5);

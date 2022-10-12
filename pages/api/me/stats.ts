@@ -30,6 +30,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         await forecast.getAssignments(range.from, range.to),
         await forecast.getProjects(),
     ])
+
     const projectMap = forecast.getProjectsMap(projects);
     const activeAssignments = filterActiveAssignments(projectMap, assignments);
     const myAssignments = getMyAssignments(activeAssignments, userId);

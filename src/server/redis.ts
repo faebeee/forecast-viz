@@ -1,7 +1,8 @@
 import { createClient } from "redis";
 
 const client = createClient({
-    url: process.env.REDIS_URL
+    url: process.env.REDIS_URL,
+    name: 'v1',
 });
 client.on('connect', () => {
     console.log('CacheStore - Connection status: connected');
@@ -18,8 +19,5 @@ client.on('error', (err) => {
 client.connect();
 
 export const getRedis = async () => {
-    if (!client.isReady) {
-
-    }
     return client;
 }

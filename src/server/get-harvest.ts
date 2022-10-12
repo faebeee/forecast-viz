@@ -29,12 +29,6 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
     })
 
     const fetchAllPages = async <RET>(url: string, key: string, results: RET): Promise<RET> => {
-        const redis = await getRedis();
-        const value = await redis.get(url) as string | null;
-        if (!!value && value.length > 0) {
-            return JSON.parse(value);
-        }
-
         console.log('fetch', url);
         const response = await api.get<{ total_pages: number, page: number, links: { next: string | null } }>(url);
         // @ts-ignore
@@ -43,9 +37,6 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
         if (response.data.links.next) {
             return fetchAllPages(response.data.links.next, key, newResults)
         }
-
-        await redis.set(url, JSON.stringify(newResults));
-        await redis.expire(url, REDIS_CACHE_TTL);
         return newResults;
     }
 
@@ -54,8 +45,18 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
                                       from,
                                       to
                                   }: QueryParams): Promise<TimeEntry[]> => {
+        const url = `/time_entries?user_id=${ userId }&from=${ from }&to=${ to }`;
+        const redis = await getRedis();
+        const value = await redis.get(url) as string | null;
+        if (!!value && value.length > 0) {
+            return JSON.parse(value);
+        }
+
         try {
-            return await fetchAllPages<TimeEntry[]>(`/time_entries?user_id=${ userId }&from=${ from }&to=${ to }`, 'time_entries', []);
+            const results = await fetchAllPages<TimeEntry[]>(url, 'time_entries', []);
+            await redis.set(url, JSON.stringify(results));
+            await redis.expire(url, REDIS_CACHE_TTL);
+            return results;
         } catch (e) {
             return [];
         }
