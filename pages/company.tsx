@@ -1,8 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
+import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Container, Grid, Typography } from "@mui/material";
-import { DataGrid } from '@mui/x-data-grid';
+import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
@@ -23,7 +22,6 @@ import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCompanyStats } from "../src/hooks/use-company-stats";
 import { useCompanyHours } from "../src/hooks/use-company-hours";
 import { GridlineSeriesProps } from "reaviz";
-import { useCompanyEntries } from "../src/hooks/use-company-entries";
 import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 
 //@ts-ignore
@@ -200,7 +198,6 @@ export const Index = ({
                                     </CardContent>
                                 </Card>
                             </Grid>
-
 
 
                             <Grid item lg={ 12 } xl={ 4 }>

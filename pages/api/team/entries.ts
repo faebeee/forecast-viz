@@ -5,7 +5,6 @@ import { getTeamHoursEntries, SpentProjectHours } from "../../../src/server/util
 import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
-
 export type GetTeamEntriesHandlerResponse = {
     entries: SpentProjectHours[];
 }

@@ -3,8 +3,7 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTeamProjectHours, SpentProjectHours } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
-import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
-import { getRedis } from "../../../src/server/redis";
+import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 
 export type GetTeamHoursHandlerResponse = {
