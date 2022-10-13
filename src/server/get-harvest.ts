@@ -17,6 +17,7 @@ export type QueryParams = {
 }
 
 
+
 export const getHarvest = async (accessToken: string, accountId: number) => {
     const api = axios.create({
         baseURL: 'https://api.harvestapp.com/v2',
@@ -142,3 +143,5 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
     }
 
 }
+
+export type HarvestApi = Awaited<ReturnType<typeof getHarvest>>

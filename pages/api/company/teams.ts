@@ -13,6 +13,7 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { orderBy } from "lodash";
 import { getRedis } from "../../../src/server/redis";
+import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 
 export type GetTeamsStatsHandlerResponse = {
     teams: TeamStatsEntry[];
@@ -40,20 +41,8 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     const allPeople = await forecast.getPersons();
     const peopleIds = allPeople.map((p) => p.harvest_user_id);
 
-
-    const redisKey = `company/teams/${ range.from }-${ range.to }`;
-
-    const redis = await getRedis();
-    if (redis) {
-        const cachedResult = await redis.get(redisKey);
-        if (!!cachedResult) {
-            res.send(JSON.parse(cachedResult));
-            return;
-        }
-    }
-
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        harvest.getTimeEntriesForUsers(peopleIds, { from: range.from, to: range.to }),
+        getTimeEntriesForUsers(harvest, peopleIds, range.from, range.to),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
     ])
@@ -101,10 +90,7 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
         teams: getHoursFor(Teams),
         roles: getHoursFor(Roles),
     };
-    if (redis) {
-        await redis.set(redisKey, JSON.stringify(result));
-        await redis.expire(redisKey, REDIS_CACHE_TTL);
-    }
+
     res.send(result);
 }
 export default getCompanyStatsHandler;

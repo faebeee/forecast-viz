@@ -6,6 +6,7 @@ import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-
 import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
+import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -55,7 +56,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to }),
+        getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
     ])

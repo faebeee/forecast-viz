@@ -4,8 +4,7 @@ import { getHarvest } from "../../../src/server/get-harvest";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
 import { getMyAssignments } from "../../../src/server/utils";
-import { getRedis } from "../../../src/server/redis";
-import { REDIS_CACHE_TTL } from "../../../src/config";
+import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 
 export type GetHoursHandlerResponse = ProjectHours[];
 export type ProjectHours = {
@@ -28,19 +27,8 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
     const userData = await harvest.getMe();
     const userId = userData.id;
 
-    const redisKey = `me/hours/${ userId }-${ range.from }-${ range.to }`;
-
-    const redis = await getRedis();
-    if (redis) {
-        const cachedResult = await redis.get(redisKey);
-        if (!!cachedResult) {
-            res.send(JSON.parse(cachedResult));
-            return;
-        }
-    }
-
     const [ entries, assignments ]: [ TimeEntry[], AssignmentEntry[] ] = await Promise.all([
-        harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
+        getTimeEntriesForUser(harvest, userId, range.from, range.to),
         forecast.getAssignments(range.from, range.to)
     ]);
     const myAssignments = getMyAssignments(assignments, userId);
@@ -82,10 +70,7 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
     });
 
     const result = Object.values(projectMap);
-    if (redis) {
-        await redis.set(redisKey, JSON.stringify(result));
-        await redis.expire(redisKey, REDIS_CACHE_TTL);
-    }
+
     res.send(result);
 }
 export default getHoursHandler;

@@ -5,6 +5,7 @@ import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
 import { REDIS_CACHE_TTL } from "../../../src/config";
+import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 
 export type ProjectHours = {
     hoursSpent: number;
@@ -29,19 +30,9 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
     const teamPeople = allPeople
         .map(p => p.harvest_user_id);
 
-    const redisKey = `company/hours/${ range.from }-${ range.to }`;
-
-    const redis = await getRedis();
-    if (redis) {
-        const cachedResult = await redis.get(redisKey);
-        if (!!cachedResult) {
-            res.send(JSON.parse(cachedResult));
-            return;
-        }
-    }
 
     const [ entries, assignments ]: [ TimeEntry[], AssignmentEntry[] ] = await Promise.all([
-        harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to }),
+        getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to),
         forecast.getAssignments(range.from, range.to)
     ]);
     const projectMap: Record<number | string, ProjectHours> = {};
@@ -80,10 +71,7 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
         hours: Object.values(projectMap),
     };
 
-    if (redis) {
-        await redis.set(redisKey, JSON.stringify(result));
-        await redis.expire(redisKey, REDIS_CACHE_TTL);
-    }
+
     res.send(result);
 }
 export default getTeamHoursHandler;
