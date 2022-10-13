@@ -1,15 +1,11 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import {
-    getHoursPerUser,
-    getMyAssignments,
-    getProjectsFromEntries,
-    getTeamAssignments
-} from "../../../src/server/utils";
+import { getHoursPerUser, getProjectsFromEntries, getTeamAssignments } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
-import { TEAMS } from "../../../src/config";
+import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
+import { getRedis } from "../../../src/server/redis";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -47,6 +43,16 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id);
 
+    const redisKey = `team/stats/${ teamId }-${ range.from }-${ range.to }`;
+
+    const redis = await getRedis();
+    if (redis) {
+        const cachedResult = await redis.get(redisKey);
+        if (!!cachedResult) {
+            res.send(JSON.parse(cachedResult));
+            return;
+        }
+    }
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
         harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to }),
@@ -61,11 +67,18 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
 
     const hoursPerUser = getHoursPerUser(teamEntries);
 
-    res.send({
+
+    const result = {
         totalHours,
         totalMembers: teamPeople.length,
         totalProjects: totalProjects.length,
         hoursPerUser,
-    });
+    };
+
+    if (redis) {
+        await redis.set(redisKey, JSON.stringify(result));
+        await redis.expire(redisKey, REDIS_CACHE_TTL);
+    }
+    res.send(result);
 }
 export default getTeamStatsHandler;

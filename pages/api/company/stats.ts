@@ -1,17 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import {
-    getHoursPerUser,
-    getMyAssignments,
-    getProjectsFromEntries,
-    getTeamAssignments
-} from "../../../src/server/utils";
+import { getProjectsFromEntries, getTeamAssignments } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
-import { TEAMS } from "../../../src/config";
+import { REDIS_CACHE_TTL } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { orderBy } from "lodash";
+import { getRedis } from "../../../src/server/redis";
 
 export type GetCompanyStatsHandlerResponse = {
     totalMembers: number;
@@ -37,6 +33,18 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
     const allPeople = await forecast.getPersons();
     const peopleIds = allPeople.map((p) => p.harvest_user_id);
+
+
+    const redisKey = `company/stats/${ range.from }-${ range.to }`;
+
+    const redis = await getRedis();
+    if (redis) {
+        const cachedResult = await redis.get(redisKey);
+        if (!!cachedResult) {
+            res.send(JSON.parse(cachedResult));
+            return;
+        }
+    }
 
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
@@ -70,12 +78,17 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     }, {} as Record<string, HourPerDayEntry>);
 
 
-    res.send({
+    const result = {
         totalHours,
         hoursPerProject: Object.values(hoursPerProject),
         hoursPerDay: orderBy(Object.values(hoursPerDay), 'date'),
         totalMembers: peopleIds.length,
         totalProjects: totalProjects.length,
-    });
+    };
+    if (redis) {
+        await redis.set(redisKey, JSON.stringify(result));
+        await redis.expire(redisKey, REDIS_CACHE_TTL);
+    }
+    res.send(result);
 }
 export default getCompanyStatsHandler;

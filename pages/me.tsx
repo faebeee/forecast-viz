@@ -92,7 +92,11 @@ export const Index = ({
                           to,
                           hasTeamAccess,
                       }: EntriesProps) => {
-    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([ !!from ? parse(from, DATE_FORMAT, new Date()) : startOfWeek(new Date()), !!to ? parse(to, DATE_FORMAT, new Date()) : endOfWeek(new Date()) ]);
+    const router = useRouter();
+    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
+        startOfWeek(new Date(), { weekStartsOn: 1 }),
+        endOfWeek(new Date(), { weekStartsOn: 6 })
+    ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
@@ -116,15 +120,21 @@ export const Index = ({
     const query = useMemo(() => qs.stringify({
         from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
         to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
-    }), [ dateRange, harvestToken, harvestAccountId, forecastAccountId, ]);
+    }), [ dateRange ]);
 
     useEffect(() => {
-        load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        assignmentsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        hoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+        const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
+        const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+        load(from, to);
+        statsApi.load(from, to);
+        assignmentsApi.load(from, to);
+        hoursApi.load(from, to);
         currentStatsApi.load();
     }, [ dateRange ]);
+
+    useEffect(() => {
+        router.replace(`?${ query }`, `?${ query }`)
+    }, [ query ]);
 
 
     return <>
@@ -180,7 +190,10 @@ export const Index = ({
                                         <CardContent>
                                             <Typography variant={ 'body1' }>My Hours</Typography>
                                             <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }</Typography>
+                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
+                                                <Typography variant={ 'body2' } component={ 'span' }>
+                                                    avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
+                                            </Typography>
                                             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                                 <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
                                             </Box>

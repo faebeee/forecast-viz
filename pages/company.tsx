@@ -85,7 +85,10 @@ export const Index = ({
                           to,
                           hasTeamAccess,
                       }: EntriesProps) => {
-    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([ !!from ? parse(from, DATE_FORMAT, new Date()) : startOfWeek(new Date()), !!to ? parse(to, DATE_FORMAT, new Date()) : endOfWeek(new Date()) ]);
+    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
+        startOfWeek(new Date(), { weekStartsOn: 1 }),
+        endOfWeek(new Date(), { weekStartsOn: 6 })
+    ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
     const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');

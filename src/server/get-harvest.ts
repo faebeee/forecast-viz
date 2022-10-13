@@ -1,15 +1,13 @@
 import {
     GetMe,
-    GetProjectAssignment, GetProjectBudget,
-    GetProjectReports,
+    GetProjectAssignment,
+    GetProjectBudget,
     GetTaskReport,
-    GetTimeEntriesResponse,
-    GetUser, GetUsersAPI, RolesApi,
+    GetUsersAPI,
+    RolesApi,
     TimeEntry
 } from "./harvest-types";
 import axios from "axios";
-import { getRedis } from "./redis";
-import { REDIS_CACHE_TTL } from "../config";
 
 
 export type QueryParams = {
@@ -46,17 +44,8 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
                                       to
                                   }: QueryParams): Promise<TimeEntry[]> => {
         const url = `/time_entries?user_id=${ userId }&from=${ from }&to=${ to }`;
-        const redis = await getRedis();
-        const value = await redis.get(url) as string | null;
-        if (!!value && value.length > 0) {
-            return JSON.parse(value);
-        }
-
         try {
-            const results = await fetchAllPages<TimeEntry[]>(url, 'time_entries', []);
-            await redis.set(url, JSON.stringify(results));
-            await redis.expire(url, REDIS_CACHE_TTL);
-            return results;
+            return await fetchAllPages<TimeEntry[]>(url, 'time_entries', []);
         } catch (e) {
             return [];
         }

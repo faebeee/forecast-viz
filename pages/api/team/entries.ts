@@ -3,7 +3,8 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
-import { TEAMS } from "../../../src/config";
+import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
+import { getRedis } from "../../../src/server/redis";
 
 export type GetTeamEntriesHandlerResponse = {
     entries: SpentProjectHours[];
@@ -31,6 +32,17 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
         return;
     }
 
+    const redisKey = `team/entries/${ teamId }-${ range.from }-${ range.to }`;
+
+    const redis = await getRedis();
+    if (redis) {
+        const cachedResult = await redis.get(redisKey);
+        if (!!cachedResult) {
+            res.send(JSON.parse(cachedResult));
+            return;
+        }
+    }
+
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id);
@@ -38,8 +50,15 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
     const assignments = await forecast.getAssignments(range.from, range.to);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
 
-    res.send({
+
+    const result = {
         entries: teamProjectHourEntries,
-    });
+    };
+
+    if (redis) {
+        await redis.set(redisKey, JSON.stringify(result));
+        await redis.expire(redisKey, REDIS_CACHE_TTL);
+    }
+    res.send(result);
 }
 export default getTeamHoursHandler;

@@ -4,6 +4,8 @@ import { getHarvest } from "../../../src/server/get-harvest";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
 import { getMyAssignments } from "../../../src/server/utils";
+import { getRedis } from "../../../src/server/redis";
+import { REDIS_CACHE_TTL } from "../../../src/config";
 
 export type GetHoursHandlerResponse = ProjectHours[];
 export type ProjectHours = {
@@ -25,13 +27,25 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
     const userData = await harvest.getMe();
     const userId = userData.id;
+
+    const redisKey = `me/hours/${ userId }-${ range.from }-${ range.to }`;
+
+    const redis = await getRedis();
+    if (redis) {
+        const cachedResult = await redis.get(redisKey);
+        if (!!cachedResult) {
+            res.send(JSON.parse(cachedResult));
+            return;
+        }
+    }
+
     const [ entries, assignments ]: [ TimeEntry[], AssignmentEntry[] ] = await Promise.all([
         harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
         forecast.getAssignments(range.from, range.to)
     ]);
     const myAssignments = getMyAssignments(assignments, userId);
 
-    const projectMap: Record<number, ProjectHours> = {};
+    const projectMap: Record<number | string, ProjectHours> = {};
     entries.forEach((e) => {
         if (!projectMap[e.project?.id]) {
             projectMap[e.project?.id] = {
@@ -67,6 +81,11 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
         projectMap[e.project.harvest_id].hoursPlanned += e.totalHours ?? 0;
     });
 
-    res.send(Object.values(projectMap));
+    const result = Object.values(projectMap);
+    if (redis) {
+        await redis.set(redisKey, JSON.stringify(result));
+        await redis.expire(redisKey, REDIS_CACHE_TTL);
+    }
+    res.send(result);
 }
 export default getHoursHandler;

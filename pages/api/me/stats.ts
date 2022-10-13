@@ -5,11 +5,16 @@ import { filterActiveAssignments, getMyAssignments, getProjectsFromEntries } fro
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
+import { differenceInBusinessDays, parse } from "date-fns";
+import { DATE_FORMAT } from "../../../src/components/date-range-widget";
+import { getRedis } from "../../../src/server/redis";
+import { REDIS_CACHE_TTL } from "../../../src/config";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
     totalPlannedHours: number;
-    totalProjects: number
+    totalProjects: number;
+    avgPerDay: number;
     hoursPerDay: HourPerDayEntry[]
 }
 
@@ -25,12 +30,24 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     const userData = await harvest.getMe();
     const userId = userData.id;
+    const redisKey = `me/stats/${ userId }-${ range.from }-${ range.to }`;
+
+    const redis = await getRedis();
+    if (redis) {
+        const cachedResult = await redis.get(redisKey);
+        if (!!cachedResult) {
+            res.send(JSON.parse(cachedResult));
+            return;
+        }
+    }
+
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        await harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
-        await forecast.getAssignments(range.from, range.to),
-        await forecast.getProjects(),
+        harvest.getTimeEntries({ userId: userId, from: range.from, to: range.to }),
+        forecast.getAssignments(range.from, range.to),
+        forecast.getProjects(),
     ])
 
+    const rangeDays = differenceInBusinessDays(parse(range.to, DATE_FORMAT, new Date()), parse(range.from, DATE_FORMAT, new Date())) + 1
     const projectMap = forecast.getProjectsMap(projects);
     const activeAssignments = filterActiveAssignments(projectMap, assignments);
     const myAssignments = getMyAssignments(activeAssignments, userId);
@@ -48,12 +65,19 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         return acc;
     }, {} as Record<string, HourPerDayEntry>)).reverse();
 
-
-    res.send({
+    const result = {
         totalHours,
         totalPlannedHours,
         totalProjects,
-        hoursPerDay
-    });
+        hoursPerDay,
+        avgPerDay: (totalHours / rangeDays),
+    }
+
+    if (redis) {
+        await redis.set(redisKey, JSON.stringify(result));
+        await redis.expire(redisKey, REDIS_CACHE_TTL);
+    }
+
+    res.send(result);
 }
 export default getStatsHandler;

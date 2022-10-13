@@ -1,8 +1,5 @@
 import axios from "axios";
 import { differenceInDays, isAfter, isBefore } from "date-fns";
-import { getMyAssignments } from "./utils";
-import { getRedis } from "./redis";
-import { REDIS_CACHE_TTL } from "../config";
 
 export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
@@ -37,7 +34,7 @@ export declare module Forecast {
         notes: string;
         start_date: string;
         end_date: string;
-        harvest_id?: number;
+        harvest_id?: string | number;
         archived: boolean;
         updated_at: Date;
         updated_by_id: number;
@@ -95,18 +92,10 @@ export const getForecast = (accessToken: string, accountId: number) => {
     })
 
     const getProjects = async (): Promise<Forecast.Project[]> => {
-        const redis = await getRedis();
         try {
-            const value = await redis.get('f:projects');
-            if (!!value) {
-                return JSON.parse(value);
-            }
             const response = await api.get<Forecast.GetProjectsResponse>(`/projects`);
             const projects: Forecast.Project[] = response.data.projects;
-            const activeProjects = projects.filter(p => !p.archived);
-            await redis.set('f:projects', JSON.stringify(activeProjects));
-            await redis.expire('f:projects', REDIS_CACHE_TTL);
-            return activeProjects;
+            return projects.map(p => ({ ...p, harvest_id: p.harvest_id ?? p.name })).filter(p => true);
         } catch (e) {
             console.error(e);
         }
@@ -114,28 +103,20 @@ export const getForecast = (accessToken: string, accountId: number) => {
     }
 
 
-    const getProjectsMap = (projects: Forecast.Project[]): Map<number, Forecast.Project> => {
+    const getProjectsMap = (projects: Forecast.Project[]): Map<number | string, Forecast.Project> => {
         return projects.reduce((map, project) => {
             if (project.harvest_id && !map.has(project.harvest_id) && !project.archived) {
                 map.set(project.harvest_id, project);
             }
             return map;
-        }, new Map<number, Forecast.Project>())
+        }, new Map<number | string, Forecast.Project>())
     }
 
     const getPersons = async (): Promise<Forecast.Person[]> => {
-        const redis = await getRedis();
-        const value = await redis.get('f:persons');
-        if (!!value) {
-            return JSON.parse(value);
-        }
 
         try {
             const response = await api.get<Forecast.GetPeopleResponse>(`/people`);
-            const activePersons = response.data.people.filter((p) => !p.archived && p.login === 'enabled');
-            await redis.set('f:persons', JSON.stringify(activePersons));
-            await redis.expire('f:persons', REDIS_CACHE_TTL);
-            return activePersons;
+            return response.data.people.filter((p) => !p.archived && p.login === 'enabled');
         } catch (e) {
             console.error(e);
         }
@@ -147,7 +128,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
         const toDate = new Date(to);
         const projects = await getProjects();
         const persons = await getPersons();
-        const projectMap = new Map<number, Forecast.Project>();
+        const projectMap = new Map<number | string, Forecast.Project>();
         projects.forEach(((p) => {
             projectMap.set(p.id, p)
         }))

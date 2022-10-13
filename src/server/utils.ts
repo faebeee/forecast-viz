@@ -1,7 +1,5 @@
-import { Project, TimeEntry } from "./harvest-types";
+import { TimeEntry } from "./harvest-types";
 import { AssignmentEntry, Forecast } from "./get-forecast";
-import { differenceInDays } from "date-fns";
-import { COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME } from "../components/settings";
 
 
 export type SpentProjectHours = {
@@ -66,9 +64,9 @@ export const getMyAssignments = (assignments: AssignmentEntry[], userId?: number
     return assignments.filter((assignment) => assignment.person?.harvest_user_id === userId);
 }
 
-export const filterActiveAssignments = (projects: Map<number, Forecast.Project>, assignments: AssignmentEntry[]) => {
+export const filterActiveAssignments = (projects: Map<number | string, Forecast.Project>, assignments: AssignmentEntry[]) => {
     return assignments.filter((a) => {
-        return a.project?.harvest_id && projects.has(a.project?.harvest_id) && !projects.get(a.project?.harvest_id)!.archived;
+        return a.project?.harvest_id && projects.has(a.project?.harvest_id);
     });
 }
 
@@ -135,8 +133,8 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
     }, {} as Record<string, SpentProjectHours>)
 }
 
-export const getProjectsFromEntries = (projectsMap: Map<number, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
-    const map = new Map<number, Forecast.Project>()
+export const getProjectsFromEntries = (projectsMap: Map<number | string, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
+    const map = new Map<number | string, Forecast.Project>()
     entries.reduce((acc, entry) => {
         if (!acc.has(entry.project.id) && projectsMap.has(entry.project.id)) {
             acc.set(entry.project.id, projectsMap.get(entry.project.id)!);
@@ -156,6 +154,7 @@ export const getProjectsFromEntries = (projectsMap: Map<number, Forecast.Project
 export const getPersonsMap = (persons: Forecast.Person[]): Map<number, Forecast.Person> => {
     return persons.reduce((map, person) => {
         if (!map.has(person.harvest_user_id)) {
+            return map;
         }
         map.set(person.harvest_user_id, person);
         return map;
