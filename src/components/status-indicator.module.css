@@ -1,0 +1,11 @@
+.root {
+    display: flex;
+}
+
+.bullet {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--status-indicator--color, #aaa);
+    margin-right: 8px;
+}

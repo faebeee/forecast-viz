@@ -10,6 +10,8 @@ export type SpentProjectHours = {
     projectName: string,
     hours: number,
     hours_forecast: number,
+    hours_delta: number;
+    hours_delta_percentage: number;
     billable?: boolean
     date?: string
 }
@@ -86,6 +88,8 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
                 projectName: project.name,
                 hours: project.hours,
                 hours_forecast: plannedHours,
+                hours_delta: project.hours - plannedHours,
+                hours_delta_percentage: 100 + (100 / plannedHours * ((project.hours - plannedHours)))
             })
         });
         return acc;
@@ -113,7 +117,7 @@ export const getHoursPerUser = (entries: TimeEntry[]): { user: string, hours: nu
     return Object.values(list)
 }
 
-export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, SpentProjectHours> => {
+export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string|number, SpentProjectHours> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.project.id]) {
             acc[entry.project.id] = {
@@ -124,13 +128,15 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string, Sp
                 hours: 0,
                 billable: entry.billable,
                 hours_forecast: 0,
+                hours_delta_percentage: 0,
+                hours_delta: 0,
             };
         }
 
         acc[entry.project.id].hours += entry.hours;
 
         return acc;
-    }, {} as Record<string, SpentProjectHours>)
+    }, {} as Record<number|string, SpentProjectHours>)
 }
 
 export const getProjectsFromEntries = (projectsMap: Map<number | string, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {

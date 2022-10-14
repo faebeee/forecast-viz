@@ -29,6 +29,9 @@ import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
 import { GridlineSeriesProps } from "reaviz";
+import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
+import { SpentProjectHours } from "../src/server/utils";
+import { StatusIndicator } from "../src/components/status-indicator";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -287,31 +290,44 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item lg={ 12 } xl={ 6 }>
+                            <Grid item lg={ 12 }>
                                 <Card>
                                     <CardContent>
                                         <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
 
                                         <DataGrid
                                             autoHeight
-                                            getRowId={ (r) => r.id }
+                                            rows={ entries }
                                             rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            rows={ hoursApi.hours ?? [] }
                                             columns={ [
-                                                { field: 'id', headerName: 'Project ID', width: 90 },
-                                                { field: 'name', headerName: 'Project Name', flex: 1 },
-                                                { field: 'code', headerName: 'Project Code', flex: 1 },
-                                                { field: 'hoursSpent', headerName: 'Spent', flex: 1 },
-                                                { field: 'hoursPlanned', headerName: 'Planned', flex: 1 },
+                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'billable', headerName: 'Billable', flex: 1 },
+                                                {
+                                                    field: 'hours', headerName: 'Hours', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                        <StatusIndicator value={ data.row[data.field] as number }/>
+                                                    </>
+                                                },
                                             ] }
                                             disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }
-                                        />
+                                            experimentalFeatures={ { newEditingApi: true } }/>
                                     </CardContent>
                                 </Card>
                             </Grid>
 
-                            <Grid item lg={ 12 } xl={ 6 }>
+                            <Grid item lg={ 12 }>
                                 <Card>
                                     <CardContent>
                                         <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>

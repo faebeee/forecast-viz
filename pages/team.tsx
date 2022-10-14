@@ -24,6 +24,9 @@ import { useTeamHours } from "../src/hooks/use-team-hours";
 import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
 import { round } from "lodash";
+import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
+import { SpentProjectHours } from "../src/server/utils";
+import { StatusIndicator } from "../src/components/status-indicator";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -219,7 +222,43 @@ export const Index = ({
                                 />
                             </Grid>
 
-                            <Grid item lg={ 12 } xl={ 6 }>
+                            <Grid item lg={ 12 }>
+                                <Card>
+                                    <CardContent>
+                                        <Typography variant={ 'h5' }>Team Hours</Typography>
+                                        <DataGrid
+                                            autoHeight
+                                            rows={ teamEntriesApi.entries }
+                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                            columns={ [
+                                                { field: 'user', headerName: 'User', flex: 1 },
+                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                                { field: 'billable', headerName: 'Billable', flex: 1 },
+                                                {
+                                                    field: 'hours', headerName: 'Hours', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                                },
+                                                {
+                                                    field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                        <StatusIndicator value={ data.row[data.field] as number }/>
+                                                    </>
+                                                },
+                                            ] }
+                                            disableSelectionOnClick
+                                            experimentalFeatures={ { newEditingApi: true } }/>
+                                    </CardContent>
+                                </Card>
+                            </Grid>
+                            <Grid item lg={ 12 }>
                                 <Card>
                                     <CardContent>
                                         <Typography variant={ 'h5' }>Team Projects</Typography>
@@ -232,25 +271,6 @@ export const Index = ({
                                                 { field: 'projectId', headerName: 'Project ID', width: 90 },
                                                 { field: 'projectName', headerName: 'Project Name', flex: 1 },
                                                 { field: 'hours', headerName: 'Hours', flex: 1 },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item lg={ 12 } xl={ 6 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>Team Hours</Typography>
-                                        <DataGrid
-                                            autoHeight
-                                            rows={ teamEntriesApi.entries }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'user', headerName: 'User', flex: 1 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                                { field: 'hours_forecast', headerName: 'Forecast', flex: 1 },
                                             ] }
                                             disableSelectionOnClick
                                             experimentalFeatures={ { newEditingApi: true } }/>
