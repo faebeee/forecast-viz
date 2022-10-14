@@ -198,59 +198,51 @@ export const Index = ({
                         </Grid>
 
                         <Grid item lg={ 12 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'h5' }>Team Hours</Typography>
-                                    <DataGrid
-                                        autoHeight
-                                        rows={ teamEntriesApi.entries }
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        columns={ [
-                                            { field: 'user', headerName: 'User', flex: 1 },
-                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                            { field: 'billable', headerName: 'Billable', flex: 1 },
-                                            {
-                                                field: 'hours', headerName: 'Hours', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                                    <StatusIndicator value={ data.row[data.field] as number }/>
-                                                </>
-                                            },
-                                        ] }
-                                        disableSelectionOnClick
-                                        experimentalFeatures={ { newEditingApi: true } }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'h5' }>Team Hours</Typography>
+                            <DataGrid
+                                autoHeight
+                                rows={ teamEntriesApi.entries }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                columns={ [
+                                    { field: 'user', headerName: 'User', flex: 1 },
+                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                    { field: 'billable', headerName: 'Billable', flex: 1 },
+                                    {
+                                        field: 'hours', headerName: 'Hours', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                            <StatusIndicator value={ data.row[data.field] as number }/>
+                                        </>
+                                    },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }/>
                         </Grid>
                         <Grid item lg={ 12 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'h5' }>Team Projects</Typography>
-                                    <DataGrid
-                                        autoHeight
-                                        getRowId={ (r) => r.projectName }
-                                        rows={ teamHoursApi.hours ?? [] }
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        columns={ [
-                                            { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                            { field: 'hours', headerName: 'Hours', flex: 1 },
-                                        ] }
-                                        disableSelectionOnClick
-                                        experimentalFeatures={ { newEditingApi: true } }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'h5' }>Team Projects</Typography>
+                            <DataGrid
+                                autoHeight
+                                getRowId={ (r) => r.projectName }
+                                rows={ teamHoursApi.hours ?? [] }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                columns={ [
+                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                    { field: 'hours', headerName: 'Hours', flex: 1 },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }/>
                         </Grid>
                     </Grid>
                 </Box>

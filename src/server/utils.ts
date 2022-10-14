@@ -159,7 +159,7 @@ export const getProjectsFromEntries = (projectsMap: Map<number | string, Forecas
 
 export const getPersonsMap = (persons: Forecast.Person[]): Map<number, Forecast.Person> => {
     return persons.reduce((map, person) => {
-        if (!map.has(person.harvest_user_id)) {
+        if (map.has(person.harvest_user_id)) {
             return map;
         }
         map.set(person.harvest_user_id, person);

@@ -41,18 +41,9 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     const allPeople = await forecast.getPersons();
     const peopleIds = allPeople.map((p) => p.harvest_user_id);
 
-    const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        getTimeEntriesForUsers(harvest, peopleIds, range.from, range.to),
-        forecast.getAssignments(range.from, range.to),
-        forecast.getProjects(),
-    ])
+    const entries = await getTimeEntriesForUsers(harvest, peopleIds, range.from, range.to);
 
     const personsMap = getPersonsMap(allPeople);
-
-    const teamAssignments = getTeamAssignments(assignments, peopleIds);
-    const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
-    const projectMap = forecast.getProjectsMap(projects);
-    const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
 
     const getMembersForTeam = (people: Forecast.Person[], team: string) => people.filter(p => p.roles.includes(team));
 

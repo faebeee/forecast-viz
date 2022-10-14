@@ -12,7 +12,7 @@ export const useCompanyStats = () => {
     const [ hoursPerDay, setHoursPerDay ] = useState<HourPerDayEntry[]>([]);
 
     const load = useCallback((from: string, to: string) => {
-        getAxios().get<GetCompanyStatsHandlerResponse>(`/company/stats?from=${ from }&to=${ to }`)
+        return getAxios().get<GetCompanyStatsHandlerResponse>(`/company/stats?from=${ from }&to=${ to }`)
             .then(({ data }) => {
                 setTotalHours(data.totalHours);
                 setTotalMembers(data.totalMembers);

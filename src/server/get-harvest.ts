@@ -17,7 +17,6 @@ export type QueryParams = {
 }
 
 
-
 export const getHarvest = async (accessToken: string, accountId: number) => {
     const api = axios.create({
         baseURL: 'https://api.harvestapp.com/v2',
@@ -28,15 +27,20 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
     })
 
     const fetchAllPages = async <RET>(url: string, key: string, results: RET): Promise<RET> => {
-        console.log('fetch', url);
-        const response = await api.get<{ total_pages: number, page: number, links: { next: string | null } }>(url);
-        // @ts-ignore
-        const newResults: RET = [ ...results, ...response.data[key] ]
+        try {
 
-        if (response.data.links.next) {
-            return fetchAllPages(response.data.links.next, key, newResults)
+            const response = await api.get<{ total_pages: number, page: number, links: { next: string | null } }>(url);
+            console.log('fetched', url);
+            // @ts-ignore
+            const newResults: RET = [ ...results, ...response.data[key] ]
+
+            if (response.data.links.next) {
+                return fetchAllPages(response.data.links.next, key, newResults)
+            }
+            return newResults;
+        } catch (e) {
+            throw e;
         }
-        return newResults;
     }
 
     const getTimeEntries = async ({
@@ -140,6 +144,7 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
         getTimeEntriesForUsers,
         getRoles,
         getUser,
+        fetchAllPages,
     }
 
 }

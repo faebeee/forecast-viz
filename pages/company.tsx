@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Button, Card, CardContent, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
@@ -84,14 +84,14 @@ export const Index = ({
                       }: EntriesProps) => {
     const { dateRange, setDateRange } = useFilterContext();
     const statsApi = useCompanyStats();
-    const hoursApi = useCompanyHours();
     const teamsStats = useCompanyTeamsStats();
 
     useEffect(() => {
-        statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        hoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-    }, [ dateRange ]);
+        statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
+            .then(() => {
+                return teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+            });
+    })
 
     return <>
         <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
@@ -164,98 +164,79 @@ export const Index = ({
                         </Grid>
 
                         <Grid item lg={ 12 } xl={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours per project</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (statsApi.hoursPerProject ?? []).map((h) => ({
-                                            key: h.name,
-                                            data: h.hours
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'body1' }>Hours per project</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                    key: h.name,
+                                    data: h.hours
+                                })) ?? [] }/>
                         </Grid>
 
 
                         <Grid item lg={ 12 } xl={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours per roles</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                            key: h.name,
-                                            data: h.hours
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'body1' }>Hours per roles</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    key: h.name,
+                                    data: h.hours
+                                })) ?? [] }/>
                         </Grid>
+
                         <Grid item lg={ 12 } xl={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Members per role</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                            key: h.name,
-                                            data: h.members
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
-                        </Grid>
-                        <Grid item lg={ 12 } xl={ 6 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours per team</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                            key: h.name,
-                                            data: h.hours
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'body1' }>Hours per team</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    key: h.name,
+                                    data: h.hours
+                                })) ?? [] }/>
                         </Grid>
 
-
                         <Grid item lg={ 12 } xl={ 6 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Members per team</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                            key: h.name,
-                                            data: h.members
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                            <Typography variant={ 'body1' }>Members per role</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    key: h.name,
+                                    data: h.members
+                                })) ?? [] }/>
+                        </Grid>
+                        
+                        <Grid item lg={ 12 } xl={ 6 }>
+                            <Typography variant={ 'body1' }>Members per team</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    key: h.name,
+                                    data: h.members
+                                })) ?? [] }/>
                         </Grid>
                     </Grid>
                 </Box>

@@ -196,147 +196,127 @@ export const Index = ({
                             </Grid>
                         </Grid>
 
-                        <Grid item xs={ 12 } lg={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours spent</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (hoursApi.hours ?? []).map((h) => ({
-                                            key: h.name ?? h.code ?? '?',
-                                            data: h.hoursSpent
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                        <Grid item xs={ 12 } lg={ 6 }>
+                            <Typography variant={ 'body1' }>Hours spent</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (hoursApi.hours ?? []).map((h) => ({
+                                    key: h.name ?? h.code ?? '?',
+                                    data: h.hoursSpent
+                                })) ?? [] }/>
                         </Grid>
 
-                        <Grid item xs={ 12 } lg={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours planned</Typography>
-                                    <PieChart height={ 600 }
-                                        series={ <PieArcSeries
-                                            cornerRadius={ 4 }
-                                            padAngle={ 0.02 }
-                                            padRadius={ 200 }
-                                            doughnut={ true }
-                                        /> }
-                                        data={ (assignmentsApi.assignments ?? []).map((h) => ({
-                                            key: h.name ?? h.code ?? '?',
-                                            data: h.totalHours ?? 0
-                                        })) ?? [] }/>
-                                </CardContent>
-                            </Card>
+                        <Grid item xs={ 12 } lg={ 6 }>
+                            <Typography variant={ 'body1' }>Hours planned</Typography>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                    key: h.name ?? h.code ?? '?',
+                                    data: h.totalHours ?? 0
+                                })) ?? [] }/>
                         </Grid>
 
-                        <Grid item xs={ 12 } lg={ 4 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Hours per day</Typography>
-                                    <BarChart
-                                        height={ 600 }
-                                        // @ts-ignore
-                                        gridlines={ <GridlineSeries line={ null }/> }
-                                        data={ statsApi.hoursPerDay.map((entry) => ({
-                                            key: entry.date,
-                                            data: entry.hours
-                                        })) }/>
-                                </CardContent>
-                            </Card>
+                        <Grid item xs={ 12 } lg={ 12 }>
+                            <Typography variant={ 'body1' }>Hours per day</Typography>
+                            <BarChart
+                                height={ 300 }
+                                // @ts-ignore
+                                gridlines={ <GridlineSeries line={ null }/> }
+                                data={ statsApi.hoursPerDay.map((entry) => ({
+                                    key: entry.date,
+                                    data: entry.hours
+                                })) }/>
                         </Grid>
 
                         <Grid item lg={ 12 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
+                            <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
 
-                                    <DataGrid
-                                        autoHeight
-                                        rows={ entries }
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        columns={ [
-                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                            { field: 'billable', headerName: 'Billable', flex: 1 },
-                                            {
-                                                field: 'hours', headerName: 'Hours', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                                    <StatusIndicator value={ data.row[data.field] as number }/>
-                                                </>
-                                            },
-                                        ] }
-                                        disableSelectionOnClick
-                                        experimentalFeatures={ { newEditingApi: true } }/>
-                                </CardContent>
-                            </Card>
+                            <DataGrid
+                                autoHeight
+                                rows={ entries }
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                columns={ [
+                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                    { field: 'billable', headerName: 'Billable', flex: 1 },
+                                    {
+                                        field: 'hours', headerName: 'Hours', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                    },
+                                    {
+                                        field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                            <StatusIndicator value={ data.row[data.field] as number }/>
+                                        </>
+                                    },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }/>
                         </Grid>
 
                         <Grid item lg={ 12 }>
-                            <Card>
-                                <CardContent>
-                                    <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
+                            <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
 
-                                    <DataGrid
-                                        autoHeight
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        rows={ assignmentsApi.assignments ?? [] }
-                                        columns={ [
-                                            {
-                                                field: 'id',
-                                                headerName: 'Project ID',
-                                            },
-                                            {
-                                                field: 'name',
-                                                headerName: 'Project Name',
-                                                flex: 1,
-                                            },
-                                            {
-                                                field: 'code',
-                                                headerName: 'Project Code',
-                                                flex: 1,
-                                            },
-                                            {
-                                                field: 'days',
-                                                headerName: 'Days',
-                                            },
-                                            {
-                                                field: 'hoursPerDay',
-                                                headerName: 'hoursPerDay',
-                                            },
-                                            {
-                                                field: 'totalHours',
-                                                headerName: 'totalHours',
-                                            },
-                                            {
-                                                field: 'startDate',
-                                                headerName: 'Start Date',
-                                            },
-                                            {
-                                                field: 'endDate',
-                                                headerName: 'End Date',
-                                            },
-                                        ] }
-                                        disableSelectionOnClick
-                                        experimentalFeatures={ { newEditingApi: true } }
-                                    />
-                                </CardContent>
-                            </Card>
+                            <DataGrid
+                                autoHeight
+                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                rows={ assignmentsApi.assignments ?? [] }
+                                columns={ [
+                                    {
+                                        field: 'id',
+                                        headerName: 'Project ID',
+                                    },
+                                    {
+                                        field: 'name',
+                                        headerName: 'Project Name',
+                                        flex: 1,
+                                    },
+                                    {
+                                        field: 'code',
+                                        headerName: 'Project Code',
+                                        flex: 1,
+                                    },
+                                    {
+                                        field: 'days',
+                                        headerName: 'Days',
+                                    },
+                                    {
+                                        field: 'hoursPerDay',
+                                        headerName: 'hoursPerDay',
+                                    },
+                                    {
+                                        field: 'totalHours',
+                                        headerName: 'totalHours',
+                                    },
+                                    {
+                                        field: 'startDate',
+                                        headerName: 'Start Date',
+                                    },
+                                    {
+                                        field: 'endDate',
+                                        headerName: 'End Date',
+                                    },
+                                ] }
+                                disableSelectionOnClick
+                                experimentalFeatures={ { newEditingApi: true } }
+                            />
                         </Grid>
                     </Grid>
                 </Box>

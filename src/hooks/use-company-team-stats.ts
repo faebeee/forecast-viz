@@ -9,7 +9,7 @@ export const useCompanyTeamsStats = () => {
     const [ teamStats, setTeamStats ] = useState<TeamStatsEntry[]>([]);
     const [ roleStats, setRoleStats ] = useState<TeamStatsEntry[]>([]);
     const load = useCallback((from: string, to: string) => {
-        getAxios().get<GetTeamsStatsHandlerResponse>(`/company/teams?from=${ from }&to=${ to }`)
+        return getAxios().get<GetTeamsStatsHandlerResponse>(`/company/teams?from=${ from }&to=${ to }`)
             .then(({ data }) => {
                 setTeamStats(data.teams);
                 setRoleStats(data.roles);

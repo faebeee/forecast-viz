@@ -35,7 +35,8 @@ const theme = createTheme({
         },
         MuiCard: {
             defaultProps: {
-                variant: 'outlined',
+                elevation: 24,
+                variant: 'elevation',
             },
         }
     }
