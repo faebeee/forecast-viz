@@ -1,7 +1,5 @@
 import { getAxios } from "../get-axios";
-import { TimeEntry } from "../server/harvest-types";
 import { useCallback, useState } from "react";
-import { MappedTimeEntry } from "../../pages/api/me/entries";
 import { GetTeamEntriesHandlerResponse } from "../../pages/api/team/entries";
 import { SpentProjectHours } from "../server/utils";
 
