@@ -15,7 +15,7 @@ import {
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import cookies from "js-cookie";
-import { FilterContext } from "../src/context/filter-context";
+import { FilterContext, useFilterContext } from "../src/context/filter-context";
 import { ContentHeader } from "../src/components/content-header";
 import Image from "next/image";
 import { useTeamStats } from "../src/hooks/use-team-stats";
@@ -95,28 +95,12 @@ export const Index = ({
                           teamId,
                       }: EntriesProps) => {
     const router = useRouter();
-    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
-        startOfWeek(new Date(), { weekStartsOn: 1 }),
-        endOfWeek(new Date(), { weekStartsOn: 6 })
-    ]);
-    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
-    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
-    const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
+    const { dateRange, setDateRange } = useFilterContext();
+
 
     const teamStatsApi = useTeamStats();
     const teamHoursApi = useTeamHours();
     const teamEntriesApi = useTeamEntries();
-
-    useEffect(() => {
-        cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
-    }, [ harvestToken ])
-
-    useEffect(() => {
-        cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
-    }, [ harvestAccountId ]);
-    useEffect(() => {
-        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId)
-    }, [ forecastAccountId ])
 
     useEffect(() => {
         teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
@@ -125,163 +109,153 @@ export const Index = ({
     }, [ dateRange ]);
 
     return <>
-        <FilterContext.Provider value={ {
-            dateRange,
-            setDateRange,
-            harvestAccountId,
-            setHarvestAccountId,
-            forecastAccountId,
-            setForecastAccountId,
-            harvestToken,
-            setHarvestToken,
-        } }>
-            <Layout active={ 'team' } hasTeamAccess={ hasTeamAccess } userName={ userName }>
-                <Box sx={ { flexGrow: 1, } }>
-                    <Box p={ 4 }>
-                        <ContentHeader title={ teamId ?? '' }>
-                            <Box sx={ { width: 280 } }>
-                                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                            </Box>
-                        </ContentHeader>
 
-                        <Grid container spacing={ 10 }>
-                            <Grid item xs={ 12 } xl={ 4 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: 200
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Team Hours</Typography>
-                                        <Typography
-                                            variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
+        <Layout active={ 'team' } hasTeamAccess={ hasTeamAccess } userName={ userName }>
+            <Box sx={ { flexGrow: 1, } }>
+                <Box p={ 4 }>
+                    <ContentHeader title={ teamId ?? '' }>
+                        <Box sx={ { width: 280 } }>
+                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+                        </Box>
+                    </ContentHeader>
 
-                            <Grid item xs={ 12 } xl={ 4 }>
-                                <Card sx={ {
-                                    minHeight: 200,
-                                    position: 'relative'
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Team Projects</Typography>
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-
-                            <Grid item xs={ 12 } xl={ 4 }>
-                                <Card sx={ {
-                                    minHeight: 200,
-                                    position: 'relative'
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Team Members</Typography>
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-
-                            <Grid item lg={ 6 } xl={ 6 }>
-                                <PieChart height={ 600 }
-                                    series={ <PieArcSeries
-                                        cornerRadius={ 4 }
-                                        padAngle={ 0.02 }
-                                        padRadius={ 200 }
-                                        doughnut={ true }
-                                    /> }
-                                    data={ teamHoursApi.hours?.map((h) => ({
-                                        key: h.projectName,
-                                        data: h.hours,
-                                    })) ?? [] }/>
-                            </Grid>
-
-                            <Grid item lg={ 6 } xl={ 6 }>
-                                <RadialAreaChart
-                                    data={ teamStatsApi.hoursPerUser?.map((h) => ({
-                                        key: h.user,
-                                        data: h.hours,
-                                    })) ?? [] }
-                                    height={ 600 }
-                                    series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
-                                    axis={ <RadialAxis
-                                        // @ts-ignore
-                                        type="category"/> }
-                                />
-                            </Grid>
-
-                            <Grid item lg={ 12 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>Team Hours</Typography>
-                                        <DataGrid
-                                            autoHeight
-                                            rows={ teamEntriesApi.entries }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'user', headerName: 'User', flex: 1 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'billable', headerName: 'Billable', flex: 1 },
-                                                {
-                                                    field: 'hours', headerName: 'Hours', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                                        <StatusIndicator value={ data.row[data.field] as number }/>
-                                                    </>
-                                                },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item lg={ 12 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'h5' }>Team Projects</Typography>
-                                        <DataGrid
-                                            autoHeight
-                                            getRowId={ (r) => r.projectName }
-                                            rows={ teamHoursApi.hours ?? [] }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'hours', headerName: 'Hours', flex: 1 },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
+                    <Grid container spacing={ 10 }>
+                        <Grid item xs={ 12 } xl={ 4 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: 200
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Team Hours</Typography>
+                                    <Typography
+                                        variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
                         </Grid>
-                    </Box>
+
+                        <Grid item xs={ 12 } xl={ 4 }>
+                            <Card sx={ {
+                                minHeight: 200,
+                                position: 'relative'
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Team Projects</Typography>
+                                    <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 12 } xl={ 4 }>
+                            <Card sx={ {
+                                minHeight: 200,
+                                position: 'relative'
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Team Members</Typography>
+                                    <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 6 } xl={ 6 }>
+                            <PieChart height={ 600 }
+                                series={ <PieArcSeries
+                                    cornerRadius={ 4 }
+                                    padAngle={ 0.02 }
+                                    padRadius={ 200 }
+                                    doughnut={ true }
+                                /> }
+                                data={ teamHoursApi.hours?.map((h) => ({
+                                    key: h.projectName,
+                                    data: h.hours,
+                                })) ?? [] }/>
+                        </Grid>
+
+                        <Grid item lg={ 6 } xl={ 6 }>
+                            <RadialAreaChart
+                                data={ teamStatsApi.hoursPerUser?.map((h) => ({
+                                    key: h.user,
+                                    data: h.hours,
+                                })) ?? [] }
+                                height={ 600 }
+                                series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                axis={ <RadialAxis
+                                    // @ts-ignore
+                                    type="category"/> }
+                            />
+                        </Grid>
+
+                        <Grid item lg={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h5' }>Team Hours</Typography>
+                                    <DataGrid
+                                        autoHeight
+                                        rows={ teamEntriesApi.entries }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'user', headerName: 'User', flex: 1 },
+                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                            { field: 'billable', headerName: 'Billable', flex: 1 },
+                                            {
+                                                field: 'hours', headerName: 'Hours', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                    <StatusIndicator value={ data.row[data.field] as number }/>
+                                                </>
+                                            },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item lg={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'h5' }>Team Projects</Typography>
+                                    <DataGrid
+                                        autoHeight
+                                        getRowId={ (r) => r.projectName }
+                                        rows={ teamHoursApi.hours ?? [] }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
                 </Box>
-            </Layout>
-        </FilterContext.Provider>
+            </Box>
+        </Layout>
     </>;
 }
 export default Index;

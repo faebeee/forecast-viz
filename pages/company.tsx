@@ -13,9 +13,8 @@ import {
     COOKIE_HARV_ACCOUNTID_NAME,
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
-import { FilterContext } from "../src/context/filter-context";
-import { useEffect, useState } from "react";
-import cookies from "js-cookie";
+import { useFilterContext } from "../src/context/filter-context";
+import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
@@ -83,13 +82,7 @@ export const Index = ({
                           to,
                           hasTeamAccess,
                       }: EntriesProps) => {
-    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
-        startOfWeek(new Date(), { weekStartsOn: 1 }),
-        endOfWeek(new Date(), { weekStartsOn: 6 })
-    ]);
-    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
-    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
-    const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
+    const { dateRange, setDateRange } = useFilterContext();
     const statsApi = useCompanyStats();
     const hoursApi = useCompanyHours();
     const teamsStats = useCompanyTeamsStats();
@@ -101,184 +94,173 @@ export const Index = ({
     }, [ dateRange ]);
 
     return <>
-        <FilterContext.Provider value={ {
-            dateRange,
-            setDateRange,
-            harvestAccountId,
-            setHarvestAccountId,
-            forecastAccountId,
-            setForecastAccountId,
-            harvestToken,
-            setHarvestToken,
-        } }>
-            <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
-                <Box sx={ { flexGrow: 1, } }>
-                    <Box p={ 4 }>
-                        <ContentHeader title={ 'Company Dashboard' }>
-                            <Box sx={ { width: 280 } }>
-                                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                            </Box>
-                        </ContentHeader>
-
-                        <Box pb={ 5 }>
-                            <Typography variant={ 'caption' }>
-                                This dashboard consumes a lot of data from the API. Therefore you might reach the
-                                API
-                                limit
-                                of req/sec.
-                                So be patient and retry you luck in 15mins.
-                            </Typography>
+        <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
+            <Box sx={ { flexGrow: 1, } }>
+                <Box p={ 4 }>
+                    <ContentHeader title={ 'Company Dashboard' }>
+                        <Box sx={ { width: 280 } }>
+                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
                         </Box>
+                    </ContentHeader>
 
-                        <Grid container spacing={ 10 }>
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Company Members</Typography>
-                                        <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Company Projects</Typography>
-                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-
-                            <Grid item xs={ 12 } md={ 4 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Company Hours</Typography>
-                                        <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
-                                    </CardContent>
-                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                        <Image src={ '/illu/work-team.svg' } width={ 128 } height={ 128 }/>
-                                    </Box>
-                                </Card>
-                            </Grid>
-
-                            <Grid item lg={ 12 } xl={ 4 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Hours per project</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (statsApi.hoursPerProject ?? []).map((h) => ({
-                                                key: h.name,
-                                                data: h.hours
-                                            })) ?? [] }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-
-
-                            <Grid item lg={ 12 } xl={ 4 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Hours per roles</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                                key: h.name,
-                                                data: h.hours
-                                            })) ?? [] }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item lg={ 12 } xl={ 4 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Members per role</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                                key: h.name,
-                                                data: h.members
-                                            })) ?? [] }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item lg={ 12 } xl={ 6 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Hours per team</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                                key: h.name,
-                                                data: h.hours
-                                            })) ?? [] }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-
-
-                            <Grid item lg={ 12 } xl={ 6 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Members per team</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                                key: h.name,
-                                                data: h.members
-                                            })) ?? [] }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        </Grid>
+                    <Box pb={ 5 }>
+                        <Typography variant={ 'caption' }>
+                            This dashboard consumes a lot of data from the API. Therefore you might reach the
+                            API
+                            limit
+                            of req/sec.
+                            So be patient and retry you luck in 15mins.
+                        </Typography>
                     </Box>
+
+                    <Grid container spacing={ 10 }>
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Company Members</Typography>
+                                    <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Company Projects</Typography>
+                                    <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 12 } md={ 4 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Company Hours</Typography>
+                                    <Typography
+                                        variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/work-team.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 12 } xl={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours per project</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                            key: h.name,
+                                            data: h.hours
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+
+                        <Grid item lg={ 12 } xl={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours per roles</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                            key: h.name,
+                                            data: h.hours
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item lg={ 12 } xl={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Members per role</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                            key: h.name,
+                                            data: h.members
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                        <Grid item lg={ 12 } xl={ 6 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours per team</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                            key: h.name,
+                                            data: h.hours
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+
+                        <Grid item lg={ 12 } xl={ 6 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Members per team</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                            key: h.name,
+                                            data: h.members
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
                 </Box>
-            </Layout>
-        </FilterContext.Provider>
+            </Box>
+        </Layout>
     </>
         ;
 }

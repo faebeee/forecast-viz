@@ -1,24 +1,21 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
+import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardActions, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
-import { get, round } from "lodash";
+import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import {
     COOKIE_FORC_ACCOUNTID_NAME,
     COOKIE_HARV_ACCOUNTID_NAME,
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
-import { FilterContext } from "../src/context/filter-context";
-import { useEffect, useMemo, useState } from "react";
-import cookies from "js-cookie";
-import qs from "qs";
-import { useRouter } from "next/router";
+import { useFilterContext } from "../src/context/filter-context";
+import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -95,35 +92,12 @@ export const Index = ({
                           to,
                           hasTeamAccess,
                       }: EntriesProps) => {
-    const router = useRouter();
-    const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
-        startOfWeek(new Date(), { weekStartsOn: 1 }),
-        endOfWeek(new Date(), { weekStartsOn: 6 })
-    ]);
-    const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
-    const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');
-    const [ forecastAccountId, setForecastAccountId ] = useState<string>(cookies.get(COOKIE_FORC_ACCOUNTID_NAME) ?? '');
+    const { dateRange, setDateRange } = useFilterContext();
     const { entries, load } = useEntries();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
-
-    useEffect(() => {
-        cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
-    }, [ harvestToken ])
-
-    useEffect(() => {
-        cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
-    }, [ harvestAccountId ]);
-    useEffect(() => {
-        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId)
-    }, [ forecastAccountId ])
-
-    const query = useMemo(() => qs.stringify({
-        from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
-        to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
-    }), [ dateRange ]);
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
@@ -135,254 +109,239 @@ export const Index = ({
         currentStatsApi.load();
     }, [ dateRange ]);
 
-    useEffect(() => {
-        router.replace(`?${ query }`, `?${ query }`)
-    }, [ query ]);
-
-
     return <>
-        <FilterContext.Provider value={ {
-            dateRange,
-            setDateRange,
-            harvestAccountId,
-            setHarvestAccountId,
-            forecastAccountId,
-            setForecastAccountId,
-            harvestToken,
-            setHarvestToken,
-        } }>
-            <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'me' }>
-                <Box sx={ { flexGrow: 1, } }>
-                    <Box p={ 4 }>
-                        <ContentHeader title={ 'My Dashboard' }>
-                            <Box sx={ { width: 280 } }>
-                                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                            </Box>
-                        </ContentHeader>
 
-                        <Grid container spacing={ 10 }>
-                            <Grid item container spacing={ 10 }>
-                                <Grid item xs={ 6 } xl={ 3 }>
-                                    <Card sx={ {
-                                        position: 'relative',
-                                        minHeight: '200px',
-                                    } }
-                                    >
-                                        <CardContent>
-                                            <Typography variant={ 'body1' }>Todays Hours</Typography>
-                                            <Typography
-                                                variant={ 'h2' }>
-                                                { round(currentStatsApi.totalHours ?? 0, 1) }
-                                                <Typography variant={ 'body2' } component={ 'span' }>
-                                                    of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
-                                                </Typography>
+        <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'me' }>
+            <Box sx={ { flexGrow: 1, } }>
+                <Box p={ 4 }>
+                    <ContentHeader title={ 'My Dashboard' }>
+                        <Box sx={ { width: 280 } }>
+                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+                        </Box>
+                    </ContentHeader>
+
+                    <Grid container spacing={ 10 }>
+                        <Grid item container spacing={ 10 }>
+                            <Grid item xs={ 6 } xl={ 3 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: '200px',
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Todays Hours</Typography>
+                                        <Typography
+                                            variant={ 'h2' }>
+                                            { round(currentStatsApi.totalHours ?? 0, 1) }
+                                            <Typography variant={ 'body2' } component={ 'span' }>
+                                                of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
                                             </Typography>
-                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                                <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-
-                                <Grid item xs={ 6 } xl={ 3 }>
-                                    <Card sx={ {
-                                        position: 'relative',
-                                        minHeight: '200px',
-                                    } }
-                                    >
-                                        <CardContent>
-                                            <Typography variant={ 'body1' }>My Hours</Typography>
-                                            <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
-                                                <Typography variant={ 'body2' } component={ 'span' }>
-                                                    avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
-                                            </Typography>
-                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                                <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                                <Grid item xs={ 6 } xl={ 3 }>
-                                    <Card sx={ {
-                                        position: 'relative',
-                                        minHeight: '200px',
-                                    } }
-                                    >
-                                        <CardContent>
-                                            <Typography variant={ 'body1' }>Planned Hours</Typography>
-                                            <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
-                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                                <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                                <Grid item xs={ 6 } xl={ 3 }>
-                                    <Card sx={ {
-                                        position: 'relative',
-                                        minHeight: 200
-                                    } }
-                                    >
-                                        <CardContent>
-                                            <Typography variant={ 'body1' }>My Projects</Typography>
-                                            <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
-                                            <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                                <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                            </Box>
-                                        </CardContent>
-                                    </Card>
-                                </Grid>
-                            </Grid>
-
-                            <Grid item xs={ 12 } lg={ 4 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Hours spent</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (hoursApi.hours ?? []).map((h) => ({
-                                                key: h.name ?? h.code ?? '?',
-                                                data: h.hoursSpent
-                                            })) ?? [] }/>
+                                        </Typography>
+                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                            <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             </Grid>
 
-                            <Grid item xs={ 12 } lg={ 4 }>
-                                <Card>
+                            <Grid item xs={ 6 } xl={ 3 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: '200px',
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography variant={ 'body1' }>Hours planned</Typography>
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (assignmentsApi.assignments ?? []).map((h) => ({
-                                                key: h.name ?? h.code ?? '?',
-                                                data: h.totalHours ?? 0
-                                            })) ?? [] }/>
+                                        <Typography variant={ 'body1' }>My Hours</Typography>
+                                        <Typography
+                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
+                                            <Typography variant={ 'body2' } component={ 'span' }>
+                                                avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
+                                        </Typography>
+                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                            <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             </Grid>
-
-                            <Grid item xs={ 12 } lg={ 4 }>
-                                <Card>
+                            <Grid item xs={ 6 } xl={ 3 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: '200px',
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography variant={ 'body1' }>Hours per day</Typography>
-                                        <BarChart
-                                            height={ 600 }
-                                            // @ts-ignore
-                                            gridlines={ <GridlineSeries line={ null }/> }
-                                            data={ statsApi.hoursPerDay.map((entry) => ({
-                                                key: entry.date,
-                                                data: entry.hours
-                                            })) }/>
+                                        <Typography variant={ 'body1' }>Planned Hours</Typography>
+                                        <Typography
+                                            variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
+                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                            <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             </Grid>
-
-                            <Grid item lg={ 12 }>
-                                <Card>
+                            <Grid item xs={ 6 } xl={ 3 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: 200
+                                } }
+                                >
                                     <CardContent>
-                                        <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
-
-                                        <DataGrid
-                                            autoHeight
-                                            rows={ entries }
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            columns={ [
-                                                { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                                { field: 'billable', headerName: 'Billable', flex: 1 },
-                                                {
-                                                    field: 'hours', headerName: 'Hours', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                                },
-                                                {
-                                                    field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                                    renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                                        <StatusIndicator value={ data.row[data.field] as number }/>
-                                                    </>
-                                                },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }/>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-
-                            <Grid item lg={ 12 }>
-                                <Card>
-                                    <CardContent>
-                                        <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
-
-                                        <DataGrid
-                                            autoHeight
-                                            rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                            rows={ assignmentsApi.assignments ?? [] }
-                                            columns={ [
-                                                {
-                                                    field: 'id',
-                                                    headerName: 'Project ID',
-                                                },
-                                                {
-                                                    field: 'name',
-                                                    headerName: 'Project Name',
-                                                    flex: 1,
-                                                },
-                                                {
-                                                    field: 'code',
-                                                    headerName: 'Project Code',
-                                                    flex: 1,
-                                                },
-                                                {
-                                                    field: 'days',
-                                                    headerName: 'Days',
-                                                },
-                                                {
-                                                    field: 'hoursPerDay',
-                                                    headerName: 'hoursPerDay',
-                                                },
-                                                {
-                                                    field: 'totalHours',
-                                                    headerName: 'totalHours',
-                                                },
-                                                {
-                                                    field: 'startDate',
-                                                    headerName: 'Start Date',
-                                                },
-                                                {
-                                                    field: 'endDate',
-                                                    headerName: 'End Date',
-                                                },
-                                            ] }
-                                            disableSelectionOnClick
-                                            experimentalFeatures={ { newEditingApi: true } }
-                                        />
+                                        <Typography variant={ 'body1' }>My Projects</Typography>
+                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                            <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                        </Box>
                                     </CardContent>
                                 </Card>
                             </Grid>
                         </Grid>
-                    </Box>
+
+                        <Grid item xs={ 12 } lg={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours spent</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (hoursApi.hours ?? []).map((h) => ({
+                                            key: h.name ?? h.code ?? '?',
+                                            data: h.hoursSpent
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 12 } lg={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours planned</Typography>
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                            key: h.name ?? h.code ?? '?',
+                                            data: h.totalHours ?? 0
+                                        })) ?? [] }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 12 } lg={ 4 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Hours per day</Typography>
+                                    <BarChart
+                                        height={ 600 }
+                                        // @ts-ignore
+                                        gridlines={ <GridlineSeries line={ null }/> }
+                                        data={ statsApi.hoursPerDay.map((entry) => ({
+                                            key: entry.date,
+                                            data: entry.hours
+                                        })) }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
+
+                                    <DataGrid
+                                        autoHeight
+                                        rows={ entries }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                            { field: 'billable', headerName: 'Billable', flex: 1 },
+                                            {
+                                                field: 'hours', headerName: 'Hours', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                            },
+                                            {
+                                                field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                    <StatusIndicator value={ data.row[data.field] as number }/>
+                                                </>
+                                            },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 12 }>
+                            <Card>
+                                <CardContent>
+                                    <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
+
+                                    <DataGrid
+                                        autoHeight
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        rows={ assignmentsApi.assignments ?? [] }
+                                        columns={ [
+                                            {
+                                                field: 'id',
+                                                headerName: 'Project ID',
+                                            },
+                                            {
+                                                field: 'name',
+                                                headerName: 'Project Name',
+                                                flex: 1,
+                                            },
+                                            {
+                                                field: 'code',
+                                                headerName: 'Project Code',
+                                                flex: 1,
+                                            },
+                                            {
+                                                field: 'days',
+                                                headerName: 'Days',
+                                            },
+                                            {
+                                                field: 'hoursPerDay',
+                                                headerName: 'hoursPerDay',
+                                            },
+                                            {
+                                                field: 'totalHours',
+                                                headerName: 'totalHours',
+                                            },
+                                            {
+                                                field: 'startDate',
+                                                headerName: 'Start Date',
+                                            },
+                                            {
+                                                field: 'endDate',
+                                                headerName: 'End Date',
+                                            },
+                                        ] }
+                                        disableSelectionOnClick
+                                        experimentalFeatures={ { newEditingApi: true } }
+                                    />
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    </Grid>
                 </Box>
-            </Layout>
-        </FilterContext.Provider>
+            </Box>
+        </Layout>
     </>
         ;
 }
