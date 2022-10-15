@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Button, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
@@ -19,7 +19,6 @@ import { ContentHeader } from "../src/components/content-header";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCompanyStats } from "../src/hooks/use-company-stats";
-import { useCompanyHours } from "../src/hooks/use-company-hours";
 import { GridlineSeriesProps } from "reaviz";
 import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 
@@ -88,10 +87,8 @@ export const Index = ({
 
     useEffect(() => {
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
-            .then(() => {
-                return teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-            });
-    })
+        teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+    }, [dateRange])
 
     return <>
         <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
@@ -114,7 +111,7 @@ export const Index = ({
                     </Box>
 
                     <Grid container spacing={ 10 }>
-                        <Grid item xs={ 12 } md={ 4 }>
+                        <Grid item xs={ 6 } lg={ 4 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: '200px',
@@ -122,7 +119,10 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Members</Typography>
-                                    <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
@@ -130,7 +130,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 12 } md={ 4 }>
+                        <Grid item xs={ 6 } lg={ 4 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: '200px',
@@ -138,7 +138,10 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Projects</Typography>
-                                    <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
@@ -146,7 +149,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 12 } md={ 4 }>
+                        <Grid item xs={ 6 } lg={ 4 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: '200px',
@@ -154,8 +157,11 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Hours</Typography>
-                                    <Typography
-                                        variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/work-team.svg' } width={ 128 } height={ 128 }/>
@@ -163,80 +169,95 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item lg={ 12 } xl={ 4 }>
+                        <Grid item xs={ 12 } lg={ 4 }>
                             <Typography variant={ 'body1' }>Hours per project</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (statsApi.hoursPerProject ?? []).map((h) => ({
-                                    key: h.name,
-                                    data: h.hours
-                                })) ?? [] }/>
+                            { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !statsApi.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                        key: h.name,
+                                        data: h.hours
+                                    })) ?? [] }/>
+                            }
                         </Grid>
 
 
-                        <Grid item lg={ 12 } xl={ 4 }>
+                        <Grid item xs={ 12 } lg={ 4 }>
                             <Typography variant={ 'body1' }>Hours per roles</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                    key: h.name,
-                                    data: h.hours
-                                })) ?? [] }/>
+                            { teamsStats.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamsStats.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                        key: h.name,
+                                        data: h.hours
+                                    })) ?? [] }/>
+                            }
                         </Grid>
 
-                        <Grid item lg={ 12 } xl={ 4 }>
+                        <Grid item xs={ 12 } lg={ 4 }>
                             <Typography variant={ 'body1' }>Hours per team</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                    key: h.name,
-                                    data: h.hours
-                                })) ?? [] }/>
+                            { teamsStats.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamsStats.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                        key: h.name,
+                                        data: h.hours
+                                    })) ?? [] }/>
+                            }
                         </Grid>
 
-                        <Grid item lg={ 12 } xl={ 6 }>
+                        <Grid item xs={ 12 } lg={ 4 }>
                             <Typography variant={ 'body1' }>Members per role</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (teamsStats.roleStats ?? []).map((h) => ({
-                                    key: h.name,
-                                    data: h.members
-                                })) ?? [] }/>
+                            { teamsStats.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamsStats.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                        key: h.name,
+                                        data: h.members
+                                    })) ?? [] }/>
+                            }
                         </Grid>
-                        
-                        <Grid item lg={ 12 } xl={ 6 }>
+
+                        <Grid item xs={ 12 } lg={ 4 }>
                             <Typography variant={ 'body1' }>Members per team</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (teamsStats.teamStats ?? []).map((h) => ({
-                                    key: h.name,
-                                    data: h.members
-                                })) ?? [] }/>
+                            { teamsStats.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamsStats.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                        key: h.name,
+                                        data: h.members
+                                    })) ?? [] }/>
+                            }
                         </Grid>
                     </Grid>
                 </Box>

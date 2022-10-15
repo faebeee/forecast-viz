@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
@@ -93,7 +93,7 @@ export const Index = ({
                           hasTeamAccess,
                       }: EntriesProps) => {
     const { dateRange, setDateRange } = useFilterContext();
-    const { entries, load } = useEntries();
+    const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
@@ -102,7 +102,7 @@ export const Index = ({
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
-        load(from, to);
+        entriesApi.load(from, to);
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
         hoursApi.load(from, to);
@@ -130,13 +130,15 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Todays Hours</Typography>
-                                        <Typography
-                                            variant={ 'h2' }>
-                                            { round(currentStatsApi.totalHours ?? 0, 1) }
-                                            <Typography variant={ 'body2' } component={ 'span' }>
-                                                of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
-                                            </Typography>
-                                        </Typography>
+                                        { currentStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !currentStatsApi.isLoading &&
+                                            <Typography
+                                                variant={ 'h2' }>
+                                                { round(currentStatsApi.totalHours ?? 0, 1) }
+                                                <Typography variant={ 'body2' } component={ 'span' }>
+                                                    of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
+                                                </Typography>
+                                            </Typography> }
                                         <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                             <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
                                         </Box>
@@ -152,11 +154,13 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>My Hours</Typography>
-                                        <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
-                                            <Typography variant={ 'body2' } component={ 'span' }>
-                                                avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
-                                        </Typography>
+                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !statsApi.isLoading &&
+                                            <Typography
+                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
+                                                <Typography variant={ 'body2' } component={ 'span' }>
+                                                    avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
+                                            </Typography> }
                                         <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                             <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
                                         </Box>
@@ -171,8 +175,11 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Planned Hours</Typography>
-                                        <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
+                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !statsApi.isLoading &&
+                                            <Typography
+                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
+                                        }
                                         <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                             <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
                                         </Box>
@@ -187,7 +194,10 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>My Projects</Typography>
-                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !statsApi.isLoading &&
+                                            <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                        }
                                         <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                             <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
                                         </Box>
@@ -198,52 +208,61 @@ export const Index = ({
 
                         <Grid item xs={ 12 } lg={ 6 }>
                             <Typography variant={ 'body1' }>Hours spent</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (hoursApi.hours ?? []).map((h) => ({
-                                    key: h.name ?? h.code ?? '?',
-                                    data: h.hoursSpent
-                                })) ?? [] }/>
+                            { hoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !hoursApi.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (hoursApi.hours ?? []).map((h) => ({
+                                        key: h.name ?? h.code ?? '?',
+                                        data: h.hoursSpent
+                                    })) ?? [] }/> }
                         </Grid>
 
                         <Grid item xs={ 12 } lg={ 6 }>
                             <Typography variant={ 'body1' }>Hours planned</Typography>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ (assignmentsApi.assignments ?? []).map((h) => ({
-                                    key: h.name ?? h.code ?? '?',
-                                    data: h.totalHours ?? 0
-                                })) ?? [] }/>
+                            { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !assignmentsApi.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                        key: h.name ?? h.code ?? '?',
+                                        data: h.totalHours ?? 0
+                                    })) ?? [] }/>
+                            }
                         </Grid>
 
                         <Grid item xs={ 12 } lg={ 12 }>
                             <Typography variant={ 'body1' }>Hours per day</Typography>
-                            <BarChart
-                                height={ 300 }
-                                // @ts-ignore
-                                gridlines={ <GridlineSeries line={ null }/> }
-                                data={ statsApi.hoursPerDay.map((entry) => ({
-                                    key: entry.date,
-                                    data: entry.hours
-                                })) }/>
+                            { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !statsApi.isLoading &&
+                                <BarChart
+                                    height={ 300 }
+                                    // @ts-ignore
+                                    gridlines={ <GridlineSeries line={ null }/> }
+                                    data={ statsApi.hoursPerDay.map((entry) => ({
+                                        key: entry.date,
+                                        data: entry.hours
+                                    })) }/>
+                            }
                         </Grid>
 
-                        <Grid item lg={ 12 }>
+                        <Grid item xs={ 12 }>
                             <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
 
                             <DataGrid
                                 autoHeight
-                                rows={ entries }
+                                loading={ entriesApi.isLoading }
+                                rows={ entriesApi.entries }
                                 rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
                                     { field: 'projectName', headerName: 'Project Name', flex: 1 },
@@ -271,12 +290,13 @@ export const Index = ({
                                 experimentalFeatures={ { newEditingApi: true } }/>
                         </Grid>
 
-                        <Grid item lg={ 12 }>
+                        <Grid item xs={ 12 }>
                             <Typography mb={ 2 } variant={ 'h5' }>My Forcecast</Typography>
 
                             <DataGrid
                                 autoHeight
                                 rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                loading={ assignmentsApi.isLoading }
                                 rows={ assignmentsApi.assignments ?? [] }
                                 columns={ [
                                     {

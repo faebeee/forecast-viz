@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Grid, Stack, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
@@ -120,7 +120,7 @@ export const Index = ({
                     </ContentHeader>
 
                     <Grid container spacing={ 10 }>
-                        <Grid item xs={ 12 } xl={ 4 }>
+                        <Grid item xs={ 6 } xl={ 4 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: 200
@@ -128,8 +128,11 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Team Hours</Typography>
-                                    <Typography
-                                        variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
+                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !teamStatsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
@@ -137,7 +140,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 12 } xl={ 4 }>
+                        <Grid item xs={ 6 } xl={ 4 }>
                             <Card sx={ {
                                 minHeight: 200,
                                 position: 'relative'
@@ -145,7 +148,10 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Team Projects</Typography>
-                                    <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
+                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !teamStatsApi.isLoading &&
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
@@ -153,7 +159,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 12 } xl={ 4 }>
+                        <Grid item xs={ 6 } xl={ 4 }>
                             <Card sx={ {
                                 minHeight: 200,
                                 position: 'relative'
@@ -161,7 +167,10 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Team Members</Typography>
-                                    <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
+                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !teamStatsApi.isLoading &&
+                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
+                                    }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
@@ -169,38 +178,45 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item lg={ 6 } xl={ 6 }>
-                            <PieChart height={ 600 }
-                                series={ <PieArcSeries
-                                    cornerRadius={ 4 }
-                                    padAngle={ 0.02 }
-                                    padRadius={ 200 }
-                                    doughnut={ true }
-                                /> }
-                                data={ teamHoursApi.hours?.map((h) => ({
-                                    key: h.projectName,
-                                    data: h.hours,
-                                })) ?? [] }/>
+                        <Grid item xs={12} lg={ 6 }>
+                            { teamHoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamHoursApi.isLoading &&
+                                <PieChart height={ 600 }
+                                    series={ <PieArcSeries
+                                        cornerRadius={ 4 }
+                                        padAngle={ 0.02 }
+                                        padRadius={ 200 }
+                                        doughnut={ true }
+                                    /> }
+                                    data={ teamHoursApi.hours?.map((h) => ({
+                                        key: h.projectName,
+                                        data: h.hours,
+                                    })) ?? [] }/>
+                            }
                         </Grid>
 
-                        <Grid item lg={ 6 } xl={ 6 }>
-                            <RadialAreaChart
-                                data={ teamStatsApi.hoursPerUser?.map((h) => ({
-                                    key: h.user,
-                                    data: h.hours,
-                                })) ?? [] }
-                                height={ 600 }
-                                series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
-                                axis={ <RadialAxis
-                                    // @ts-ignore
-                                    type="category"/> }
-                            />
+                        <Grid item xs={12} lg={ 6 }>
+                            { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !teamStatsApi.isLoading &&
+                                <RadialAreaChart
+                                    data={ teamStatsApi.hoursPerUser?.map((h) => ({
+                                        key: h.user,
+                                        data: h.hours,
+                                    })) ?? [] }
+                                    height={ 600 }
+                                    series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                    axis={ <RadialAxis
+                                        // @ts-ignore
+                                        type="category"/> }
+                                />
+                            }
                         </Grid>
 
-                        <Grid item lg={ 12 }>
+                        <Grid item xs={ 12 }>
                             <Typography variant={ 'h5' }>Team Hours</Typography>
                             <DataGrid
                                 autoHeight
+                                loading={ teamEntriesApi.isLoading }
                                 rows={ teamEntriesApi.entries }
                                 rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
@@ -229,11 +245,12 @@ export const Index = ({
                                 disableSelectionOnClick
                                 experimentalFeatures={ { newEditingApi: true } }/>
                         </Grid>
-                        <Grid item lg={ 12 }>
+                        <Grid item xs={ 12 }>
                             <Typography variant={ 'h5' }>Team Projects</Typography>
                             <DataGrid
                                 autoHeight
                                 getRowId={ (r) => r.projectName }
+                                loading={ teamHoursApi.isLoading }
                                 rows={ teamHoursApi.hours ?? [] }
                                 rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
