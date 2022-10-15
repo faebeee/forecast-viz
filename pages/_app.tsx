@@ -38,6 +38,12 @@ const theme = createTheme({
                 elevation: 24,
                 variant: 'elevation',
             },
+            styleOverrides: {
+                root: {
+                    background: "linear-gradient(to right, #283048, #859398)",
+                    color: 'white',
+                }
+            }
         }
     }
 });
