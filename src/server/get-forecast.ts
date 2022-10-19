@@ -27,7 +27,7 @@ export declare module Forecast {
     }
 
     export interface Project {
-        id: number;
+        id: number | string;
         name: string;
         color: string;
         code: string;
@@ -105,7 +105,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
     const getProjectsMap = (projects: Forecast.Project[]): Map<number | string, Forecast.Project> => {
         return projects.reduce((map, project) => {
-            if (project.harvest_id && !map.has(project.harvest_id) && !project.archived) {
+            if ((project.harvest_id && !map.has(project.harvest_id) && !project.archived)) {
                 map.set(project.harvest_id, project);
             }
             return map;

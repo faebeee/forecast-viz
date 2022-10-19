@@ -104,6 +104,13 @@ export const Index = ({
         return currentStatsApi.totalHours - statsApi.avgPerDay;
     }, [ currentStatsApi.totalHours, statsApi.avgPerDay ]);
 
+    const totalOvertime = useMemo(() => {
+        if (!statsApi.totalHours || !statsApi.totalPlannedHours) {
+            return 0;
+        }
+        return statsApi.totalHours - statsApi.totalPlannedHours;
+    }, [ statsApi.totalHours, statsApi.totalPlannedHours ]);
+
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
@@ -124,101 +131,108 @@ export const Index = ({
                     <ContentHeader title={ 'My Dashboard' }/>
 
                     <Grid container spacing={ 10 }>
-                        <Grid item container spacing={ 10 }>
-                            <Grid item xs={ 6 } xl={ 3 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Todays Hours</Typography>
-                                        { currentStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                        { !currentStatsApi.isLoading &&
-                                            <Typography
-                                                variant={ 'h2' }>
-                                                { round(currentStatsApi.totalHours ?? 0, 1) }
-                                                <Typography variant={ 'body2' } component={ 'span' }>
-                                                    of { round(currentStatsApi.totalPlannedHours ?? 0, 1) }
-                                                </Typography>
-                                            </Typography> }
-                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                            <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
-                                        </Box>
-                                    </CardContent>
-                                    { !currentStatsApi.isLoading && <CardActions>
-                                        Overtime: { round(todaysOvertime, 2) }
-                                    </CardActions> }
-                                </Card>
-                            </Grid>
-
-                            <Grid item xs={ 6 } xl={ 3 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>My Hours</Typography>
-                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                        { !statsApi.isLoading &&
-                                            <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
-                                                <Typography variant={ 'body2' } component={ 'span' }>
-                                                    avg { round(statsApi.avgPerDay ?? 0, 1) }h per day</Typography>
-                                            </Typography> }
-                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                            <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={ 6 } xl={ 3 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: '200px',
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>Planned Hours</Typography>
-                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                        { !statsApi.isLoading &&
-                                            <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }
-                                                <Typography
-                                                    component='span'
-                                                    variant={ 'caption' }>
-                                                    { round((statsApi.totalPlannedHours ?? 0) / amountOfDays, 1) }h per
-                                                    day
-                                                </Typography>
+                        <Grid item xs={ 6 } xl={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Todays Hours</Typography>
+                                    { currentStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !currentStatsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>
+                                            { round(currentStatsApi.totalHours ?? 0, 1) }
+                                            <Typography variant={ 'body2' } component={ 'span' }>
+                                                of { round(currentStatsApi.totalPlannedHours ?? 0, 1) } planned hours
                                             </Typography>
-
-                                        }
-                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                            <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                            <Grid item xs={ 6 } xl={ 3 }>
-                                <Card sx={ {
-                                    position: 'relative',
-                                    minHeight: 200
-                                } }
-                                >
-                                    <CardContent>
-                                        <Typography variant={ 'body1' }>My Projects</Typography>
-                                        { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                        { !statsApi.isLoading &&
-                                            <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
-                                        }
-                                        <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                            <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
+                                        </Typography> }
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </CardContent>
+                                { !currentStatsApi.isLoading && <CardActions>
+                                    Overtime: { round(todaysOvertime, 2) }
+                                </CardActions> }
+                            </Card>
                         </Grid>
+
+                        <Grid item xs={ 6 } xl={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>My Hours</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
+                                            <Typography variant={ 'body2' } component={ 'span' }>
+                                                of { round(statsApi.totalPlannedHours ?? 0, 1) } planned hours
+                                            </Typography>
+                                        </Typography> }
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/work.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </CardContent>
+                                { !statsApi.isLoading && <CardActions>
+                                    Overtime: { round(totalOvertime, 2) }
+                                </CardActions> }
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 6 } xl={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: 200
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>My Projects</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>{ statsApi.totalProjects }
+                                        </Typography>
+                                    }
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+
+                        <Grid item xs={ 6 } xl={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: 200
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>My Billable hours</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>
+                                            { round(statsApi.billableHoursPercentage, 1) }%
+                                        </Typography>
+                                    }
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </CardContent>
+                                { !statsApi.isLoading && <CardActions>
+                                    <Typography
+                                        variant={ 'caption' }>
+                                       Billable/Non billable: { round(statsApi.billableHours, 1) }/{ round(statsApi.nonBillableHours, 1) }
+                                    </Typography>
+                                </CardActions> }
+                            </Card>
+                        </Grid>
+
 
                         <Grid item xs={ 12 } lg={ 12 }>
                             <Typography variant={ 'body1' }>Hours per day</Typography>

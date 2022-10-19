@@ -15,7 +15,10 @@ export type GetStatsHandlerResponse = {
     totalPlannedHours: number;
     totalProjects: number;
     avgPerDay: number;
-    hoursPerDay: HourPerDayEntry[]
+    billableHours: number;
+    nonBillableHours: number;
+    billableHoursPercentage: number;
+    hoursPerDay: HourPerDayEntry[];
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
@@ -65,11 +68,25 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         return acc;
     }, record));
 
+
+    const billableHours = entries.reduce((acc, entry) => {
+        if (entry.billable) {
+            acc.billable += entry.hours;
+        } else {
+            acc.nonBillable += entry.hours;
+        }
+
+        return acc;
+    }, { billable: 0, nonBillable: 0 });
+
     const result = {
         totalHours,
         totalPlannedHours,
         totalProjects,
         hoursPerDay: sortBy(hoursPerDay, 'date'),
+        billableHoursPercentage: 100 / (billableHours.billable + billableHours.nonBillable) * billableHours.billable,
+        billableHours: billableHours.billable,
+        nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
     }
 
