@@ -32,11 +32,11 @@ import { StatusIndicator } from "../src/components/status-indicator";
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
-const LineChart = dynamic<LineChartProps>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
+const LineChart = dynamic<Partial<LineChartProps>>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
 //@ts-ignore
-const LineSeries = dynamic<LineSeriesProps>(() => import('reaviz').then(module => module.LineSeries), { ssr: false });
+const LineSeries = dynamic<Partial<LineSeriesProps>>(() => import('reaviz').then(module => module.LineSeries), { ssr: false });
 //@ts-ignore
-const Line = dynamic<LineProps>(() => import('reaviz').then(module => module.Line), { ssr: false });
+const Line = dynamic<Partial<LineProps>>(() => import('reaviz').then(module => module.Line), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
@@ -241,7 +241,7 @@ export const Index = ({
                                             data: statsApi.hoursPerDay.map((entry, index) => ({
                                                 key: parse(entry.date, DATE_FORMAT, new Date()),
                                                 id: entry.date,
-                                                data: statsApi.avgPerDay
+                                                data: statsApi.avgPerDay ?? 0
                                             }))
                                         },
                                         {
