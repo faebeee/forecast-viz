@@ -95,7 +95,7 @@ export const Index = ({
                           teamId,
                       }: EntriesProps) => {
     const router = useRouter();
-    const { dateRange, setDateRange } = useFilterContext();
+    const { dateRange } = useFilterContext();
 
     const teamStatsApi = useTeamStats();
     const teamHoursApi = useTeamHours();
@@ -113,9 +113,6 @@ export const Index = ({
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ teamId ?? '' }>
-                        <Box sx={ { width: 280 } }>
-                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                        </Box>
                     </ContentHeader>
 
                     <Grid container spacing={ 10 }>
@@ -177,7 +174,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={12} lg={ 6 }>
+                        <Grid item xs={ 12 } lg={ 6 }>
                             { teamHoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
                             { !teamHoursApi.isLoading &&
                                 <PieChart height={ 600 }
@@ -194,7 +191,7 @@ export const Index = ({
                             }
                         </Grid>
 
-                        <Grid item xs={12} lg={ 6 }>
+                        <Grid item xs={ 12 } lg={ 6 }>
                             { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                             { !teamStatsApi.isLoading &&
                                 <RadialAreaChart

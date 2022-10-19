@@ -1,6 +1,6 @@
 import { Card, CardContent, TextField, Typography } from "@mui/material";
 import DatePicker from "react-datepicker";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type DateRangeWidgetProps = {
     dateRange: [ Date, Date ]
@@ -17,6 +17,10 @@ export const DateRangeWidget = ({ dateRange, onChange, onClose }: DateRangeWidge
         onClose?.();
         onChange?.(range);
     }
+
+    useEffect(() => {
+        setRange(dateRange);
+    }, [ dateRange ])
 
     return <DatePicker
         selectsRange

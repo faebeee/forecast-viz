@@ -158,7 +158,7 @@ export const getForecast = (accessToken: string, accountId: number) => {
             })
             return r.filter((entry) => !entry.project?.archived);
         } catch (e) {
-            console.error(e);
+            console.error(e.message);
         }
         return [];
     }

@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
+import { differenceInBusinessDays, format, parse, startOfMonth, startOfWeek, startOfYear, sub } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, Button, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
@@ -97,6 +97,12 @@ export const Index = ({
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
+    const todaysOvertime = useMemo(() => {
+        if (!currentStatsApi.totalHours || !statsApi.avgPerDay) {
+            return 0;
+        }
+        return currentStatsApi.totalHours - statsApi.avgPerDay;
+    }, [ currentStatsApi.totalHours, statsApi.avgPerDay ]);
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
@@ -110,15 +116,12 @@ export const Index = ({
 
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
 
+
     return <>
         <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'me' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
-                    <ContentHeader title={ 'My Dashboard' }>
-                        <Box sx={ { width: 280 } }>
-                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                        </Box>
-                    </ContentHeader>
+                    <ContentHeader title={ 'My Dashboard' }/>
 
                     <Grid container spacing={ 10 }>
                         <Grid item container spacing={ 10 }>
@@ -143,6 +146,9 @@ export const Index = ({
                                             <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
                                         </Box>
                                     </CardContent>
+                                    { !currentStatsApi.isLoading && <CardActions>
+                                        Overtime: { round(todaysOvertime, 2) }
+                                    </CardActions> }
                                 </Card>
                             </Grid>
 

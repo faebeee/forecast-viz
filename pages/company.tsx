@@ -81,23 +81,20 @@ export const Index = ({
                           to,
                           hasTeamAccess,
                       }: EntriesProps) => {
-    const { dateRange, setDateRange } = useFilterContext();
+    const { dateRange } = useFilterContext();
     const statsApi = useCompanyStats();
     const teamsStats = useCompanyTeamsStats();
 
     useEffect(() => {
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
         teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-    }, [dateRange])
+    }, [ dateRange ])
 
     return <>
         <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ 'Company Dashboard' }>
-                        <Box sx={ { width: 280 } }>
-                            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-                        </Box>
                     </ContentHeader>
 
                     <Box pb={ 5 }>
