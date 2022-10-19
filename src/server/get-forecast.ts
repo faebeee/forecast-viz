@@ -27,7 +27,7 @@ export declare module Forecast {
     }
 
     export interface Project {
-        id: number | string;
+        id: number;
         name: string;
         color: string;
         code: string;
