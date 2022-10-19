@@ -32,8 +32,8 @@ const BarChart = dynamic<BarChartProps>(() => import('reaviz').then(module => mo
 const GridlineSeries = dynamic<GridlineSeriesProps>(() => import('reaviz').then(module => module.GridlineSeries), { ssr: false });
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
-    const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
+    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
+    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
     const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);

@@ -12,6 +12,8 @@ import {
     Typography
 } from "@mui/material";
 import { useFilterContext } from "../context/filter-context";
+import { useRouter } from "next/router";
+import { useMemo } from "react";
 
 export const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
 export const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
@@ -22,6 +24,14 @@ export type SettingsProps = {}
 
 export const Settings = ({}: SettingsProps) => {
     const filterContext = useFilterContext();
+    const router = useRouter();
+
+    const onClick = () => {
+        router.push('/', '/');
+    }
+    const isValid = useMemo(() => {
+        return !!filterContext.harvestToken && !!filterContext.harvestAccountId && !!filterContext.forecastAccountId;
+    }, [ filterContext ])
 
     return <div>
         <Box p={ 2 }>
@@ -54,8 +64,11 @@ export const Settings = ({}: SettingsProps) => {
 
                 <Button color={ 'primary' }
                     fullWidth
+                    disabled={ !isValid }
                     size={ 'large' }
                     variant={ 'contained' }
+                    onClick={ onClick }
+
                 >Search</Button>
             </Stack>
 

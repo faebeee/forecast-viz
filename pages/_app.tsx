@@ -53,7 +53,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
     const [ dateRange, setDateRange ] = useState<[ Date, Date ]>([
         router.query.from ? parse(router.query.from as string, DATE_FORMAT, new Date()) : startOfWeek(new Date(), { weekStartsOn: 1 }),
-        router.query.to ? parse(router.query.to as string, DATE_FORMAT, new Date()) : endOfWeek(new Date(), { weekStartsOn: 6 })
+        router.query.to ? parse(router.query.to as string, DATE_FORMAT, new Date()) : new Date(),
     ]);
     const [ harvestToken, setHarvestToken ] = useState<string>(cookies.get(COOKIE_HARV_TOKEN_NAME) ?? '');
     const [ harvestAccountId, setHarvestAccountId ] = useState<string>(cookies.get(COOKIE_HARV_ACCOUNTID_NAME) ?? '');

@@ -117,7 +117,7 @@ export const getHoursPerUser = (entries: TimeEntry[]): { user: string, hours: nu
     return Object.values(list)
 }
 
-export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string|number, SpentProjectHours> => {
+export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string | number, SpentProjectHours> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.project.id]) {
             acc[entry.project.id] = {
@@ -136,7 +136,7 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string|num
         acc[entry.project.id].hours += entry.hours;
 
         return acc;
-    }, {} as Record<number|string, SpentProjectHours>)
+    }, {} as Record<number | string, SpentProjectHours>)
 }
 
 export const getProjectsFromEntries = (projectsMap: Map<number | string, Forecast.Project>, entries: TimeEntry[], assignment: AssignmentEntry[]): Forecast.Project[] => {
@@ -165,4 +165,19 @@ export const getPersonsMap = (persons: Forecast.Person[]): Map<number, Forecast.
         map.set(person.harvest_user_id, person);
         return map;
     }, new Map<number, Forecast.Person>);
+}
+
+export const getDates = (startDate: Date, endDate: Date): Date[] => {
+    const dates: Date[] = [];
+    let currentDate = startDate;
+    const addDays = (date: Date, days: Day) => {
+        const _date = new Date(date.valueOf())
+        _date.setDate(_date.getDate() + days)
+        return _date;
+    }
+    while (currentDate <= endDate) {
+        dates.push(currentDate)
+        currentDate = addDays(currentDate, 1)
+    }
+    return dates
 }

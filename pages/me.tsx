@@ -1,5 +1,5 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { endOfWeek, format, startOfWeek } from 'date-fns';
+import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -15,7 +15,7 @@ import {
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -23,9 +23,8 @@ import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
-import { BarSparklineChartProps } from "reaviz/dist/src/Sparkline/BarSparklineChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
-import { GridlineSeriesProps } from "reaviz";
+import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
@@ -33,18 +32,18 @@ import { StatusIndicator } from "../src/components/status-indicator";
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
-const BarSparklineChart = dynamic<BarSparklineChartProps>(() => import('reaviz').then(module => module.BarSparklineChart), { ssr: false });
+const LineChart = dynamic<LineChartProps>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
+//@ts-ignore
+const LineSeries = dynamic<LineSeriesProps>(() => import('reaviz').then(module => module.LineSeries), { ssr: false });
+//@ts-ignore
+const Line = dynamic<LineProps>(() => import('reaviz').then(module => module.Line), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
-//@ts-ignore
-const LinearGauge = dynamic(() => import('reaviz').then(module => module.LinearGauge), { ssr: false });
-//@ts-ignore
-const BarChart = dynamic<BarChartProps>(() => import('reaviz').then(module => module.BarChart), { ssr: false });
-//@ts-ignore
-const GridlineSeries = dynamic<GridlineSeriesProps>(() => import('reaviz').then(module => module.GridlineSeries), { ssr: false });
+
+
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date()), DATE_FORMAT);
-    const to = query.to as string ?? format(endOfWeek(new Date()), DATE_FORMAT);
+    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
+    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
     const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
@@ -109,8 +108,9 @@ export const Index = ({
         currentStatsApi.load();
     }, [ dateRange ]);
 
-    return <>
+    const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
 
+    return <>
         <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'me' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
@@ -178,7 +178,15 @@ export const Index = ({
                                         { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                         { !statsApi.isLoading &&
                                             <Typography
-                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }</Typography>
+                                                variant={ 'h2' }>{ round(statsApi.totalPlannedHours ?? 0, 1) }
+                                                <Typography
+                                                    component='span'
+                                                    variant={ 'caption' }>
+                                                    { round((statsApi.totalPlannedHours ?? 0) / amountOfDays, 1) }h per
+                                                    day
+                                                </Typography>
+                                            </Typography>
+
                                         }
                                         <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                             <Image src={ '/illu/time.svg' } width={ 128 } height={ 128 }/>
@@ -204,6 +212,48 @@ export const Index = ({
                                     </CardContent>
                                 </Card>
                             </Grid>
+                        </Grid>
+
+                        <Grid item xs={ 12 } lg={ 12 }>
+                            <Typography variant={ 'body1' }>Hours per day</Typography>
+                            { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                            { !statsApi.isLoading && <>
+                                <LineChart
+                                    height={ 300 }
+                                    gridlines={ null }
+                                    series={
+                                        <LineSeries
+                                            type="grouped"
+                                            line={ <Line strokeWidth={ 4 }/> }
+                                        />
+                                    }
+                                    data={ [
+                                        {
+                                            key: 'Planned Hours',
+                                            data: statsApi.hoursPerDay.map((entry, index) => ({
+                                                key: parse(entry.date, DATE_FORMAT, new Date()),
+                                                id: entry.date,
+                                                data: (statsApi.totalPlannedHours ?? 0) / amountOfDays
+                                            }))
+                                        },
+                                        {
+                                            key: 'Average Hours',
+                                            data: statsApi.hoursPerDay.map((entry, index) => ({
+                                                key: parse(entry.date, DATE_FORMAT, new Date()),
+                                                id: entry.date,
+                                                data: statsApi.avgPerDay
+                                            }))
+                                        },
+                                        {
+                                            key: 'Tracked Hours',
+                                            data: statsApi.hoursPerDay.map((entry, index) => ({
+                                                key: parse(entry.date, DATE_FORMAT, new Date()),
+                                                id: entry.date,
+                                                data: entry.hours
+                                            }))
+                                        }
+                                    ] }/>
+                            </> }
                         </Grid>
 
                         <Grid item xs={ 12 } lg={ 6 }>
@@ -238,21 +288,6 @@ export const Index = ({
                                         key: h.name ?? h.code ?? '?',
                                         data: h.totalHours ?? 0
                                     })) ?? [] }/>
-                            }
-                        </Grid>
-
-                        <Grid item xs={ 12 } lg={ 12 }>
-                            <Typography variant={ 'body1' }>Hours per day</Typography>
-                            { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                            { !statsApi.isLoading &&
-                                <BarChart
-                                    height={ 300 }
-                                    // @ts-ignore
-                                    gridlines={ <GridlineSeries line={ null }/> }
-                                    data={ statsApi.hoursPerDay.map((entry) => ({
-                                        key: entry.date,
-                                        data: entry.hours
-                                    })) }/>
                             }
                         </Grid>
 

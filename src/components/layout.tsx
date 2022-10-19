@@ -19,6 +19,7 @@ const drawerWidth = 340;
 
 export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProps) => {
     const theme = useTheme();
+    const router = useRouter();
     const context = useFilterContext();
     const [ showSidebar, setShowSidebar ] = useState(!context.forecastAccountId || !context.harvestAccountId || !context.harvestToken);
 
@@ -36,7 +37,7 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
                             </Button>
                         </Link>
                         { hasTeamAccess &&
-                            <Link href={ `/team` }>
+                            <Link href={ `/team` } >
                                 <Button sx={ { mr: 2 } }
                                     component={ 'a' }
                                     variant={ active === 'team' ? 'contained' : 'text' }

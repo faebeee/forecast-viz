@@ -1,13 +1,14 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { filterActiveAssignments, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
+import { filterActiveAssignments, getDates, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
-import { differenceInBusinessDays, parse } from "date-fns";
+import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
 import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
+import { sortBy } from "lodash";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
@@ -46,19 +47,29 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
 
+    const days = getDates(parse(range.from, DATE_FORMAT, new Date()), parse(range.to, DATE_FORMAT, new Date()));
+
+    const record = days.reduce((acc, date) => {
+        const formattedDate = format(date, DATE_FORMAT);
+        if (!isWeekend(date)) {
+            acc[formattedDate] = { date: formattedDate, hours: 0 };
+        }
+        return acc;
+    }, {} as Record<string, HourPerDayEntry>)
+
     const hoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
         if (!acc[entry.spent_date]) {
             acc[entry.spent_date] = { date: entry.spent_date, hours: 0 };
         }
         acc[entry.spent_date].hours += entry.hours;
         return acc;
-    }, {} as Record<string, HourPerDayEntry>)).reverse();
+    }, record));
 
     const result = {
         totalHours,
         totalPlannedHours,
         totalProjects,
-        hoursPerDay,
+        hoursPerDay: sortBy(hoursPerDay, 'date'),
         avgPerDay: (totalHours / rangeDays),
     }
 
