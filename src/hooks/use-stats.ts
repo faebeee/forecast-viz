@@ -1,7 +1,6 @@
 import { getAxios } from "../get-axios";
 import { useCallback, useState } from "react";
-import { GetStatsHandlerResponse } from "../../pages/api/me/stats";
-import { Forecast } from "../server/get-forecast";
+import { GetStatsHandlerResponse } from "../../pages/api/user/stats";
 
 export const useStats = () => {
     const [ isLoading, setIsLoading ] = useState(false);
@@ -14,9 +13,9 @@ export const useStats = () => {
     const [ billableHoursPercentage, setBillableHoursPercentage ] = useState<number>(0);
     const [ nonBillableHours, setNonBillableHours ] = useState<number>(0);
 
-    const load = useCallback((from: string, to: string) => {
+    const load = useCallback((from: string, to: string, uid: string = '') => {
         setIsLoading(true);
-        getAxios().get<GetStatsHandlerResponse>(`/me/stats?from=${ from }&to=${ to }`)
+        getAxios().get<GetStatsHandlerResponse>(`/user/stats?from=${ from }&to=${ to }&uid=${ uid }`)
             .then(({ data }) => {
                 setTotalHours(data.totalHours)
                 setTotalPlannedHours(data.totalPlannedHours)

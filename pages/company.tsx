@@ -1,11 +1,10 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { endOfWeek, format, startOfWeek } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { getForecast } from "../src/server/get-forecast";
+import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import {
@@ -36,7 +35,6 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
     const to = query.to as string ?? format(new Date(), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
 
     if (!token || !account) {
         return {
@@ -48,20 +46,13 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
         }
     }
     const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
     const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
 
     return {
         props: {
             from,
             to,
             userName: userData.first_name,
-            hasTeamAccess,
         }
     }
 }
@@ -71,7 +62,6 @@ export type EntriesProps = {
     from: string;
     to: string;
     userName?: string | null;
-    hasTeamAccess?: boolean;
 }
 
 
@@ -79,7 +69,6 @@ export const Index = ({
                           userName,
                           from,
                           to,
-                          hasTeamAccess,
                       }: EntriesProps) => {
     const { dateRange } = useFilterContext();
     const statsApi = useCompanyStats();
@@ -91,7 +80,7 @@ export const Index = ({
     }, [ dateRange ])
 
     return <>
-        <Layout hasTeamAccess={ hasTeamAccess ?? false } userName={ userName ?? '' } active={ 'company' }>
+        <Layout userName={ userName ?? '' } active={ 'company' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ 'Company Dashboard' }>

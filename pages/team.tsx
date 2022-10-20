@@ -27,6 +27,7 @@ import { round } from "lodash";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
+import { getAdminAccess } from "../src/server/has-admin-access";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -62,9 +63,9 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
 
     const allPeople = await forecast.getPersons();
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
 
     const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
-    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
     const teamId = myTeamEntry!.key;
 
     return {
@@ -72,8 +73,8 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             from,
             to,
             userName: userData.first_name,
-            hasTeamAccess,
             teamId,
+            hasAdminAccess
         }
     }
 }
@@ -82,8 +83,8 @@ export type EntriesProps = {
     from: string;
     to: string;
     userName?: string;
-    hasTeamAccess?: boolean;
-    teamId?: string
+    teamId?: string;
+    hasAdminAccess?: boolean;
 }
 
 
@@ -91,8 +92,8 @@ export const Index = ({
                           userName,
                           from,
                           to,
-                          hasTeamAccess,
                           teamId,
+                          hasAdminAccess,
                       }: EntriesProps) => {
     const router = useRouter();
     const { dateRange } = useFilterContext();
@@ -108,8 +109,7 @@ export const Index = ({
     }, [ dateRange ]);
 
     return <>
-
-        <Layout active={ 'team' } hasTeamAccess={ hasTeamAccess } userName={ userName }>
+        <Layout hasAdminAccess={ hasAdminAccess } active={ 'team' } userName={ userName }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ teamId ?? '' }>
@@ -216,6 +216,7 @@ export const Index = ({
                                 rows={ teamEntriesApi.entries }
                                 rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                 columns={ [
+                                    { field: 'userId', headerName: 'User ID', flex: 1 },
                                     { field: 'user', headerName: 'User', flex: 1 },
                                     { field: 'projectName', headerName: 'Project Name', flex: 1 },
                                     { field: 'billable', headerName: 'Billable', flex: 1 },

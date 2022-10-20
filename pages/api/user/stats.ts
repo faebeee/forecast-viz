@@ -32,7 +32,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
 
     const userData = await harvest.getMe();
-    const userId = userData.id;
+    const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
         getTimeEntriesForUser(harvest, userId, range.from, range.to),

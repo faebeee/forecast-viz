@@ -1,25 +1,19 @@
-import { AppBar, Box, Button, Container, Drawer, Toolbar, Typography } from "@mui/material";
+import { AppBar, Box, Button, Container, Drawer, Toolbar } from "@mui/material";
 import { Settings } from "./settings";
-import { PropsWithChildren, useMemo, useState } from "react";
+import { PropsWithChildren, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import qs from 'qs';
-import { version, name } from "../../package.json"
+import { name, version } from "../../package.json"
 import { Menu } from "@mui/icons-material";
-import { useTheme } from "@mui/system";
-import { grey } from "@mui/material/colors";
 import { useFilterContext } from "../context/filter-context";
 
 export type LayoutProps = PropsWithChildren<{
     active?: string;
     userName?: string | null;
-    hasTeamAccess?: boolean;
+    hasAdminAccess?: boolean;
 }>;
 const drawerWidth = 340;
 
-export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProps) => {
-    const theme = useTheme();
-    const router = useRouter();
+export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutProps) => {
     const context = useFilterContext();
     const [ showSidebar, setShowSidebar ] = useState(!context.forecastAccountId || !context.harvestAccountId || !context.harvestToken);
 
@@ -36,15 +30,15 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
                                 Me
                             </Button>
                         </Link>
-                        { hasTeamAccess &&
-                            <Link href={ `/team` } >
-                                <Button sx={ { mr: 2 } }
-                                    component={ 'a' }
-                                    variant={ active === 'team' ? 'contained' : 'text' }
-                                    color={ "secondary" }>
-                                    Team
-                                </Button>
-                            </Link> }
+
+                        <Link href={ `/team` }>
+                            <Button sx={ { mr: 2 } }
+                                component={ 'a' }
+                                variant={ active === 'team' ? 'contained' : 'text' }
+                                color={ "secondary" }>
+                                Team
+                            </Button>
+                        </Link>
 
                         <Link href={ `/company` }>
                             <Button sx={ { mr: 2 } }
@@ -54,6 +48,15 @@ export const Layout = ({ children, active, userName, hasTeamAccess }: LayoutProp
                                 Company
                             </Button>
                         </Link>
+
+                        { hasAdminAccess && <Link href={ `/user` }>
+                            <Button sx={ { mr: 2 } }
+                                component={ 'a' }
+                                variant={ active === 'user' ? 'contained' : 'text' }
+                                color={ "secondary" }>
+                                User
+                            </Button>
+                        </Link> }
                     </Box>
                     <Button onClick={ () => setShowSidebar(!showSidebar) } variant={ 'text' } color={ 'secondary' }
                         endIcon={ <Menu/> }>

@@ -1,12 +1,24 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import {
+    Box,
+    Card,
+    CardActions,
+    CardContent,
+    CircularProgress,
+    FormControl,
+    Grid,
+    InputLabel,
+    MenuItem,
+    Select,
+    Typography
+} from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
-import { getForecast } from "../src/server/get-forecast";
+import { Forecast, getForecast } from "../src/server/get-forecast";
 import { debounce, round } from "lodash";
 import { Layout } from "../src/components/layout";
 import {
@@ -15,7 +27,7 @@ import {
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -28,6 +40,7 @@ import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
+import { TEAMS } from "../src/config";
 import { getAdminAccess } from "../src/server/has-admin-access";
 
 //@ts-ignore
@@ -55,6 +68,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
                 from,
                 to,
                 userName: null,
+                persons: [],
             }
         }
     }
@@ -66,21 +80,26 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
     const allPeople = await forecast.getPersons();
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
     const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
+    const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
+    const teamId = myTeamEntry!.key;
+    const teamPeople = allPeople
+        .filter((p) => p.roles.includes(teamId!) && !p.archived)
 
     return {
         props: {
             from,
             to,
+            persons: teamPeople,
             userName: userData.first_name,
             hasAdminAccess,
         }
     }
 }
 
-
 export type EntriesProps = {
     from: string;
     to: string;
+    persons: Forecast.Person[];
     userName?: string | null;
     hasAdminAccess?: boolean;
 }
@@ -91,8 +110,10 @@ export const Index = ({
                           from,
                           to,
                           hasAdminAccess,
+                          persons,
                       }: EntriesProps) => {
-    const { dateRange } = useFilterContext();
+    const [ userId, setUID ] = useState('');
+    const { dateRange, setDateRange } = useFilterContext();
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
@@ -112,23 +133,42 @@ export const Index = ({
         return statsApi.totalHours - statsApi.totalPlannedHours;
     }, [ statsApi.totalHours, statsApi.totalPlannedHours ]);
 
-    useEffect(() => {
+    const debounceLoad = debounce(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
-        entriesApi.load(from, to);
-        statsApi.load(from, to);
-        assignmentsApi.load(from, to);
-        hoursApi.load(from, to);
-        currentStatsApi.load();
-    }, [ dateRange ]);
+        if (!userId) {
+            return;
+        }
+        entriesApi.load(from, to, userId);
+        statsApi.load(from, to, userId);
+        assignmentsApi.load(from, to, userId);
+        hoursApi.load(from, to, userId);
+        currentStatsApi.load(userId);
+    }, 200)
+
+    useEffect(() => {
+        debounceLoad();
+    }, [ dateRange, userId ]);
 
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
 
     return <>
-        <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'me' }>
+        <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'user' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
-                    <ContentHeader title={ 'My Dashboard' }/>
+                    <ContentHeader title={ 'Dashboard' }>
+                        { hasAdminAccess &&
+                            <FormControl sx={ { width: 280 } }>
+                                <InputLabel>Select User</InputLabel>
+                                <Select label={ 'Select User' } value={ userId }
+                                    onChange={ (e) => setUID(e.target.value) }>
+                                    { persons.map((p) => (
+                                        <MenuItem key={ p.id }
+                                            value={ p.harvest_user_id }>{ p.first_name } { p.last_name }</MenuItem>)) }
+                                </Select>
+                            </FormControl>
+                        }
+                    </ContentHeader>
                     <Grid container spacing={ 10 }>
                         <Grid item xs={ 6 } xl={ 3 }>
                             <Card sx={ {
@@ -164,7 +204,7 @@ export const Index = ({
                             } }
                             >
                                 <CardContent>
-                                    <Typography variant={ 'body1' }>My Hours</Typography>
+                                    <Typography variant={ 'body1' }>Total Hours</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
@@ -190,7 +230,7 @@ export const Index = ({
                             } }
                             >
                                 <CardContent>
-                                    <Typography variant={ 'body1' }>My Projects</Typography>
+                                    <Typography variant={ 'body1' }>Total Projects</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
@@ -211,7 +251,7 @@ export const Index = ({
                             } }
                             >
                                 <CardContent>
-                                    <Typography variant={ 'body1' }>My Billable hours</Typography>
+                                    <Typography variant={ 'body1' }>Total Billable hours</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
@@ -312,7 +352,7 @@ export const Index = ({
                         </Grid>
 
                         <Grid item xs={ 12 }>
-                            <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
+                            <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
 
                             <DataGrid
                                 autoHeight

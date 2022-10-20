@@ -6,9 +6,11 @@ export type SpentProjectHours = {
     id: string | number,
     projectId: number,
     user: string,
+    userId: number;
     notes?: any,
     projectName: string,
     hours: number,
+    nonBillableHours: number,
     hours_forecast: number,
     hours_delta: number;
     hours_delta_percentage: number;
@@ -28,7 +30,18 @@ export type MyEntries = {
 }
 
 
-export const getTeamHours = (teamEntries: TimeEntry[]) => {
+export type TeamHoursProjectEntry = {
+    projectId: number;
+    name: string;
+    hours: number;
+    nonBillableHours: number;
+}
+export type TeamHoursEntry = {
+    user: string;
+    userId: number;
+    projects: Record<string, TeamHoursProjectEntry>
+}
+export const getTeamHours = (teamEntries: TimeEntry[]): Record<number, TeamHoursEntry> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.user.id]) {
             acc[entry.user.id] = {
@@ -41,16 +54,20 @@ export const getTeamHours = (teamEntries: TimeEntry[]) => {
         if (!acc[entry.user.id].projects[entry.project.id]) {
             acc[entry.user.id].projects[entry.project.id] = {
                 projectId: entry.project.id,
-                billable: entry.billable,
                 name: !!entry.project.code ? entry.project.code : entry.project.name,
-                hours: 0
+                hours: 0,
+                nonBillableHours: 0,
             };
         }
 
-        acc[entry.user.id].projects[entry.project.id].hours += entry.hours;
+        if (entry.billable) {
+            acc[entry.user.id].projects[entry.project.id].hours += entry.hours;
+        } else {
+            acc[entry.user.id].projects[entry.project.id].nonBillableHours += entry.hours;
+        }
 
         return acc;
-    }, {} as Record<number, { user: string, userId: number, projects: Record<string, { projectId: number, billable: boolean, name: string, hours: number }> }>)
+    }, {} as Record<number, TeamHoursEntry>)
 }
 
 export const findAssignment = (assignments: AssignmentEntry[], projectId: number, userId?: number): AssignmentEntry[] => {
@@ -84,12 +101,13 @@ export const getTeamHoursEntries = (teamEntries: TimeEntry[], assignments: Assig
                 id: `${ entry.user }-${ project.name }`,
                 projectId: project.projectId,
                 user: entry.user,
-                billable: project.billable,
+                userId: entry.userId,
                 projectName: project.name,
                 hours: project.hours,
+                nonBillableHours: project.nonBillableHours,
                 hours_forecast: plannedHours,
-                hours_delta: project.hours - plannedHours,
-                hours_delta_percentage: 100 + (100 / plannedHours * ((project.hours - plannedHours)))
+                hours_delta: (project.hours + project.nonBillableHours) - plannedHours,
+                hours_delta_percentage: 100 + (100 / plannedHours * (((project.hours + project.nonBillableHours) - plannedHours)))
             })
         });
         return acc;
@@ -123,9 +141,11 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string | n
             acc[entry.project.id] = {
                 id: entry.user.id,
                 user: entry.user.name,
+                userId: entry.user.id,
                 projectId: entry.project.id,
                 projectName: !!entry.project.code ? entry.project.code : entry.project.name,
                 hours: 0,
+                nonBillableHours: 0,
                 billable: entry.billable,
                 hours_forecast: 0,
                 hours_delta_percentage: 0,
@@ -133,7 +153,11 @@ export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string | n
             };
         }
 
-        acc[entry.project.id].hours += entry.hours;
+        if (entry.billable) {
+            acc[entry.project.id].hours += entry.hours;
+        } else {
+            acc[entry.project.id].nonBillableHours += entry.hours;
+        }
 
         return acc;
     }, {} as Record<number | string, SpentProjectHours>)
