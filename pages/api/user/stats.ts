@@ -18,6 +18,8 @@ export type GetStatsHandlerResponse = {
     billableHours: number;
     nonBillableHours: number;
     billableHoursPercentage: number;
+    totalHoursPerDay: number;
+    totalWeeklyCapacity: number;
     hoursPerDay: HourPerDayEntry[];
 }
 
@@ -34,11 +36,16 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
     const userData = await harvest.getMe();
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
-    const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
+    const [ entries, assignments, projects, persons ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[], Forecast.Person[] ] = await Promise.all([
         getTimeEntriesForUser(harvest, userId, range.from, range.to),
         forecast.getAssignments(range.from, range.to),
         forecast.getProjects(),
-    ])
+        forecast.getPersons(),
+    ]);
+    const myData = persons.find((p) => p.harvest_user_id === userId);
+    if(!myData){
+        throw new Error('No data found for user');
+    }
 
     const rangeDays = differenceInBusinessDays(parse(range.to, DATE_FORMAT, new Date()), parse(range.from, DATE_FORMAT, new Date())) + 1
     const projectMap = forecast.getProjectsMap(projects);
@@ -51,7 +58,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
     const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
 
     const days = getDates(parse(range.from, DATE_FORMAT, new Date()), parse(range.to, DATE_FORMAT, new Date()));
-
+    const amountOfWorkingDays = Object.values(myData.working_days).filter(Boolean).length;
     const record = days.reduce((acc, date) => {
         const formattedDate = format(date, DATE_FORMAT);
         if (!isWeekend(date)) {
@@ -88,6 +95,8 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         billableHours: billableHours.billable,
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
+        totalWeeklyCapacity: myData.weekly_capacity / 60 / 60,
+        totalHoursPerDay: myData.weekly_capacity / amountOfWorkingDays / 60 / 60
     }
 
     res.send(result);

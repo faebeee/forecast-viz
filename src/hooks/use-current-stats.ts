@@ -5,10 +5,8 @@ import { DATE_FORMAT } from "../components/date-range-widget";
 import { format } from "date-fns";
 
 export const useCurrentStats = () => {
+    const [ data, setData ] = useState<GetStatsHandlerResponse | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
-    const [ totalHours, setTotalHours ] = useState<number | null>(null);
-    const [ totalPlannedHours, setTotalPlannedHours ] = useState<number | null>(null);
-    const [ totalProjects, setTotalProjects ] = useState<number | null>(null);
     const from = format(new Date(), DATE_FORMAT);
     const to = format(new Date(), DATE_FORMAT);
 
@@ -16,9 +14,7 @@ export const useCurrentStats = () => {
         setIsLoading(true);
         getAxios().get<GetStatsHandlerResponse>(`/user/stats?from=${ from }&to=${ to }&uid=${ uid }`)
             .then(({ data }) => {
-                setTotalHours(data.totalHours)
-                setTotalPlannedHours(data.totalPlannedHours)
-                setTotalProjects(data.totalProjects)
+                setData(data)
             })
             .finally(() => {
                 setIsLoading(false)
@@ -28,8 +24,6 @@ export const useCurrentStats = () => {
     return {
         load,
         isLoading,
-        totalHours,
-        totalPlannedHours,
-        totalProjects,
+        ...(data ?? {}),
     }
 }

@@ -25,7 +25,7 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
     const userData = await harvest.getMe();
-    const userId = userData.id;
+    const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
     const [ entries, assignments ]: [ TimeEntry[], AssignmentEntry[] ] = await Promise.all([
         getTimeEntriesForUser(harvest, userId, range.from, range.to),

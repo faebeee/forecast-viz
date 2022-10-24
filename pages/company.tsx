@@ -20,6 +20,8 @@ import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCompanyStats } from "../src/hooks/use-company-stats";
 import { GridlineSeriesProps } from "reaviz";
 import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
+import { getAdminAccess } from "../src/server/has-admin-access";
+import { getForecast } from "../src/server/get-forecast";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -35,6 +37,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
     const to = query.to as string ?? format(new Date(), DATE_FORMAT);
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
     const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
+    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
 
     if (!token || !account) {
         return {
@@ -42,17 +45,23 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
                 from,
                 to,
                 userName: null,
+                hasAdminAccess: false,
             }
         }
     }
     const api = await getHarvest(token, account);
+    const forecast = getForecast(token, forecastAccount);
     const userData = await api.getMe();
-
+    const allPeople = await forecast.getPersons();
+    const userId = userData.id;
+    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
     return {
         props: {
             from,
             to,
             userName: userData.first_name,
+            hasAdminAccess,
         }
     }
 }
@@ -62,6 +71,7 @@ export type EntriesProps = {
     from: string;
     to: string;
     userName?: string | null;
+    hasAdminAccess: boolean;
 }
 
 
@@ -69,6 +79,7 @@ export const Index = ({
                           userName,
                           from,
                           to,
+                          hasAdminAccess,
                       }: EntriesProps) => {
     const { dateRange } = useFilterContext();
     const statsApi = useCompanyStats();
@@ -80,7 +91,7 @@ export const Index = ({
     }, [ dateRange ])
 
     return <>
-        <Layout userName={ userName ?? '' } active={ 'company' }>
+        <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'company' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ 'Company Dashboard' }>
@@ -105,7 +116,7 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Members</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
                                     }
@@ -124,7 +135,7 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Projects</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
                                     }
@@ -143,7 +154,7 @@ export const Index = ({
                             >
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Company Hours</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
                                             variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>

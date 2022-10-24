@@ -14,6 +14,7 @@ export const ContentHeader = ({ title, children }: ContentHeaderProps) => {
     const selectWholeYear = () => setDateRange([ startOfYear(new Date()), new Date() ]);
     const selectCurrentMonth = () => setDateRange([ startOfMonth(new Date()), new Date() ]);
     const latest180Days = () => setDateRange([ sub(new Date(), { days: 180 }), new Date() ]);
+    const latest7Days = () => setDateRange([ sub(new Date(), { days: 7 }), new Date() ]);
 
     return <Box sx={ { display: 'flex', justifyContent: 'space-between', mb: 7, mt: 5 } }>
         <Box sx={ { display: 'flex', marginBottom: 4 } }>
@@ -24,10 +25,10 @@ export const ContentHeader = ({ title, children }: ContentHeaderProps) => {
         </Box>
         <Box sx={ { width: 280 } }>
             <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
-            <Button variant='text' color={ 'primary' } onClick={ selectWholeYear }>Year</Button>
-            <Button variant='text' color={ 'primary' } onClick={ selectCurrentMonth }>Month</Button>
-            <Button variant='text' color={ 'primary' } onClick={ latest180Days }>Last 180
-                days</Button>
+            <Button variant='text' color={ 'primary' } onClick={ latest7Days }>Last 7 days</Button>
+            <Button variant='text' color={ 'primary' } onClick={ selectCurrentMonth }>Current Month</Button>
+            <Button variant='text' color={ 'primary' } onClick={ latest180Days }>Last 180 days</Button>
+            <Button variant='text' color={ 'primary' } onClick={ selectWholeYear }>Current Year</Button>
         </Box>
     </Box>
 }
