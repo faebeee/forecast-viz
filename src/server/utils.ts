@@ -205,3 +205,19 @@ export const getDates = (startDate: Date, endDate: Date): Date[] => {
     }
     return dates
 }
+
+export type HourPerTaskObject = { task: string, hours: number };
+export const getHoursPerTask = (entries: TimeEntry[]): HourPerTaskObject[] => {
+    return Object.values(entries.reduce((acc, e) => {
+        const key = `${ e.project.code ?? e.project.name } ${ e.task.name }`;
+        if (!acc[key]) {
+            acc[key] = {
+                task: `${ e.project.code ?? e.project.name } ${ e.task.name }`,
+                hours: 0
+            }
+        }
+
+        acc[key].hours += e.hours;
+        return acc;
+    }, {} as Record<string, HourPerTaskObject>));
+}

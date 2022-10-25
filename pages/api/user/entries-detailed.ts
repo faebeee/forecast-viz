@@ -1,0 +1,52 @@
+import { NextApiRequest, NextApiResponse } from "next";
+import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
+import { getHarvest } from "../../../src/server/get-harvest";
+import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
+import { getMyAssignments, getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
+import { getForecast } from "../../../src/server/get-forecast";
+import { TimeEntry } from "../../../src/server/harvest-types";
+
+export type SimpleTimeEntry = {
+    id: number;
+    client: string;
+    notes: string;
+    projectName: string;
+    projectCode: string;
+    hours: number;
+    billable: boolean;
+    task: string;
+}
+
+export type GetEntriesDetailedHandlerResponse = {
+    entries: SimpleTimeEntry[];
+}
+export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextApiResponse<GetEntriesDetailedHandlerResponse>) => {
+    if (!hasApiAccess(req)) {
+        res.status(403).send({ entries: [] });
+        return;
+    }
+    const apiAuth = getAuthFromCookies(req);
+    const range = getRange(req);
+    const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
+    const userData = await harvest.getMe();
+    const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
+
+    const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to);
+    const flattedEntries: SimpleTimeEntry[] = entries.map((e) => ({
+        id: e.id,
+        client: e.client.name,
+        notes: e.notes,
+        projectName: e.project.name,
+        projectCode: e.project.code,
+        hours: e.hours,
+        billable: e.billable,
+        task: e.task.name,
+    }))
+
+    const result = {
+        entries: flattedEntries,
+    };
+
+    res.send(result);
+}
+export default getEntriesDetailedHandler;

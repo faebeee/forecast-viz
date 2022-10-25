@@ -1,7 +1,13 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { filterActiveAssignments, getDates, getMyAssignments, getProjectsFromEntries } from "../../../src/server/utils";
+import {
+    filterActiveAssignments,
+    getDates,
+    getHoursPerTask,
+    getMyAssignments,
+    getProjectsFromEntries, HourPerTaskObject
+} from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
@@ -21,6 +27,7 @@ export type GetStatsHandlerResponse = {
     totalHoursPerDay: number;
     totalWeeklyCapacity: number;
     hoursPerDay: HourPerDayEntry[];
+    hoursPerTask: HourPerTaskObject[];
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
@@ -43,7 +50,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         forecast.getPersons(),
     ]);
     const myData = persons.find((p) => p.harvest_user_id === userId);
-    if(!myData){
+    if (!myData) {
         throw new Error('No data found for user');
     }
 
@@ -86,6 +93,8 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         return acc;
     }, { billable: 0, nonBillable: 0 });
 
+    const hoursPerTask = getHoursPerTask(entries);
+
     const result = {
         totalHours,
         totalPlannedHours,
@@ -96,7 +105,8 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
         totalWeeklyCapacity: myData.weekly_capacity / 60 / 60,
-        totalHoursPerDay: myData.weekly_capacity / amountOfWorkingDays / 60 / 60
+        totalHoursPerDay: myData.weekly_capacity / amountOfWorkingDays / 60 / 60,
+        hoursPerTask
     }
 
     res.send(result);

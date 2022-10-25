@@ -25,6 +25,14 @@ export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutPro
                         <Link href={ `/` }>
                             <Button sx={ { mr: 2 } }
                                 component={ 'a' }
+                                variant={ active === 'day' ? 'contained' : 'text' }
+                                color={ "secondary" }>
+                                Today
+                            </Button>
+                        </Link>
+                        <Link href={ `/me` }>
+                            <Button sx={ { mr: 2 } }
+                                component={ 'a' }
                                 variant={ active === 'me' ? 'contained' : 'text' }
                                 color={ "secondary" }>
                                 Me

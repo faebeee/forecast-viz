@@ -6,9 +6,10 @@ import { useFilterContext } from "../context/filter-context";
 
 export type ContentHeaderProps = PropsWithChildren<{
     title: ReactNode;
+    showPicker?: boolean;
 }>;
 
-export const ContentHeader = ({ title, children }: ContentHeaderProps) => {
+export const ContentHeader = ({ title, children, showPicker = true }: ContentHeaderProps) => {
     const { dateRange, setDateRange } = useFilterContext();
 
     const selectWholeYear = () => setDateRange([ startOfYear(new Date()), new Date() ]);
@@ -23,12 +24,12 @@ export const ContentHeader = ({ title, children }: ContentHeaderProps) => {
             </Typography>
             { children }
         </Box>
-        <Box sx={ { width: 280 } }>
+        { showPicker && <Box sx={ { width: 280 } }>
             <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
             <Button variant='text' color={ 'primary' } onClick={ latest7Days }>Last 7 days</Button>
             <Button variant='text' color={ 'primary' } onClick={ selectCurrentMonth }>Current Month</Button>
             <Button variant='text' color={ 'primary' } onClick={ latest180Days }>Last 180 days</Button>
             <Button variant='text' color={ 'primary' } onClick={ selectWholeYear }>Current Year</Button>
-        </Box>
+        </Box> }
     </Box>
 }
