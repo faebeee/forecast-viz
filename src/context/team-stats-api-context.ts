@@ -7,9 +7,7 @@ type Value = GetTeamStatsHandlerResponse & {
 };
 
 export const TeamStatsApiContextValue: Value = {
-    hoursPerUser: [], isLoading: false, totalHours: 0, totalMembers: 0, totalProjects: 0
-
-
+    hoursPerUser: [], hoursPerUserHistory: [], isLoading: false, totalHours: 0, totalMembers: 0, totalProjects: 0
 }
 export const TeamStatsApiContext = React.createContext<Value>(TeamStatsApiContextValue)
 export const useTeamStatsApiContext = () => React.useContext(TeamStatsApiContext);
