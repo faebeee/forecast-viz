@@ -1,5 +1,8 @@
 import { TimeEntry } from "./harvest-types";
 import { AssignmentEntry, Forecast } from "./get-forecast";
+import { HoursPerUserItemHistory } from "../../pages/api/team/stats";
+import { format, isWeekend, parse } from "date-fns";
+import { DATE_FORMAT } from "../components/date-range-widget";
 
 
 export type SpentProjectHours = {
@@ -220,4 +223,29 @@ export const getHoursPerTask = (entries: TimeEntry[]): HourPerTaskObject[] => {
         acc[key].hours += e.hours;
         return acc;
     }, {} as Record<string, HourPerTaskObject>));
+}
+
+export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Date): HoursPerUserItemHistory[] => {
+    const days = getDates(from, to);
+
+    return Object.values(entries.reduce((acc, entry) => {
+        if (!acc[entry.user.id]) {
+            acc[entry.user.id] = {
+                user: entry.user.name,
+                entries: days.reduce((acc, day) => {
+                    if (!isWeekend(day)) {
+                        acc[format(day, DATE_FORMAT)] = 0;
+                    }
+                    return acc;
+                }, {} as Record<string, number>)
+            }
+        }
+
+        if (!acc[entry.user.id].entries[entry.spent_date]) {
+            acc[entry.user.id].entries[entry.spent_date] = 0
+        }
+
+        acc[entry.user.id].entries[entry.spent_date] += entry.hours;
+        return acc;
+    }, {} as Record<string, HoursPerUserItemHistory>))
 }

@@ -1,18 +1,31 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { getHoursPerUser, getProjectsFromEntries, getTeamAssignments } from "../../../src/server/utils";
+import {
+    getDates,
+    getHoursPerUser,
+    getHoursPerUserHistory,
+    getProjectsFromEntries,
+    getTeamAssignments
+} from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+import { parse } from "date-fns";
+import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
     totalHours: number;
     totalProjects: number;
     hoursPerUser: HoursPerUserItem[];
+    hoursPerUserHistory: HoursPerUserItemHistory[]
+}
+export type HoursPerUserItemHistory = {
+    user: string;
+    entries: Record<string, number>;
 }
 export type HoursPerUserItem = {
     user: string, hours: number
@@ -54,6 +67,8 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
             return;
         }
     }
+    const fromDate = parse(range.from, DATE_FORMAT, new Date());
+    const toDate = parse(range.to, DATE_FORMAT, new Date());
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
         getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to),
@@ -67,6 +82,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to });
 
     const hoursPerUser = getHoursPerUser(teamEntries);
+    const hoursPerUserHistory = getHoursPerUserHistory(teamEntries, fromDate, toDate);
 
 
     const result = {
@@ -74,6 +90,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         totalMembers: teamPeople.length,
         totalProjects: totalProjects.length,
         hoursPerUser,
+        hoursPerUserHistory
     };
 
     if (redis) {

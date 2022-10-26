@@ -28,6 +28,9 @@ import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellPar
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { getAdminAccess } from "../src/server/has-admin-access";
+import { HistoryLineChart } from "../src/components/chart/history-line-chart";
+import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-chart";
+import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -109,159 +112,167 @@ export const Index = ({
     }, [ dateRange ]);
 
     return <>
-        <Layout hasAdminAccess={ hasAdminAccess } active={ 'team' } userName={ userName }>
-            <Box sx={ { flexGrow: 1, } }>
-                <Box p={ 4 }>
-                    <ContentHeader title={ teamId ?? '' }>
-                    </ContentHeader>
+        <TeamStatsApiContext.Provider value={ teamStatsApi }>
+            <Layout hasAdminAccess={ hasAdminAccess } active={ 'team' } userName={ userName }>
+                <Box sx={ { flexGrow: 1, } }>
+                    <Box p={ 4 }>
+                        <ContentHeader title={ teamId ?? '' }>
+                        </ContentHeader>
 
-                    <Grid container spacing={ 10 }>
-                        <Grid item xs={ 6 } xl={ 4 }>
-                            <Card sx={ {
-                                position: 'relative',
-                                minHeight: 200
-                            } }
-                            >
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Team Hours</Typography>
-                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !teamStatsApi.isLoading &&
-                                        <Typography
-                                            variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
-                                    }
-                                </CardContent>
-                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                    <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
-                                </Box>
-                            </Card>
-                        </Grid>
+                        <Grid container spacing={ 10 }>
+                            <Grid item xs={ 6 } xl={ 4 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: 200
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Hours</Typography>
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !teamStatsApi.isLoading &&
+                                            <Typography
+                                                variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
+                                        }
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/co-work.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </Card>
+                            </Grid>
 
-                        <Grid item xs={ 6 } xl={ 4 }>
-                            <Card sx={ {
-                                minHeight: 200,
-                                position: 'relative'
-                            } }
-                            >
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Team Projects</Typography>
-                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !teamStatsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
-                                    }
-                                </CardContent>
-                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                    <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                </Box>
-                            </Card>
-                        </Grid>
+                            <Grid item xs={ 6 } xl={ 4 }>
+                                <Card sx={ {
+                                    minHeight: 200,
+                                    position: 'relative'
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Projects</Typography>
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !teamStatsApi.isLoading &&
+                                            <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
+                                        }
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </Card>
+                            </Grid>
 
-                        <Grid item xs={ 6 } xl={ 4 }>
-                            <Card sx={ {
-                                minHeight: 200,
-                                position: 'relative'
-                            } }
-                            >
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Team Members</Typography>
-                                    { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !teamStatsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
-                                    }
-                                </CardContent>
-                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                    <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
-                                </Box>
-                            </Card>
-                        </Grid>
+                            <Grid item xs={ 6 } xl={ 4 }>
+                                <Card sx={ {
+                                    minHeight: 200,
+                                    position: 'relative'
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Members</Typography>
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { !teamStatsApi.isLoading &&
+                                            <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
+                                        }
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/team.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                </Card>
+                            </Grid>
 
-                        <Grid item xs={ 12 } lg={ 6 }>
-                            { teamHoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                            { !teamHoursApi.isLoading &&
-                                <PieChart height={ 600 }
-                                    series={ <PieArcSeries
-                                        cornerRadius={ 4 }
-                                        padAngle={ 0.02 }
-                                        padRadius={ 200 }
-                                        doughnut={ true }
-                                    /> }
-                                    data={ teamHoursApi.hours?.map((h) => ({
-                                        key: h.projectName,
-                                        data: h.hours,
-                                    })) ?? [] }/>
-                            }
-                        </Grid>
+                            <Grid item xs={ 12 } >
+                                { !teamStatsApi.isLoading && <TeamHistoryLineChart/> }
+                            </Grid>
 
-                        <Grid item xs={ 12 } lg={ 6 }>
-                            { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                            { !teamStatsApi.isLoading &&
-                                <RadialAreaChart
-                                    data={ teamStatsApi.hoursPerUser?.map((h) => ({
-                                        key: h.user,
-                                        data: h.hours,
-                                    })) ?? [] }
-                                    height={ 600 }
-                                    series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
-                                    axis={ <RadialAxis
-                                        // @ts-ignore
-                                        type="category"/> }
-                                />
-                            }
-                        </Grid>
+                            <Grid item xs={ 12 } lg={ 6 }>
+                                { teamHoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !teamHoursApi.isLoading &&
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ teamHoursApi.hours?.map((h, index) => ({
+                                            id: index.toString(),
+                                            key: h.projectName,
+                                            data: h.hours,
+                                        })) ?? [] }/>
+                                }
+                            </Grid>
 
-                        <Grid item xs={ 12 }>
-                            <Typography variant={ 'h5' }>Team Hours</Typography>
-                            <DataGrid
-                                autoHeight
-                                loading={ teamEntriesApi.isLoading }
-                                rows={ teamEntriesApi.entries }
-                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                columns={ [
-                                    { field: 'userId', headerName: 'User ID', flex: 1 },
-                                    { field: 'user', headerName: 'User', flex: 1 },
-                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                    { field: 'billable', headerName: 'Billable', flex: 1 },
-                                    {
-                                        field: 'hours', headerName: 'Hours', flex: 1,
-                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                    },
-                                    {
-                                        field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                    },
-                                    {
-                                        field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                    },
-                                    {
-                                        field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                        renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                            <StatusIndicator value={ data.row[data.field] as number }/>
-                                        </>
-                                    },
-                                ] }
-                                disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }/>
+                            <Grid item xs={ 12 } lg={ 6 }>
+                                { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !teamStatsApi.isLoading &&
+                                    <RadialAreaChart
+                                        data={ teamStatsApi.hoursPerUser?.map((h, index) => ({
+                                            id: index.toString(),
+                                            key: h.user,
+                                            data: h.hours,
+                                        })) ?? [] }
+                                        height={ 600 }
+                                        series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                        axis={ <RadialAxis
+                                            // @ts-ignore
+                                            type="category"/> }
+                                    />
+                                }
+                            </Grid>
+
+                            <Grid item xs={ 12 }>
+                                <Typography variant={ 'h5' }>Team Hours</Typography>
+                                <DataGrid
+                                    autoHeight
+                                    loading={ teamEntriesApi.isLoading }
+                                    rows={ teamEntriesApi.entries }
+                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                    columns={ [
+                                        { field: 'userId', headerName: 'User ID', flex: 1 },
+                                        { field: 'user', headerName: 'User', flex: 1 },
+                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                        { field: 'billable', headerName: 'Billable', flex: 1 },
+                                        {
+                                            field: 'hours', headerName: 'Hours', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                <StatusIndicator value={ data.row[data.field] as number }/>
+                                            </>
+                                        },
+                                    ] }
+                                    disableSelectionOnClick
+                                    experimentalFeatures={ { newEditingApi: true } }/>
+                            </Grid>
+                            <Grid item xs={ 12 }>
+                                <Typography variant={ 'h5' }>Team Projects</Typography>
+                                <DataGrid
+                                    autoHeight
+                                    getRowId={ (r) => r.projectName }
+                                    loading={ teamHoursApi.isLoading }
+                                    rows={ teamHoursApi.hours ?? [] }
+                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                    columns={ [
+                                        { field: 'projectId', headerName: 'Project ID', width: 90 },
+                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                        { field: 'hours', headerName: 'Hours', flex: 1 },
+                                    ] }
+                                    disableSelectionOnClick
+                                    experimentalFeatures={ { newEditingApi: true } }/>
+                            </Grid>
                         </Grid>
-                        <Grid item xs={ 12 }>
-                            <Typography variant={ 'h5' }>Team Projects</Typography>
-                            <DataGrid
-                                autoHeight
-                                getRowId={ (r) => r.projectName }
-                                loading={ teamHoursApi.isLoading }
-                                rows={ teamHoursApi.hours ?? [] }
-                                rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                columns={ [
-                                    { field: 'projectId', headerName: 'Project ID', width: 90 },
-                                    { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                    { field: 'hours', headerName: 'Hours', flex: 1 },
-                                ] }
-                                disableSelectionOnClick
-                                experimentalFeatures={ { newEditingApi: true } }/>
-                        </Grid>
-                    </Grid>
+                    </Box>
                 </Box>
-            </Box>
-        </Layout>
+            </Layout>
+        </TeamStatsApiContext.Provider>
     </>;
 }
 export default Index;
