@@ -21,6 +21,10 @@ export const TeamHistoryLineChart = () => {
     } = useTeamStatsApiContext();
     const { dateRange } = useFilterContext();
 
+    if (isLoading || hoursPerUserHistory.length <= 0) {
+        return <CircularProgress color={ 'primary' }/>
+    }
+
     const data = [
         ...(hoursPerUserHistory ?? []).map((e) => ({
             key: e.user,
@@ -47,10 +51,6 @@ export const TeamHistoryLineChart = () => {
             }))
         },
     ];
-
-    if (isLoading || data.length <= 0) {
-        return <CircularProgress color={ 'primary' }/>
-    }
 
     return <LineChart
         height={ 400 }
