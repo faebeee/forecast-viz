@@ -39,14 +39,14 @@ export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutPro
                             </Button>
                         </Link>
 
-                        <Link href={ `/team` }>
+                        { hasAdminAccess && <Link href={ `/team` }>
                             <Button sx={ { mr: 2 } }
                                 component={ 'a' }
                                 variant={ active === 'team' ? 'contained' : 'text' }
                                 color={ "secondary" }>
                                 Team
                             </Button>
-                        </Link>
+                        </Link> }
 
                         <Link href={ `/company` }>
                             <Button sx={ { mr: 2 } }
