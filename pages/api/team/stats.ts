@@ -2,11 +2,11 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    getDates,
+    getHoursPerTask,
     getHoursPerUser,
     getHoursPerUserHistory,
     getProjectsFromEntries,
-    getTeamAssignments
+    getTeamAssignments, getTeamHoursEntries, HourPerTaskObject
 } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
@@ -21,7 +21,9 @@ export type GetTeamStatsHandlerResponse = {
     totalHours: number;
     totalProjects: number;
     hoursPerUser: HoursPerUserItem[];
-    hoursPerUserHistory: HoursPerUserItemHistory[]
+    plannedHoursPerUser: HoursPerUserItem[];
+    hoursPerUserHistory: HoursPerUserItemHistory[];
+    hoursPerTask: HourPerTaskObject[];
 }
 export type HoursPerUserItemHistory = {
     user: string;
@@ -83,14 +85,28 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
 
     const hoursPerUser = getHoursPerUser(teamEntries);
     const hoursPerUserHistory = getHoursPerUserHistory(teamEntries, fromDate, toDate);
+    const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
 
+    const plannedHoursPerUser = teamProjectHourEntries.reduce((accumulator, entry) => {
+        if (!accumulator.has(entry.userId)) {
+            accumulator.set(entry.userId, { user: entry.user, hours: 0 });
+        }
+        const a = accumulator.get(entry.userId);
+        accumulator.set(entry.userId, { user: entry.user, hours: a!.hours + entry.hours_forecast });
+
+        return accumulator;
+    }, new Map<number, HoursPerUserItem>());
+
+    const hoursPerTask = getHoursPerTask(entries);
 
     const result = {
         totalHours,
         totalMembers: teamPeople.length,
         totalProjects: totalProjects.length,
         hoursPerUser,
-        hoursPerUserHistory
+        hoursPerUserHistory,
+        plannedHoursPerUser: Array.from(plannedHoursPerUser.values()),
+        hoursPerTask
     };
 
     if (redis) {

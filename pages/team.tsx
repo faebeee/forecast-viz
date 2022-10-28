@@ -42,6 +42,10 @@ const RadialAreaChart = dynamic(() => import('reaviz').then(module => module.Rad
 const RadialAreaSeries = dynamic(() => import('reaviz').then(module => module.RadialAreaSeries), { ssr: false });
 //@ts-ignore
 const RadialAxis = dynamic(() => import('reaviz').then(module => module.RadialAxis), { ssr: false });
+//@ts-ignore
+const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialArea), { ssr: false });
+//@ts-ignore
+const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }) => {
@@ -128,7 +132,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Hours</Typography>
-                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                         { !teamStatsApi.isLoading &&
                                             <Typography
                                                 variant={ 'h2' }>{ round(teamStatsApi.totalHours ?? 0, 1) }</Typography>
@@ -148,7 +152,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Projects</Typography>
-                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                         { !teamStatsApi.isLoading &&
                                             <Typography variant={ 'h2' }>{ teamStatsApi.totalProjects }</Typography>
                                         }
@@ -167,7 +171,7 @@ export const Index = ({
                                 >
                                     <CardContent>
                                         <Typography variant={ 'body1' }>Team Members</Typography>
-                                        { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                         { !teamStatsApi.isLoading &&
                                             <Typography variant={ 'h2' }>{ teamStatsApi.totalMembers }</Typography>
                                         }
@@ -178,11 +182,12 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item xs={ 12 } >
+                            <Grid item xs={ 12 }>
                                 { !teamStatsApi.isLoading && <TeamHistoryLineChart/> }
                             </Grid>
 
                             <Grid item xs={ 12 } lg={ 6 }>
+                                <Typography variant={ 'body1' }>Project Hours</Typography>
                                 { teamHoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                 { !teamHoursApi.isLoading &&
                                     <PieChart height={ 600 }
@@ -201,6 +206,25 @@ export const Index = ({
                             </Grid>
 
                             <Grid item xs={ 12 } lg={ 6 }>
+                                <Typography variant={ 'body1' }>Hours spent per task</Typography>
+                                { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !teamStatsApi.isLoading &&
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (teamStatsApi.hoursPerTask ?? []).map((h) => ({
+                                            key: h.task,
+                                            data: h.hours ?? 0
+                                        })) ?? [] }/>
+                                }
+                            </Grid>
+
+                            <Grid item xs={ 12 } lg={ 6 }>
+                                <Typography variant={ 'body1' }>Spent Hours</Typography>
                                 { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                 { !teamStatsApi.isLoading &&
                                     <RadialAreaChart
@@ -210,7 +234,30 @@ export const Index = ({
                                             data: h.hours,
                                         })) ?? [] }
                                         height={ 600 }
-                                        series={ <RadialAreaSeries area={ null } interpolation={ 'linear' }/> }
+                                        series={ <RadialAreaSeries
+                                            area={ <RadialArea gradient={ <RadialGradient/> }/> }
+                                            interpolation={ 'linear' }/> }
+                                        axis={ <RadialAxis
+                                            // @ts-ignore
+                                            type="category"/> }
+                                    />
+                                }
+                            </Grid>
+
+                            <Grid item xs={ 12 } lg={ 6 }>
+                                <Typography variant={ 'body1' }>Planned Hours</Typography>
+                                { teamStatsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !teamStatsApi.isLoading &&
+                                    <RadialAreaChart
+                                        data={ teamStatsApi.plannedHoursPerUser?.map((h, index) => ({
+                                            id: index.toString(),
+                                            key: h.user,
+                                            data: h.hours,
+                                        })) ?? [] }
+                                        height={ 600 }
+                                        series={ <RadialAreaSeries
+                                            area={ <RadialArea gradient={ <RadialGradient/> }/> }
+                                            interpolation={ 'linear' }/> }
                                         axis={ <RadialAxis
                                             // @ts-ignore
                                             type="category"/> }

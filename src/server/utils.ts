@@ -138,6 +138,11 @@ export const getHoursPerUser = (entries: TimeEntry[]): { user: string, hours: nu
     return Object.values(list)
 }
 
+const getAssignmentsPerUser = (userId: number, assignments: AssignmentEntry[]) => {
+    return assignments.filter((a) => a.person?.harvest_user_id === userId);
+}
+
+
 export const getTeamProjectHours = (teamEntries: TimeEntry[]): Record<string | number, SpentProjectHours> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.project.id]) {

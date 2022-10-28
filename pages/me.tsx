@@ -174,6 +174,24 @@ export const Index = ({
                                 </Grid>
 
                                 <Grid item xs={ 12 } lg={ 4 }>
+                                    <Typography variant={ 'body1' }>Hours spent per task</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                                key: h.task,
+                                                data: h.hours ?? 0
+                                            })) ?? [] }/>
+                                    }
+                                </Grid>
+
+                                <Grid item xs={ 12 } lg={ 4 }>
                                     <Typography variant={ 'body1' }>Hours planned</Typography>
                                     { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !assignmentsApi.isLoading &&
@@ -187,24 +205,6 @@ export const Index = ({
                                             data={ (assignmentsApi.assignments ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.totalHours ?? 0
-                                            })) ?? [] }/>
-                                    }
-                                </Grid>
-
-                                <Grid item xs={ 12 } lg={ 4 }>
-                                    <Typography variant={ 'body1' }>Hours per Task</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading &&
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (statsApi.hoursPerTask ?? []).map((h) => ({
-                                                key: h.task,
-                                                data: h.hours ?? 0
                                             })) ?? [] }/>
                                     }
                                 </Grid>

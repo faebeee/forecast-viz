@@ -17,7 +17,7 @@ export const HistoryLineChart = () => {
     const {
         hoursPerDay,
         avgPerDay,
-        totalHoursPerDay,
+        totalHoursPerDayCapacity,
         totalPlannedHours,
     } = useStatsApiContext();
     const { dateRange } = useFilterContext();
@@ -47,7 +47,7 @@ export const HistoryLineChart = () => {
                 data: hoursPerDay.map((entry, index) => ({
                     key: parse(entry.date, DATE_FORMAT, new Date()),
                     id: entry.date,
-                    data: totalHoursPerDay
+                    data: totalHoursPerDayCapacity
                 }))
             },
             {
