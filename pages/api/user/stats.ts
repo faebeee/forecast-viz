@@ -24,8 +24,8 @@ export type GetStatsHandlerResponse = {
     billableHours: number;
     nonBillableHours: number;
     billableHoursPercentage: number;
-    totalHoursPerDay: number;
     totalWeeklyCapacity: number;
+    totalHoursPerDayCapacity: number;
     hoursPerDay: HourPerDayEntry[];
     hoursPerTask: HourPerTaskObject[];
 }
@@ -105,7 +105,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
         totalWeeklyCapacity: myData.weekly_capacity / 60 / 60,
-        totalHoursPerDay: myData.weekly_capacity / amountOfWorkingDays / 60 / 60,
+        totalHoursPerDayCapacity: myData.weekly_capacity / amountOfWorkingDays / 60 / 60,
         hoursPerTask
     }
 

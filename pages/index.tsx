@@ -1,5 +1,5 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { format } from 'date-fns';
+import { differenceInBusinessDays, format } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -87,12 +87,6 @@ export const Index = ({
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
     const detailedEntriesApi = useEntriesDetailed();
-    const todaysOvertime = useMemo(() => {
-        if (!currentStatsApi.totalHours || !statsApi.avgPerDay) {
-            return 0;
-        }
-        return currentStatsApi.totalHours - statsApi.avgPerDay;
-    }, [ currentStatsApi.totalHours, statsApi.avgPerDay ]);
 
     useEffect(() => {
         const from = format(new Date(), DATE_FORMAT)
@@ -119,11 +113,11 @@ export const Index = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalHoursStats/>
+                                    <TotalHoursStats amountOfDays={ 1 }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <RemainingCapacityStats/>
+                                    <RemainingCapacityStats amountOfDays={ 1 }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>

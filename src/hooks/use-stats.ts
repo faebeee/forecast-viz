@@ -7,7 +7,6 @@ export const useStats = () => {
     const [ data, setData ] = useState<GetStatsHandlerResponse>(StatsApiContextValue);
     const [ isLoading, setIsLoading ] = useState(false);
 
-
     const load = useCallback((from: string, to: string, uid: string = '') => {
         setIsLoading(true);
         getAxios().get<GetStatsHandlerResponse>(`/user/stats?from=${ from }&to=${ to }&uid=${ uid }`)

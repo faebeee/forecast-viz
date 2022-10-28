@@ -21,7 +21,7 @@ export const WeeklyCapacityStats = () => {
                     <Typography
                         component={ 'span' }
                         variant={ 'caption' }>
-                        with { round(statsApi.totalHoursPerDay ?? 0, 1) } per day
+                        with { round(statsApi.totalHoursPerDayCapacity ?? 0, 1) } per day
                     </Typography>
                 </Typography> }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>

@@ -9,8 +9,7 @@ export const BillableHoursStats = () => {
     return <Card sx={ {
         position: 'relative',
         minHeight: 200
-    } }
-    >
+    } }>
         <CardContent>
             <Typography variant={ 'body1' }>Total Billable hours</Typography>
             { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
@@ -25,11 +24,7 @@ export const BillableHoursStats = () => {
             </Box>
         </CardContent>
         { !statsApi.isLoading && <CardActions>
-            <Typography
-                variant={ 'caption' }>
-                Billable/Non
-                billable: { round(statsApi.billableHours, 1) }/{ round(statsApi.nonBillableHours, 1) }
-            </Typography>
+            Billable/Non billable: { round(statsApi.billableHours, 1) }/{ round(statsApi.nonBillableHours, 1) }
         </CardActions> }
     </Card>;
 }

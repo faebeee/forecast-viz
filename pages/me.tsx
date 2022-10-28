@@ -101,19 +101,6 @@ export const Index = ({
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
-    const todaysOvertime = useMemo(() => {
-        if (!currentStatsApi.totalHours || !statsApi.avgPerDay) {
-            return 0;
-        }
-        return currentStatsApi.totalHours - statsApi.avgPerDay;
-    }, [ currentStatsApi.totalHours, statsApi.avgPerDay ]);
-
-    const totalOvertime = useMemo(() => {
-        if (!statsApi.totalHours || !statsApi.totalPlannedHours) {
-            return 0;
-        }
-        return statsApi.totalHours - statsApi.totalPlannedHours;
-    }, [ statsApi.totalHours, statsApi.totalPlannedHours ]);
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
@@ -140,7 +127,7 @@ export const Index = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalHoursStats/>
+                                    <TotalHoursStats amountOfDays={ amountOfDays }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
@@ -148,7 +135,7 @@ export const Index = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <RemainingCapacityStats/>
+                                    <RemainingCapacityStats amountOfDays={ amountOfDays }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
@@ -169,7 +156,7 @@ export const Index = ({
                                     { !statsApi.isLoading && <HistoryLineChart/> }
                                 </Grid>
 
-                                <Grid item xs={ 12 } lg={ 6 }>
+                                <Grid item xs={ 12 } lg={ 4 }>
                                     <Typography variant={ 'body1' }>Hours spent</Typography>
                                     { hoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !hoursApi.isLoading &&
@@ -186,7 +173,7 @@ export const Index = ({
                                             })) ?? [] }/> }
                                 </Grid>
 
-                                <Grid item xs={ 12 } lg={ 6 }>
+                                <Grid item xs={ 12 } lg={ 4 }>
                                     <Typography variant={ 'body1' }>Hours planned</Typography>
                                     { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !assignmentsApi.isLoading &&
@@ -200,6 +187,24 @@ export const Index = ({
                                             data={ (assignmentsApi.assignments ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.totalHours ?? 0
+                                            })) ?? [] }/>
+                                    }
+                                </Grid>
+
+                                <Grid item xs={ 12 } lg={ 4 }>
+                                    <Typography variant={ 'body1' }>Hours per Task</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                                key: h.task,
+                                                data: h.hours ?? 0
                                             })) ?? [] }/>
                                     }
                                 </Grid>

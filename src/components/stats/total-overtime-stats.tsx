@@ -11,11 +11,11 @@ export type TotalOvertimeProps = {
 export const TotalOvertimeStats = ({ amountOfDays }: TotalOvertimeProps) => {
     const statsApi = useStatsApiContext();
     const totalOvertime = useMemo(() => {
-        if (!statsApi.totalHours || !statsApi.totalHoursPerDay) {
+        if (!statsApi.totalHours || !statsApi.totalHoursPerDayCapacity) {
             return 0;
         }
-        return statsApi.totalHours - (statsApi.totalHoursPerDay * amountOfDays);
-    }, [ statsApi.totalHours, statsApi.totalHoursPerDay, amountOfDays ]);
+        return statsApi.totalHours - (statsApi.totalHoursPerDayCapacity * amountOfDays);
+    }, [ statsApi.totalHours, statsApi.totalHoursPerDayCapacity, amountOfDays ]);
 
     return <Card sx={ {
         position: 'relative',

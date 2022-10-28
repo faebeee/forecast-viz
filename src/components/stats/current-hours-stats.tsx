@@ -18,7 +18,7 @@ export const CurrentHoursStats = () => {
                     variant={ 'h2' }>
                     { round(currentStatsApi.totalHours ?? 0, 1) }
                     <Typography variant={ 'body2' } component={ 'span' }>
-                        of { round(currentStatsApi.totalPlannedHours ?? 0, 1) } planned
+                        of { round(currentStatsApi.totalHoursPerDayCapacity ?? 0, 1) } capacity
                         hours
                     </Typography>
                 </Typography> }
@@ -26,5 +26,9 @@ export const CurrentHoursStats = () => {
                 <Image src={ '/illu/wip.svg' } width={ 128 } height={ 128 }/>
             </Box>
         </CardContent>
+
+        { !!currentStatsApi.totalPlannedHours && !currentStatsApi.isLoading && <CardActions>
+            Planned hours: { round(currentStatsApi.totalPlannedHours, 2) }
+        </CardActions> }
     </Card>
 }

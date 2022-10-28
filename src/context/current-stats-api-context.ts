@@ -9,9 +9,8 @@ export const StatsApiContextValue: Value = {
     hoursPerDay: [],
     isLoading: false,
     nonBillableHours: 0,
-    totalHoursPerDay: 0,
+    totalHoursPerDayCapacity: 0,
     totalWeeklyCapacity: 0
-
 }
 export const CurrentStatsApiContext = React.createContext<Value>(StatsApiContextValue)
 export const useCurrentStatsApiContext = () => React.useContext(CurrentStatsApiContext);

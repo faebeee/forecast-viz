@@ -2,24 +2,21 @@ import { Box, Card, CardActions, CardContent, CircularProgress, Typography } fro
 import { round } from "lodash";
 import Image from "next/image";
 import { useStatsApiContext } from "../../context/stats-api-context";
-import { useFilterContext } from "../../context/filter-context";
-import { useMemo } from "react";
-import { differenceInBusinessDays } from "date-fns";
 
-export const RemainingCapacityStats = () => {
+export type RemainingCapacityStatsProps = {
+    amountOfDays: number;
+}
+
+export const RemainingCapacityStats = ({ amountOfDays }: RemainingCapacityStatsProps) => {
     const statsApi = useStatsApiContext();
-    const { dateRange } = useFilterContext();
 
-    const amountOfDays = useMemo(() => (differenceInBusinessDays(dateRange[1], dateRange[0]) ?? 0) + 1, [ dateRange ]);
-    const hoursOverCapacity = (statsApi.totalPlannedHours) - ((statsApi.totalHoursPerDay) * amountOfDays);
-    const percentage = 100 / (statsApi.totalHoursPerDay ?? 1) * hoursOverCapacity;
-
+    const hoursOverCapacity = (statsApi.totalPlannedHours) - ((statsApi.totalHoursPerDayCapacity * amountOfDays));
+    const percentage = 100 / (statsApi.totalPlannedHours ?? 1) * hoursOverCapacity;
 
     return <Card sx={ {
         position: 'relative',
         minHeight: '200px',
-    } }
-    >
+    } }>
         <CardContent>
             <Typography variant={ 'body1' }>Capacity</Typography>
             { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
@@ -27,11 +24,11 @@ export const RemainingCapacityStats = () => {
                 <Typography
                     color={ percentage > 0 ? 'error' : 'inherit' }
                     variant={ 'h2' }>
-                    { !isNaN(percentage) && round(percentage, 1) }%
+                    { round(hoursOverCapacity, 1) }
                     <Typography
                         component={ 'span' }
                         variant={ 'caption' }>
-                        which are { round(hoursOverCapacity, 2) }
+                        { !isNaN(hoursOverCapacity) && <>which are { round(percentage, 2) }%</> }
                     </Typography>
                 </Typography> }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -39,12 +36,11 @@ export const RemainingCapacityStats = () => {
             </Box>
         </CardContent>
 
-        { !!statsApi.totalPlannedHours && <CardActions>
-            <Typography component={ 'p' } variant={ 'caption' }>Planned
+        { !!statsApi.totalPlannedHours && !statsApi.isLoading && <CardActions>
+            <Typography component={ 'p' }>Planned
                 hours: { round(statsApi.totalPlannedHours ?? 0, 2) }</Typography>
             <Typography
-                component={ 'p' }
-                variant={ 'caption' }>Capacity: { round(statsApi.totalHoursPerDay * amountOfDays, 2) }</Typography>
+                component={ 'p' }>Capacity: { round(statsApi.totalHoursPerDayCapacity * amountOfDays, 2) }</Typography>
         </CardActions> }
 
     </Card>;

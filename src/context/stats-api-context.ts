@@ -16,7 +16,7 @@ export const StatsApiContextValue: Value = {
     hoursPerDay: [],
     isLoading: false,
     nonBillableHours: 0,
-    totalHoursPerDay: 0,
+    totalHoursPerDayCapacity: 0,
     totalWeeklyCapacity: 0
 
 }
