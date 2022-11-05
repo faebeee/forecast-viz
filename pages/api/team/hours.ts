@@ -31,11 +31,12 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
         res.status(403).send(null);
         return;
     }
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
 
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id);
-    const teamEntries = await getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to);
+    const teamEntries = await getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to, projectId);
     const teamProjectHours = getTeamProjectHours(teamEntries);
 
     const result = {

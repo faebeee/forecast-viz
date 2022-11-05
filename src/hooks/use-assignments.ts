@@ -5,9 +5,9 @@ import { GetAssignmentsHandlerEntry, GetAssignmentsHandlerResponse } from "../..
 export const useAssignments = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ assignments, setAssignments ] = useState<GetAssignmentsHandlerEntry[]>([]);
-    const load = useCallback((from: string, to: string, uid: string = '') => {
+    const load = useCallback((from: string, to: string, uid: string = '', projectId?: number) => {
         setIsLoading(true);
-        getAxios().get<GetAssignmentsHandlerResponse>(`/user/assignments?from=${ from }&to=${ to }&uid=${ uid }`)
+        getAxios().get<GetAssignmentsHandlerResponse>(`/user/assignments?from=${ from }&to=${ to }&uid=${ uid }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setAssignments(data.assignments);
             })

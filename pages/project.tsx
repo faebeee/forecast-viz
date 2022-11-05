@@ -53,6 +53,8 @@ import { CurrentStatsApiContext } from "../src/context/current-stats-api-context
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { useProjects } from "../src/hooks/use-projects";
+import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
+import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -91,6 +93,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }): Pr
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && !p.archived)
 
+
     return {
         props: {
             from,
@@ -121,40 +124,45 @@ export const Index = ({
     const [ userId, setUID ] = useState('');
     const { dateRange } = useFilterContext();
     const entriesApi = useEntries();
+    const detailedEntriesApi = useEntriesDetailed();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
     const hoursApi = useHours();
-
-    const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
+    const projectsApi = useProjects();
+    const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
 
     const debounceLoad = debounce(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
-        if (!userId) {
+        if (userId) {
+            projectsApi.load(from, to, userId);
+        }
+
+        if (!userId || !selectedProject?.id) {
             return;
         }
-        entriesApi.load(from, to, userId);
-        statsApi.load(from, to, userId);
-        assignmentsApi.load(from, to, userId);
-        hoursApi.load(from, to, userId);
+        entriesApi.load(from, to, userId, selectedProject?.id as number);
+        statsApi.load(from, to, userId, selectedProject?.id as number);
+        assignmentsApi.load(from, to, userId, selectedProject?.id as number);
+        hoursApi.load(from, to, userId, selectedProject?.id as number);
+        detailedEntriesApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
     }, 200)
 
     useEffect(() => {
         debounceLoad();
-    }, [ dateRange, userId ]);
-
+    }, [ dateRange, userId, selectedProject ]);
 
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'user' }>
+                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'project' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'Dashboard' }>
                                 { hasAdminAccess &&
-                                    <FormControl sx={ { width: 280 } }>
+                                    <FormControl sx={ { width: 280, mr: 1 } }>
                                         <InputLabel>Select User</InputLabel>
                                         <Select label={ 'Select User' } value={ userId }
                                             onChange={ (e) => setUID(e.target.value) }>
@@ -164,30 +172,25 @@ export const Index = ({
                                         </Select>
                                     </FormControl>
                                 }
+                                <Autocomplete
+                                    options={ projectsApi.projects.map((p) => ({
+                                        label: `${ p.code } - ${ p.name }`,
+                                        id: p.harvest_id ?? p.id as number
+                                    })) }
+                                    sx={ { width: 300 } }
+                                    onChange={ (event, data) => setSelectedProject(data) }
+                                    renderInput={ (params) => <TextField { ...params } label="Project"/> }
+                                />
                             </ContentHeader>
                             { userId && <Grid container spacing={ 10 }>
 
-                                <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalHoursStats amountOfDays={ amountOfDays }/>
+                                <Grid item xs={ 6 } xl={ 6 }>
+                                    <SpentPlannedStats/>
+
                                 </Grid>
 
-                                <Grid item xs={ 6 } xl={ 4 }>
-                                    <RemainingCapacityStats amountOfDays={ amountOfDays }/>
-                                </Grid>
-
-                                <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalOvertimeStats amountOfDays={ amountOfDays }/>
-                                </Grid>
-
-                                <Grid item xs={ 6 } xl={ 4 }>
+                                <Grid item xs={ 6 } xl={ 6 }>
                                     <BillableHoursStats/>
-                                </Grid>
-
-                                <Grid item xs={ 6 } xl={ 4 }>
-                                    <ProjectsStats/>
-                                </Grid>
-                                <Grid item xs={ 6 } xl={ 4 }>
-                                    <WeeklyCapacityStats/>
                                 </Grid>
 
                                 <Grid item xs={ 12 } lg={ 12 }>
@@ -283,8 +286,26 @@ export const Index = ({
                                                 </>
                                             },
                                         ] }
-                                        disableSelectionOnClick
-                                        experimentalFeatures={ { newEditingApi: true } }/>
+                                        disableSelectionOnClick/>
+                                </Grid>
+
+                                <Grid item xs={ 12 }>
+                                    <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
+
+                                    <DataGrid
+                                        autoHeight
+                                        loading={ detailedEntriesApi.isLoading }
+                                        rows={ detailedEntriesApi.entries }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'spent', headerName: 'Date', flex: 1 },
+                                            { field: 'task', headerName: 'Task', flex: 1 },
+                                            { field: 'notes', headerName: 'Notes', flex: 1 },
+                                            { field: 'billable', headerName: 'Billable', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+
+                                        ] }
+                                        disableSelectionOnClick/>
                                 </Grid>
                             </Grid> }
                         </Box>

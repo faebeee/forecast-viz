@@ -6,9 +6,9 @@ export const useHours = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ hours, setHours ] = useState<ProjectHours[] | null>(null);
 
-    const load = useCallback((from: string, to: string, uid: string = '') => {
+    const load = useCallback((from: string, to: string, uid: string = '', projectId?: number) => {
         setIsLoading(true);
-        getAxios().get<GetHoursHandlerResponse>(`/user/hours?from=${ from }&to=${ to }&uid=${ uid }`)
+        getAxios().get<GetHoursHandlerResponse>(`/user/hours?from=${ from }&to=${ to }&uid=${ uid }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setHours(data)
                 setHours(data)

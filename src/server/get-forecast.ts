@@ -91,11 +91,14 @@ export const getForecast = (accessToken: string, accountId: number) => {
         }
     })
 
-    const getProjects = async (): Promise<Forecast.Project[]> => {
+    const getProjects = async (projectId?: number): Promise<Forecast.Project[]> => {
         try {
             const response = await api.get<Forecast.GetProjectsResponse>(`/projects`);
             const projects: Forecast.Project[] = response.data.projects;
-            return projects.map(p => ({ ...p, harvest_id: p.harvest_id ?? p.name })).filter(p => true);
+            return projects
+                .map(p => ({ ...p, harvest_id: p.harvest_id ?? p.name }))
+                .filter(p => true)
+                .filter(p => projectId ? p.harvest_id === projectId : true);
         } catch (e) {
             console.error(e);
         }
@@ -123,10 +126,10 @@ export const getForecast = (accessToken: string, accountId: number) => {
         return [];
     }
 
-    const getAssignments = async (from: string, to: string): Promise<AssignmentEntry[]> => {
+    const getAssignments = async (from: string, to: string, projectId?: number): Promise<AssignmentEntry[]> => {
         const fromDate = new Date(from);
         const toDate = new Date(to);
-        const projects = await getProjects();
+        const projects = await getProjects(projectId);
         const persons = await getPersons();
         const projectMap = new Map<number | string, Forecast.Project>();
         projects.forEach(((p) => {

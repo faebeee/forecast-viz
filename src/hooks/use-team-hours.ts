@@ -7,9 +7,9 @@ export const useTeamHours = () => {
     const [ hours, setHours ] = useState<SpentProjectHours[] | null>(null);
     const [ isLoading, setIsLoading ] = useState(false);
 
-    const load = useCallback((from: string, to: string) => {
+    const load = useCallback((from: string, to: string, projectId?: number | null) => {
         setIsLoading(true);
-        getAxios().get<GetTeamHoursHandlerResponse>(`/team/hours?from=${ from }&to=${ to }`)
+        getAxios().get<GetTeamHoursHandlerResponse>(`/team/hours?from=${ from }&to=${ to }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setHours(data.hours)
             })

@@ -2,9 +2,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import { getMyAssignments, getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
-import { getForecast } from "../../../src/server/get-forecast";
-import { TimeEntry } from "../../../src/server/harvest-types";
 
 export type SimpleTimeEntry = {
     id: number;
@@ -15,6 +12,7 @@ export type SimpleTimeEntry = {
     hours: number;
     billable: boolean;
     task: string;
+    spent: string;
 }
 
 export type GetEntriesDetailedHandlerResponse = {
@@ -30,8 +28,8 @@ export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextAp
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const userData = await harvest.getMe();
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
-
-    const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to);
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
+    const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId);
     const flattedEntries: SimpleTimeEntry[] = entries.map((e) => ({
         id: e.id,
         client: e.client.name,
@@ -41,6 +39,7 @@ export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextAp
         hours: e.hours,
         billable: e.billable,
         task: e.task.name,
+        spent: e.spent_date,
     }))
 
     const result = {

@@ -14,6 +14,7 @@ export type QueryParams = {
     userId: number;
     from: string;
     to: string;
+    project_id?: number;
 }
 
 
@@ -46,9 +47,17 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
     const getTimeEntries = async ({
                                       userId,
                                       from,
-                                      to
+                                      to,
+                                      project_id
                                   }: QueryParams): Promise<TimeEntry[]> => {
-        const url = `/time_entries?user_id=${ userId }&from=${ from }&to=${ to }`;
+        const params = new URLSearchParams();
+        params.set('user_id', userId.toString());
+        params.set('from', from);
+        params.set('to', to);
+        if (project_id) {
+            params.set('project_id', project_id.toString());
+        }
+        const url = `/time_entries?${ params.toString() }`;
         try {
             return await fetchAllPages<TimeEntry[]>(url, 'time_entries', []);
         } catch (e) {
@@ -58,9 +67,10 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
 
     const getTimeEntriesForUsers = async (userIds: number[], {
         from,
-        to
-    }: { from: string, to: string }) => {
-        const allLoaders = userIds.map((uid) => getTimeEntries({ userId: uid, from, to }));
+        to,
+        project_id
+    }: { from: string, to: string, project_id?: number; }) => {
+        const allLoaders = userIds.map((uid) => getTimeEntries({ userId: uid, from, to, project_id }));
         const responses = await Promise.all(allLoaders);
         return responses.reduce((acc, resp) => {
             acc.push(...resp);

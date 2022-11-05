@@ -1,16 +1,13 @@
 import { getAxios } from "../get-axios";
 import { useCallback, useState } from "react";
-import { GetEntriesHandlerResponse } from "../../pages/api/user/entries";
-import { SpentProjectHours } from "../server/utils";
-import { TimeEntry } from "../server/harvest-types";
 import { GetEntriesDetailedHandlerResponse, SimpleTimeEntry } from "../../pages/api/user/entries-detailed";
 
 export const useEntriesDetailed = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ entries, setEntries ] = useState<SimpleTimeEntry[]>([]);
-    const load = useCallback((from: string, to: string, uid: string = '') => {
+    const load = useCallback((from: string, to: string, uid: string = '', projectId?: number) => {
         setIsLoading(true)
-        getAxios().get<GetEntriesDetailedHandlerResponse>(`/user/entries-detailed?from=${ from }&to=${ to }&uid=${ uid }`)
+        getAxios().get<GetEntriesDetailedHandlerResponse>(`/user/entries-detailed?from=${ from }&to=${ to }&uid=${ uid }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setEntries(data.entries)
             })

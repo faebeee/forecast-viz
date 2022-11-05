@@ -65,6 +65,15 @@ export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutPro
                                 User
                             </Button>
                         </Link> }
+
+                        { hasAdminAccess && <Link href={ `/project` }>
+                            <Button sx={ { mr: 2 } }
+                                component={ 'a' }
+                                variant={ active === 'project' ? 'contained' : 'text' }
+                                color={ "secondary" }>
+                                Project
+                            </Button>
+                        </Link> }
                     </Box>
                     <Button onClick={ () => setShowSidebar(!showSidebar) } variant={ 'text' } color={ 'secondary' }
                         endIcon={ <Menu/> }>

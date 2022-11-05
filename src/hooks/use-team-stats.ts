@@ -7,9 +7,9 @@ export const useTeamStats = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ data, setData ] = useState<GetTeamStatsHandlerResponse>(TeamStatsApiContextValue)
 
-    const load = useCallback((from: string, to: string) => {
+    const load = useCallback((from: string, to: string, projectId?: number | null) => {
         setIsLoading(true)
-        getAxios().get<GetTeamStatsHandlerResponse>(`/team/stats?from=${ from }&to=${ to }`)
+        getAxios().get<GetTeamStatsHandlerResponse>(`/team/stats?from=${ from }&to=${ to }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setData(data)
             })

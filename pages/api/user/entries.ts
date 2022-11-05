@@ -14,6 +14,7 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
         res.status(403).send({ entries: [] });
         return;
     }
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
@@ -21,8 +22,8 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
     const userData = await harvest.getMe();
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
-    const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to);
-    const assignments = await forecast.getAssignments(range.from, range.to);
+    const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId);
+    const assignments = await forecast.getAssignments(range.from, range.to, projectId);
     const myAssignments = getMyAssignments(assignments, userId);
     const myEntries = getTeamHoursEntries(entries, assignments);
 

@@ -28,11 +28,11 @@ export const getAssignmentsHandler = async (req: NextApiRequest, res: NextApiRes
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
     const forecast = getForecast(apiAuth.harvestToken, apiAuth.forecastAccount);
-
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const userData = await harvest.getMe();
     const userId =  req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
-    const assignments = await forecast.getAssignments(range.from, range.to);
+    const assignments = await forecast.getAssignments(range.from, range.to, projectId);
     const myAssignments = getMyAssignments(assignments, userId);
 
     const map: Record<number | string, GetAssignmentsHandlerEntry> = {};

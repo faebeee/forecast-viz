@@ -1,11 +1,23 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { endOfWeek, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, CircularProgress, Grid, Stack, Typography } from "@mui/material";
+import {
+    Autocomplete,
+    Box,
+    Card,
+    CardContent,
+    CircularProgress,
+    FormControl,
+    Grid,
+    InputLabel, MenuItem,
+    Select,
+    Stack, TextField,
+    Typography
+} from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT, DateRangeWidget } from "../src/components/date-range-widget";
-import { getForecast } from "../src/server/get-forecast";
+import { Forecast, getForecast } from "../src/server/get-forecast";
 import { Layout } from "../src/components/layout";
 import {
     COOKIE_FORC_ACCOUNTID_NAME,
@@ -60,6 +72,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             props: {
                 from,
                 to,
+                projects: [],
             }
         }
     }
@@ -69,6 +82,7 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
     const userId = userData.id;
 
     const allPeople = await forecast.getPersons();
+    const projects = await forecast.getProjects();
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
     const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
 
@@ -81,7 +95,8 @@ export const getServerSideProps: GetServerSideProps = async ({ query, req }) => 
             to,
             userName: userData.first_name,
             teamId,
-            hasAdminAccess
+            hasAdminAccess,
+            projects,
         }
     }
 }
@@ -92,6 +107,7 @@ export type EntriesProps = {
     userName?: string;
     teamId?: string;
     hasAdminAccess?: boolean;
+    projects: Forecast.Project[]
 }
 
 
@@ -101,19 +117,21 @@ export const Index = ({
                           to,
                           teamId,
                           hasAdminAccess,
+                          projects
                       }: EntriesProps) => {
     const router = useRouter();
     const { dateRange } = useFilterContext();
+    const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
 
     const teamStatsApi = useTeamStats();
     const teamHoursApi = useTeamHours();
     const teamEntriesApi = useTeamEntries();
 
     useEffect(() => {
-        teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        teamHoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-        teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
-    }, [ dateRange ]);
+        teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
+        teamHoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
+        teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
+    }, [ dateRange, selectedProject ]);
 
     return <>
         <TeamStatsApiContext.Provider value={ teamStatsApi }>
@@ -121,6 +139,15 @@ export const Index = ({
                 <Box sx={ { flexGrow: 1, } }>
                     <Box p={ 4 }>
                         <ContentHeader title={ teamId ?? '' }>
+                            <Autocomplete
+                                options={ projects.map((p) => ({
+                                    label: `${ p.code } - ${ p.name }`,
+                                    id: p.harvest_id ?? p.id as number
+                                })) }
+                                sx={ { width: 300 } }
+                                onChange={ (event, data) => setSelectedProject(data) }
+                                renderInput={ (params) => <TextField { ...params } label="Project"/> }
+                            />
                         </ContentHeader>
 
                         <Grid container spacing={ 10 }>

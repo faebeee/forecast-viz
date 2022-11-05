@@ -2,15 +2,17 @@ import { getAxios } from "../get-axios";
 import { useCallback, useState } from "react";
 import { GetEntriesHandlerResponse } from "../../pages/api/user/entries";
 import { SpentProjectHours } from "../server/utils";
+import { Forecast } from "../server/get-forecast";
+import { GetProjectsApiHandlerResponse } from "../../pages/api/user/projects";
 
-export const useEntries = () => {
+export const useProjects = () => {
     const [ isLoading, setIsLoading ] = useState(false);
-    const [ entries, setEntries ] = useState<SpentProjectHours[]>([]);
-    const load = useCallback((from: string, to: string, uid: string = '', projectId?: number) => {
+    const [ projects, setEntries ] = useState<Forecast.Project[]>([]);
+    const load = useCallback((from: string, to: string, uid: string = '') => {
         setIsLoading(true)
-        getAxios().get<GetEntriesHandlerResponse>(`/user/entries?from=${ from }&to=${ to }&uid=${ uid }&project_id=${ projectId }`)
+        getAxios().get<GetProjectsApiHandlerResponse>(`/user/projects?from=${ from }&to=${ to }&uid=${ uid }`)
             .then(({ data }) => {
-                setEntries(data.entries)
+                setEntries(data.projects)
             })
             .finally(() => {
                 setIsLoading(false);
@@ -20,6 +22,6 @@ export const useEntries = () => {
     return {
         load,
         isLoading,
-        entries,
+        projects,
     }
 }

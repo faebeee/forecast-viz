@@ -5,6 +5,7 @@ import { getTeamHoursEntries, SpentProjectHours } from "../../../src/server/util
 import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+
 export type GetTeamEntriesHandlerResponse = {
     entries: SpentProjectHours[];
 }
@@ -30,12 +31,12 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
         res.status(403).send(null);
         return;
     }
-
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id);
-    const teamEntries = await getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to);
-    const assignments = await forecast.getAssignments(range.from, range.to);
+    const teamEntries = await getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to, projectId);
+    const assignments = await forecast.getAssignments(range.from, range.to, projectId);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
 
     const result = {

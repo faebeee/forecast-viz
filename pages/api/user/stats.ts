@@ -42,11 +42,12 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     const userData = await harvest.getMe();
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
+    const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
 
     const [ entries, assignments, projects, persons ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[], Forecast.Person[] ] = await Promise.all([
-        getTimeEntriesForUser(harvest, userId, range.from, range.to),
-        forecast.getAssignments(range.from, range.to),
-        forecast.getProjects(),
+        getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId),
+        forecast.getAssignments(range.from, range.to, projectId),
+        forecast.getProjects(projectId),
         forecast.getPersons(),
     ]);
     const myData = persons.find((p) => p.harvest_user_id === userId);

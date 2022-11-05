@@ -7,9 +7,9 @@ export const useStats = () => {
     const [ data, setData ] = useState<GetStatsHandlerResponse>(StatsApiContextValue);
     const [ isLoading, setIsLoading ] = useState(false);
 
-    const load = useCallback((from: string, to: string, uid: string = '') => {
+    const load = useCallback((from: string, to: string, uid: string = '', projectId?: number) => {
         setIsLoading(true);
-        getAxios().get<GetStatsHandlerResponse>(`/user/stats?from=${ from }&to=${ to }&uid=${ uid }`)
+        getAxios().get<GetStatsHandlerResponse>(`/user/stats?from=${ from }&to=${ to }&uid=${ uid }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setData(data)
 

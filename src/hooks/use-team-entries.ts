@@ -6,9 +6,9 @@ import { SpentProjectHours } from "../server/utils";
 export const useTeamEntries = () => {
     const [ isLoading, setIsLoading ] = useState(false);
     const [ entries, setEntries ] = useState<SpentProjectHours[]>([]);
-    const load = useCallback((from: string, to: string) => {
+    const load = useCallback((from: string, to: string, projectId?: number | null) => {
         setIsLoading(true);
-        getAxios().get<GetTeamEntriesHandlerResponse>(`/team/entries?from=${ from }&to=${ to }`)
+        getAxios().get<GetTeamEntriesHandlerResponse>(`/team/entries?from=${ from }&to=${ to }&project_id=${ projectId }`)
             .then(({ data }) => {
                 setEntries(data.entries)
             })
