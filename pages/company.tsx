@@ -1,7 +1,7 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
@@ -108,7 +108,51 @@ export const Index = ({
                     </Box>
 
                     <Grid container spacing={ 10 }>
-                        <Grid item xs={ 6 } lg={ 4 }>
+                        <Grid item lg={ 6 } lg={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: '200px',
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Company Hours</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <Typography
+                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                    }
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/work-team.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 6 } lg={ 3 }>
+                            <Card sx={ {
+                                position: 'relative',
+                                minHeight: 200
+                            } }
+                            >
+                                <CardContent>
+                                    <Typography variant={ 'body1' }>Team Billable Hours</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                    { !statsApi.isLoading && statsApi.hours &&
+                                        <Typography
+                                            variant={ 'h2' }>{ round(100 / (statsApi.hours.billable + statsApi.hours.nonBillable) * statsApi.hours.billable, 1) }%</Typography>
+                                    }
+                                </CardContent>
+                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                    <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
+                                </Box>
+                                { !statsApi.isLoading && statsApi.hours && <CardActions>
+                                    Billable/Non
+                                    Billable: { round(statsApi.hours.billable, 1) }/{ round(statsApi.hours.nonBillable, 1) }
+                                </CardActions> }
+                            </Card>
+                        </Grid>
+
+                        <Grid item lg={ 6 } lg={ 3 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: '200px',
@@ -127,7 +171,7 @@ export const Index = ({
                             </Card>
                         </Grid>
 
-                        <Grid item xs={ 6 } lg={ 4 }>
+                        <Grid item lg={ 6 } lg={ 3 }>
                             <Card sx={ {
                                 position: 'relative',
                                 minHeight: '200px',
@@ -142,26 +186,6 @@ export const Index = ({
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/projects.svg' } width={ 128 } height={ 128 }/>
-                                </Box>
-                            </Card>
-                        </Grid>
-
-                        <Grid item xs={ 6 } lg={ 4 }>
-                            <Card sx={ {
-                                position: 'relative',
-                                minHeight: '200px',
-                            } }
-                            >
-                                <CardContent>
-                                    <Typography variant={ 'body1' }>Company Hours</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
-                                    { !statsApi.isLoading &&
-                                        <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
-                                    }
-                                </CardContent>
-                                <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
-                                    <Image src={ '/illu/work-team.svg' } width={ 128 } height={ 128 }/>
                                 </Box>
                             </Card>
                         </Grid>

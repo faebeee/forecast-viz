@@ -5,21 +5,14 @@ import { HourPerDayEntry } from "../type";
 
 export const useCompanyStats = () => {
     const [ isLoading, setIsLoading ] = useState(false);
-    const [ totalHours, setTotalHours ] = useState<number | null>(null);
-    const [ totalMembers, setTotalMembers ] = useState<number | null>(null);
-    const [ totalProjects, setTotalProjects ] = useState<number | null>(null);
-    const [ hoursPerProject, setHoursPerProject ] = useState<HoursPerProjectEntry[]>([]);
-    const [ hoursPerDay, setHoursPerDay ] = useState<HourPerDayEntry[]>([]);
+    const [ data, setData ] = useState<GetCompanyStatsHandlerResponse | null>(null);
 
     const load = useCallback((from: string, to: string) => {
         setIsLoading(true);
         return getAxios().get<GetCompanyStatsHandlerResponse>(`/company/stats?from=${ from }&to=${ to }`)
             .then(({ data }) => {
-                setTotalHours(data.totalHours);
-                setTotalMembers(data.totalMembers);
-                setTotalProjects(data.totalProjects);
-                setHoursPerProject(data.hoursPerProject);
-                setHoursPerDay(data.hoursPerDay);
+                setData(data);
+
             }).finally(() => {
                 setIsLoading(false);
             });
@@ -28,10 +21,6 @@ export const useCompanyStats = () => {
     return {
         load,
         isLoading,
-        hoursPerDay,
-        totalHours,
-        totalMembers,
-        totalProjects,
-        hoursPerProject,
+        ...(data ?? {}),
     }
 }

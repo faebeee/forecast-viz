@@ -24,6 +24,7 @@ export type GetTeamStatsHandlerResponse = {
     plannedHoursPerUser: HoursPerUserItem[];
     hoursPerUserHistory: HoursPerUserItemHistory[];
     hoursPerTask: HourPerTaskObject[];
+    hours: { billable: number, nonBillable: number }
 }
 export type HoursPerUserItemHistory = {
     user: string;
@@ -102,6 +103,17 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         return accumulator;
     }, new Map<number, HoursPerUserItem>());
 
+
+    const billableHours = entries.reduce((acc, entry) => {
+        if (entry.billable) {
+            acc.billable += entry.hours;
+        } else {
+            acc.nonBillable += entry.hours;
+        }
+
+        return acc;
+    }, { billable: 0, nonBillable: 0 });
+
     const hoursPerTask = getHoursPerTask(entries);
 
     const result = {
@@ -111,7 +123,8 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         hoursPerUser,
         hoursPerUserHistory,
         plannedHoursPerUser: Array.from(plannedHoursPerUser.values()),
-        hoursPerTask
+        hoursPerTask,
+        hours: billableHours,
     };
 
     if (redis) {

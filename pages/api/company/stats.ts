@@ -16,6 +16,8 @@ export type GetCompanyStatsHandlerResponse = {
     totalProjects: number;
     hoursPerDay: HourPerDayEntry[];
     hoursPerProject: HoursPerProjectEntry[];
+    hours: { billable: number, nonBillable: number }
+
 }
 
 export type HoursPerProjectEntry = {
@@ -67,12 +69,23 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
     }, {} as Record<string, HourPerDayEntry>);
 
 
+    const billableHours = entries.reduce((acc, entry) => {
+        if (entry.billable) {
+            acc.billable += entry.hours;
+        } else {
+            acc.nonBillable += entry.hours;
+        }
+
+        return acc;
+    }, { billable: 0, nonBillable: 0 });
+
     const result = {
         totalHours,
         hoursPerProject: Object.values(hoursPerProject),
         hoursPerDay: orderBy(Object.values(hoursPerDay), 'date'),
         totalMembers: peopleIds.length,
         totalProjects: totalProjects.length,
+        hours: billableHours,
     };
 
     res.send(result);

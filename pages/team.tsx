@@ -4,7 +4,7 @@ import { GetServerSideProps } from "next";
 import {
     Autocomplete,
     Box,
-    Card,
+    Card, CardActions,
     CardContent,
     CircularProgress,
     FormControl,
@@ -151,7 +151,7 @@ export const Index = ({
                         </ContentHeader>
 
                         <Grid container spacing={ 10 }>
-                            <Grid item xs={ 6 } xl={ 4 }>
+                            <Grid item lg={ 6 } xl={ 3 }>
                                 <Card sx={ {
                                     position: 'relative',
                                     minHeight: 200
@@ -171,7 +171,31 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item xs={ 6 } xl={ 4 }>
+                            <Grid item lg={ 6 } xl={ 3 }>
+                                <Card sx={ {
+                                    position: 'relative',
+                                    minHeight: 200
+                                } }
+                                >
+                                    <CardContent>
+                                        <Typography variant={ 'body1' }>Team Billable Hours</Typography>
+                                        { teamStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
+                                        { !teamStatsApi.isLoading && teamStatsApi.hours &&
+                                            <Typography
+                                                variant={ 'h2' }>{ round(100 / (teamStatsApi.hours.billable + teamStatsApi.hours.nonBillable) * teamStatsApi.hours.billable, 1) }%</Typography>
+                                        }
+                                    </CardContent>
+                                    <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
+                                        <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
+                                    </Box>
+                                    { !teamStatsApi.isLoading && teamStatsApi.hours && <CardActions>
+                                        Billable/Non
+                                        Billable: { round(teamStatsApi.hours.billable, 1) }/{ round(teamStatsApi.hours.nonBillable, 1) }
+                                    </CardActions> }
+                                </Card>
+                            </Grid>
+
+                            <Grid item lg={ 6 } xl={ 3 }>
                                 <Card sx={ {
                                     minHeight: 200,
                                     position: 'relative'
@@ -190,7 +214,7 @@ export const Index = ({
                                 </Card>
                             </Grid>
 
-                            <Grid item xs={ 6 } xl={ 4 }>
+                            <Grid item lg={ 6 } xl={ 3 }>
                                 <Card sx={ {
                                     minHeight: 200,
                                     position: 'relative'
@@ -347,6 +371,7 @@ export const Index = ({
                 </Box>
             </Layout>
         </TeamStatsApiContext.Provider>
-    </>;
+    </>
+        ;
 }
 export default Index;
