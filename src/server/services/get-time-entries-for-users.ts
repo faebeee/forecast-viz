@@ -3,7 +3,7 @@ import { HarvestApi } from "../get-harvest";
 import { TimeEntry } from "../harvest-types";
 
 export const getTimeEntriesForUser = async (harvest: HarvestApi, userId: number, from: string, to: string, projectId?: number): Promise<TimeEntry[]> => {
-    const redisKey = `services/entries/${ userId }-${ from }-${ to }`;
+    const redisKey = `services/entries/${ userId }-${ from }-${ to }-${projectId}`;
 
     const redis = await getRedis();
     if (redis) {
