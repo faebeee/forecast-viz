@@ -60,7 +60,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
         .map(p => p.harvest_user_id);
 
-    const redisKey = `team/stats/${ teamId }-${ range.from }-${ range.to }`;
+    const redisKey = `team/stats/${ teamId }-${ range.from }-${ range.to }-${ projectId }`;
 
     const redis = await getRedis();
     if (redis) {
@@ -82,7 +82,11 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const projectMap = forecast.getProjectsMap(projects);
     const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
-    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, { from: range.from, to: range.to, project_id: projectId });
+    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, {
+        from: range.from,
+        to: range.to,
+        project_id: projectId
+    });
 
     const hoursPerUser = getHoursPerUser(teamEntries);
     const hoursPerUserHistory = getHoursPerUserHistory(teamEntries, fromDate, toDate);
