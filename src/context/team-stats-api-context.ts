@@ -7,6 +7,7 @@ type Value = GetTeamStatsHandlerResponse & {
 };
 
 export const TeamStatsApiContextValue: Value = {
+    hours: { billable: 0, nonBillable: 0 },
     hoursPerTask: [], plannedHoursPerUser: [],
     hoursPerUser: [], hoursPerUserHistory: [], isLoading: false, totalHours: 0, totalMembers: 0, totalProjects: 0
 }
