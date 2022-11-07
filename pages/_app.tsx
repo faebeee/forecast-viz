@@ -16,6 +16,7 @@ import { FilterContext } from '../src/context/filter-context';
 import qs from "qs";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { useRouter } from "next/router";
+import { COOKIE_TTL } from "../src/config";
 
 const theme = createTheme({
     palette: {
@@ -65,14 +66,14 @@ function MyApp({ Component, pageProps }: AppProps) {
     }), [ dateRange ]);
 
     useEffect(() => {
-        cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken)
+        cookies.set(COOKIE_HARV_TOKEN_NAME, harvestToken, { expires: COOKIE_TTL })
     }, [ harvestToken ])
 
     useEffect(() => {
-        cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId)
+        cookies.set(COOKIE_HARV_ACCOUNTID_NAME, harvestAccountId, { expires: COOKIE_TTL })
     }, [ harvestAccountId ]);
     useEffect(() => {
-        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId)
+        cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId, { expires: COOKIE_TTL })
     }, [ forecastAccountId ])
 
 
