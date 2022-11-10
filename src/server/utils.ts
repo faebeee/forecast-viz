@@ -254,3 +254,7 @@ export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Dat
         return acc;
     }, {} as Record<string, HoursPerUserItemHistory>))
 }
+
+export const filterEntriesForUser = (entries: TimeEntry[], userId: number) => {
+    return entries.filter((e) => e.user.id === userId);
+}

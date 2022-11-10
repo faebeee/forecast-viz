@@ -36,3 +36,5 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 # Resources
 
 [Illustrations](https://undraw.co/search)
+
+Color #ffe290

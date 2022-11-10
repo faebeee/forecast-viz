@@ -350,7 +350,7 @@ export const Index = ({
                                     disableSelectionOnClick
                                     experimentalFeatures={ { newEditingApi: true } }/>
                             </Grid>
-                            <Grid item xs={ 12 }>
+                            <Grid item xs={ 12 } xl={ 6 }>
                                 <Typography variant={ 'h5' }>Team Projects</Typography>
                                 <DataGrid
                                     autoHeight
@@ -362,6 +362,22 @@ export const Index = ({
                                         { field: 'projectId', headerName: 'Project ID', width: 90 },
                                         { field: 'projectName', headerName: 'Project Name', flex: 1 },
                                         { field: 'hours', headerName: 'Hours', flex: 1 },
+                                    ] }
+                                    disableSelectionOnClick
+                                    experimentalFeatures={ { newEditingApi: true } }/>
+                            </Grid>
+
+                            <Grid item xs={ 12 } xl={ 6 }>
+                                <Typography variant={ 'h5' }>Timereports for Team Members</Typography>
+                                <DataGrid
+                                    autoHeight
+                                    getRowId={ (r) => r.user }
+                                    loading={ teamStatsApi.isLoading }
+                                    rows={ teamStatsApi.statsPerUser ?? [] }
+                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                    columns={ [
+                                        { field: 'user', headerName: 'User', flex: 1 },
+                                        { field: 'lastEntryDate', headerName: 'Last entry date', flex: 1 },
                                     ] }
                                     disableSelectionOnClick
                                     experimentalFeatures={ { newEditingApi: true } }/>

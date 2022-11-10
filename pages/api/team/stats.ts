@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
+    filterEntriesForUser,
     getHoursPerTask,
     getHoursPerUser,
     getHoursPerUserHistory,
@@ -24,7 +25,8 @@ export type GetTeamStatsHandlerResponse = {
     plannedHoursPerUser: HoursPerUserItem[];
     hoursPerUserHistory: HoursPerUserItemHistory[];
     hoursPerTask: HourPerTaskObject[];
-    hours: { billable: number, nonBillable: number }
+    hours: { billable: number, nonBillable: number },
+    statsPerUser: { user: string, lastEntryDate: string }[]
 }
 export type HoursPerUserItemHistory = {
     user: string;
@@ -59,6 +61,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const teamId = myTeamEntry.key;
     const teamPeople = allPeople
         .filter((p) => p.roles.includes(teamId!) && p.archived === false)
+    const teamPeopleIds = teamPeople
         .map(p => p.harvest_user_id);
 
     const redisKey = `team/stats/${ teamId }-${ range.from }-${ range.to }-${ projectId }`;
@@ -75,15 +78,15 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const toDate = parse(range.to, DATE_FORMAT, new Date());
 
     const [ entries, assignments, projects ]: [ TimeEntry[], AssignmentEntry[], Forecast.Project[] ] = await Promise.all([
-        getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to, projectId),
+        getTimeEntriesForUsers(harvest, teamPeopleIds, range.from, range.to, projectId),
         forecast.getAssignments(range.from, range.to, projectId),
         forecast.getProjects(),
     ])
-    const teamAssignments = getTeamAssignments(assignments, teamPeople);
+    const teamAssignments = getTeamAssignments(assignments, teamPeopleIds);
     const totalHours = entries.reduce((acc, entry) => acc + entry.hours, 0);
     const projectMap = forecast.getProjectsMap(projects);
     const totalProjects = getProjectsFromEntries(projectMap, entries, teamAssignments);
-    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeople, {
+    const teamEntries = await harvest.getTimeEntriesForUsers(teamPeopleIds, {
         from: range.from,
         to: range.to,
         project_id: projectId
@@ -116,15 +119,25 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
 
     const hoursPerTask = getHoursPerTask(entries);
 
+    const statsPerUser = teamPeople.map((person) => {
+        const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
+        const lastEntryDate = usersEntries[usersEntries.length - 1]?.spent_date ?? '?';
+        return {
+            user: `${ person.first_name } ${ person.last_name }`,
+            lastEntryDate,
+        }
+    })
+
     const result = {
         totalHours,
-        totalMembers: teamPeople.length,
+        totalMembers: teamPeopleIds.length,
         totalProjects: totalProjects.length,
         hoursPerUser,
         hoursPerUserHistory,
         plannedHoursPerUser: Array.from(plannedHoursPerUser.values()),
         hoursPerTask,
         hours: billableHours,
+        statsPerUser,
     };
 
     if (redis) {

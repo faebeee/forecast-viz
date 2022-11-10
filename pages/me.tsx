@@ -38,6 +38,7 @@ import { ProjectsStats } from "../src/components/stats/projects-stats";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
+import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -140,6 +141,10 @@ export const Index = ({
 
                                 <Grid item xs={ 6 } xl={ 4 }>
                                     <BillableHoursStats/>
+                                </Grid>
+
+                                <Grid item xs={ 6 } xl={ 4 }>
+                                    <LastEntryStats/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
