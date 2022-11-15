@@ -1,5 +1,5 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format, startOfWeek } from 'date-fns';
+import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -39,11 +39,22 @@ import { BillableHoursStats } from "../src/components/stats/billable-hours-stats
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
+import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
+//@ts-ignore
+const RadialAreaChart = dynamic(() => import('reaviz').then(module => module.RadialAreaChart), { ssr: false });
+//@ts-ignore
+const RadialAreaSeries = dynamic(() => import('reaviz').then(module => module.RadialAreaSeries), { ssr: false });
+//@ts-ignore
+const RadialAxis = dynamic(() => import('reaviz').then(module => module.RadialAxis), { ssr: false });
+//@ts-ignore
+const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialArea), { ssr: false });
+//@ts-ignore
+const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
@@ -101,11 +112,13 @@ export const Index = ({
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
+    const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+        entriesDetailedApi.load(from, to);
         entriesApi.load(from, to);
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
@@ -154,8 +167,53 @@ export const Index = ({
                                 <Grid item xs={ 6 } xl={ 4 }>
                                     <ProjectsStats/>
                                 </Grid>
+                                <Grid item xs={ 6 } xl={ 4 }>
+                                    <div/>
+                                </Grid>
 
-                                <Grid item xs={ 12 } lg={ 12 }>
+                                <Grid item xs={ 12 } xl={ 6 }>
+                                    <Typography variant={ 'body1' }>Reported Hours</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <RadialAreaChart
+                                            data={ statsApi.hoursPerDay?.filter((e) => e.hours > 0)
+                                                .map((h, index) => ({
+                                                    id: index.toString(),
+                                                    key: parse(h.date, DATE_FORMAT, new Date()),
+                                                    data: h.hours,
+                                                })) ?? [] }
+                                            height={ 400 }
+                                            series={ <RadialAreaSeries
+                                                area={ <RadialArea gradient={ <RadialGradient/> }/> }
+                                                interpolation={ 'linear' }/> }
+                                            axis={ <RadialAxis
+                                                // @ts-ignore
+                                                type="category"/> }
+                                        />
+                                    }
+                                </Grid>
+                                <Grid item xs={ 12 } xl={ 6 }>
+                                    <Typography variant={ 'body1' }>Reported Overtime</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <RadialAreaChart
+                                            data={ statsApi.overtimePerDay?.filter((e) => e.hours > 0)
+                                                .map((h, index) => ({
+                                                    id: index.toString(),
+                                                    key: parse(h.date, DATE_FORMAT, new Date()),
+                                                    data: h.hours,
+                                                })) ?? [] }
+                                            height={ 400 }
+                                            series={ <RadialAreaSeries
+                                                area={ <RadialArea gradient={ <RadialGradient/> }/> }
+                                                interpolation={ 'linear' }/> }
+                                            axis={ <RadialAxis
+                                                // @ts-ignore
+                                                type="category"/> }
+                                        />
+                                    }
+                                </Grid>
+                                <Grid item xs={ 12 } xl={ 12 }>
                                     <Typography variant={ 'body1' }>Hours per day</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !statsApi.isLoading && <HistoryLineChart/> }
@@ -249,6 +307,25 @@ export const Index = ({
                                         ] }
                                         disableSelectionOnClick
                                         experimentalFeatures={ { newEditingApi: true } }/>
+                                </Grid>
+
+                                <Grid item xs={ 12 }>
+                                    <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
+
+                                    <DataGrid
+                                        autoHeight
+                                        loading={ entriesDetailedApi.isLoading }
+                                        rows={ entriesDetailedApi.entries }
+                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                        columns={ [
+                                            { field: 'client', headerName: 'Client', flex: 1 },
+                                            { field: 'projectCode', headerName: 'Project Code', flex: 1 },
+                                            { field: 'task', headerName: 'Task', flex: 1 },
+                                            { field: 'notes', headerName: 'Notes', flex: 1 },
+                                            { field: 'hours', headerName: 'Hours', flex: 1 },
+
+                                        ] }
+                                        disableSelectionOnClick/>
                                 </Grid>
                             </Grid>
                         </Box>

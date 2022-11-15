@@ -28,6 +28,7 @@ export type GetStatsHandlerResponse = {
     totalHoursPerDayCapacity: number;
     lastEntryDate: string;
     hoursPerDay: HourPerDayEntry[];
+    overtimePerDay: HourPerDayEntry[];
     hoursPerTask: HourPerTaskObject[];
 }
 
@@ -65,14 +66,13 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
     const totalProjects = myProjects.length;
 
     const totalPlannedHours = myAssignments.reduce((acc, assignment) => acc + (assignment.totalHours ?? 0), 0);
-
     const days = getDates(parse(range.from, DATE_FORMAT, new Date()), parse(range.to, DATE_FORMAT, new Date()));
     const amountOfWorkingDays = Object.values(myData.working_days).filter(Boolean).length;
-    const record = days.reduce((acc, date) => {
+    const weeklyCapacity = myData.weekly_capacity / 60 / 60;
+    const dailyCapacity = weeklyCapacity / amountOfWorkingDays;
+    const getRecord = () => days.reduce((acc, date) => {
         const formattedDate = format(date, DATE_FORMAT);
-        if (!isWeekend(date)) {
-            acc[formattedDate] = { date: formattedDate, hours: 0 };
-        }
+        acc[formattedDate] = { date: formattedDate, hours: 0 };
         return acc;
     }, {} as Record<string, HourPerDayEntry>)
 
@@ -82,8 +82,19 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         }
         acc[entry.spent_date].hours += entry.hours;
         return acc;
-    }, record));
+    }, getRecord()));
 
+
+    const overtimePerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = { date: entry.spent_date, hours: 0 };
+        }
+        acc[entry.spent_date].hours += entry.hours;
+        return acc;
+    }, getRecord()))
+        .map((entry) => {
+            return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
+        });
 
     const billableHours = entries.reduce((acc, entry) => {
         if (entry.billable) {
@@ -107,10 +118,11 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         billableHours: billableHours.billable,
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
-        totalWeeklyCapacity: myData.weekly_capacity / 60 / 60,
-        totalHoursPerDayCapacity: myData.weekly_capacity / amountOfWorkingDays / 60 / 60,
+        totalWeeklyCapacity: weeklyCapacity,
+        totalHoursPerDayCapacity: dailyCapacity,
         hoursPerTask,
         lastEntryDate,
+        overtimePerDay,
     }
 
     res.send(result);
