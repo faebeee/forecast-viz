@@ -99,10 +99,12 @@ export const Index = ({
         detailedEntriesApi.load(from, to);
         currentStatsApi.load();
 
-        mixpanel.track('filter', {
-            'page': "today",
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "today",
+                range: { from, to },
+            });
+        }
     }, []);
 
     return <>

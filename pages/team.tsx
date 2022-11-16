@@ -133,11 +133,13 @@ export const Index = ({
         teamHoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
         teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
 
-        mixpanel.track('filter', {
-            'page': "team",
-            project: selectedProject?.label,
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "team",
+                project: selectedProject?.label,
+                range: { from, to },
+            });
+        }
     }, [ dateRange, selectedProject ]);
 
     return <>

@@ -155,10 +155,12 @@ export const Index = ({
         hoursApi.load(from, to, userId);
         currentStatsApi.load(userId);
 
-        mixpanel.track('filter', {
-            'page': "user",
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "user",
+                range: { from, to },
+            });
+        }
     }, 200)
 
     useEffect(() => {

@@ -150,11 +150,13 @@ export const Index = ({
         detailedEntriesApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
 
-        mixpanel.track('filter', {
-            'page': "project",
-            project: selectedProject?.label,
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "project",
+                project: selectedProject?.label,
+                range: { from, to },
+            });
+        }
     }, 200)
 
     useEffect(() => {

@@ -90,10 +90,12 @@ export const Index = ({
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
         teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
 
-        mixpanel.track('filter', {
-            'page': "company",
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "company",
+                range: { from, to },
+            });
+        }
     }, [ dateRange ])
 
     return <>

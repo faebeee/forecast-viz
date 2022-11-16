@@ -127,10 +127,12 @@ export const Index = ({
         hoursApi.load(from, to);
         currentStatsApi.load();
 
-        mixpanel.track('filter', {
-            'page': "Me",
-            range: { from, to },
-        });
+        if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+            mixpanel.track('filter', {
+                'page': "Me",
+                range: { from, to },
+            });
+        }
     }, [ dateRange ]);
 
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
