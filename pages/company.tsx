@@ -22,6 +22,7 @@ import { GridlineSeriesProps } from "reaviz";
 import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 import { getAdminAccess } from "../src/server/has-admin-access";
 import { getForecast } from "../src/server/get-forecast";
+import mixpanel from "mixpanel-browser";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -88,6 +89,11 @@ export const Index = ({
     useEffect(() => {
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
         teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+
+        mixpanel.track('filter', {
+            'page': "company",
+            range: { from, to },
+        });
     }, [ dateRange ])
 
     return <>

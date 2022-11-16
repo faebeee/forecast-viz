@@ -17,6 +17,7 @@ import qs from "qs";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { useRouter } from "next/router";
 import { COOKIE_TTL } from "../src/config";
+import mixpanel from 'mixpanel-browser';
 
 const theme = createTheme({
     palette: {
@@ -76,6 +77,9 @@ function MyApp({ Component, pageProps }: AppProps) {
         cookies.set(COOKIE_FORC_ACCOUNTID_NAME, forecastAccountId, { expires: COOKIE_TTL })
     }, [ forecastAccountId ])
 
+    if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
+        mixpanel.init(process.env.NEXT_PUBLIC_ANALYTICS_ID, { debug: true });
+    }
 
     useEffect(() => {
         router.replace(`?${ query }`, `?${ query }`)

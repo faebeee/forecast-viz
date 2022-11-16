@@ -40,6 +40,7 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
+import mixpanel from 'mixpanel-browser';
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -115,6 +116,7 @@ export const Index = ({
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
 
+
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
@@ -124,6 +126,11 @@ export const Index = ({
         assignmentsApi.load(from, to);
         hoursApi.load(from, to);
         currentStatsApi.load();
+
+        mixpanel.track('filter', {
+            'page': "Me",
+            range: { from, to },
+        });
     }, [ dateRange ]);
 
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);

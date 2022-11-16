@@ -43,6 +43,7 @@ import { getAdminAccess } from "../src/server/has-admin-access";
 import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-chart";
 import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
+import mixpanel from "mixpanel-browser";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -131,6 +132,12 @@ export const Index = ({
         teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
         teamHoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
         teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
+
+        mixpanel.track('filter', {
+            'page': "team",
+            project: selectedProject?.label,
+            range: { from, to },
+        });
     }, [ dateRange, selectedProject ]);
 
     return <>

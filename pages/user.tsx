@@ -55,6 +55,7 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import { useProjects } from "../src/hooks/use-projects";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
+import mixpanel from "mixpanel-browser";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -153,6 +154,11 @@ export const Index = ({
         assignmentsApi.load(from, to, userId);
         hoursApi.load(from, to, userId);
         currentStatsApi.load(userId);
+
+        mixpanel.track('filter', {
+            'page': "user",
+            range: { from, to },
+        });
     }, 200)
 
     useEffect(() => {

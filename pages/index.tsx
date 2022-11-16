@@ -34,6 +34,7 @@ import { BillableHoursStats } from "../src/components/stats/billable-hours-stats
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
+import mixpanel from "mixpanel-browser";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -97,8 +98,12 @@ export const Index = ({
         hoursApi.load(from, to);
         detailedEntriesApi.load(from, to);
         currentStatsApi.load();
-    }, []);
 
+        mixpanel.track('filter', {
+            'page': "today",
+            range: { from, to },
+        });
+    }, []);
 
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
