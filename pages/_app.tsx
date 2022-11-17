@@ -78,7 +78,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     }, [ forecastAccountId ])
 
     if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
-        mixpanel.init(process.env.NEXT_PUBLIC_ANALYTICS_ID, { debug: true });
+        mixpanel.init(process.env.NEXT_PUBLIC_ANALYTICS_ID, { debug: false });
     }
 
     useEffect(() => {
