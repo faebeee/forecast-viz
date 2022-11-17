@@ -121,7 +121,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
 
     const statsPerUser = teamPeople.map((person) => {
         const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
-        const lastEntryDate = usersEntries[usersEntries.length - 1]?.spent_date ?? '?';
+        const lastEntryDate = usersEntries[0]?.spent_date ?? '?';
         return {
             user: `${ person.first_name } ${ person.last_name }`,
             lastEntryDate,
