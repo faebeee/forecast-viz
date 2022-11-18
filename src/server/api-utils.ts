@@ -4,14 +4,14 @@ import { DATE_FORMAT } from "../context/formats";
 
 export const getAuthFromCookies = (req: NextApiRequest): { harvestToken: string, harvestAccount: number, forecastAccount: number } => {
     return {
-        harvestAccount: account,
-        harvestToken: token,
-        forecastAccount: forecastAccount,
+        harvestAccount: req.session.harvestId!,
+        harvestToken: req.session.accessToken!,
+        forecastAccount: req.session.forecastId!,
     }
 }
 
 export const hasApiAccess = (req: NextApiRequest) => {
-    return false;
+    return req.session.accessToken && req.session.forecastId && req.session.harvestId;
 }
 
 export const getRange = (req: NextApiRequest): { from: string, to: string } => {

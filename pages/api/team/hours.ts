@@ -5,6 +5,7 @@ import { getTeamProjectHours, SpentProjectHours } from "../../../src/server/util
 import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+import {withSessionApiRoute} from "../../../src/server/with-session";
 
 export type GetTeamHoursHandlerResponse = {
     hours: SpentProjectHours[];
@@ -45,4 +46,4 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
 
     res.send(result);
 }
-export default getTeamHoursHandler;
+export default withSessionApiRoute(getTeamHoursHandler);

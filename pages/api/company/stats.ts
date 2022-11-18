@@ -3,12 +3,11 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getProjectsFromEntries, getTeamAssignments } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
-import { REDIS_CACHE_TTL } from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { orderBy } from "lodash";
-import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+import {withSessionApiRoute} from "../../../src/server/with-session";
 
 export type GetCompanyStatsHandlerResponse = {
     totalMembers: number;
@@ -90,4 +89,4 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
 
     res.send(result);
 }
-export default getCompanyStatsHandler;
+export default withSessionApiRoute(getCompanyStatsHandler);
