@@ -370,6 +370,31 @@ export namespace GetUsersAPI {
 
 }
 
+export namespace AccountsApi {
+    export enum ProductName {
+        harvest = 'harvest',
+        forecast = 'forecast'
+    }
+
+    export interface User {
+        id: number,
+        first_name: string,
+        last_name: string,
+        email: string
+    }
+
+    export interface Account {
+        id: number,
+        name: string,
+        product: ProductName
+    }
+
+    export interface Response {
+        user: User
+        accounts: Account[]
+    }
+}
+
 export namespace RolesApi {
 
     export interface Role {

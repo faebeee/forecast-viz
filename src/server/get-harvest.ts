@@ -1,4 +1,5 @@
 import {
+    AccountsApi,
     GetMe,
     GetProjectAssignment,
     GetProjectBudget,
@@ -18,14 +19,19 @@ export type QueryParams = {
 }
 
 
-export const getHarvest = async (accessToken: string, accountId: number) => {
+export const getHarvest = async (accessToken: string, accountId?: number) => {
+    const headers: { [index: string]: string | number } = {
+        Authorization: ` Bearer ${accessToken}`,
+    }
+    if (accountId) {
+        headers['Harvest-Account-Id'] = accountId
+    }
     const api = axios.create({
-        baseURL: 'https://api.harvestapp.com/v2',
-        headers: {
-            Authorization: ` Bearer ${ accessToken }`,
-            'Harvest-Account-Id': accountId
-        }
+        baseURL: accountId ? 'https://api.harvestapp.com/v2' : 'https://id.getharvest.com/api/v2',
+        headers
     })
+
+
 
     const fetchAllPages = async <RET>(url: string, key: string, results: RET): Promise<RET> => {
         try {
@@ -144,6 +150,15 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
         }
     }
 
+    const getAccounts = async (): Promise<AccountsApi.Response | null> => {
+        try {
+            const response = await api.get(`/accounts`)
+            return response.data;
+        } catch (e) {
+            return null
+        }
+    }
+
     return {
         getProjectBudget,
         getTimeEntries,
@@ -154,6 +169,7 @@ export const getHarvest = async (accessToken: string, accountId: number) => {
         getTimeEntriesForUsers,
         getRoles,
         getUser,
+        getAccounts,
         fetchAllPages,
     }
 
