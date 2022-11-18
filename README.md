@@ -18,9 +18,9 @@ Color #ffe290
 # Env Variables
 
 ```
+NEXT_PUBLIC_OAUTH_CLIENT_ID=****
 REDIS_URL=****
 REDIS_CACHE_TTL=600
-
 REDIS_ENABLED=false
 
 # Optional
