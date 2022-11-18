@@ -28,7 +28,9 @@ export const getServerSideProps: GetServerSideProps = async ({query, req, res}) 
         cookies.push(COOKIE_FORC_ACCOUNTID_NAME + '=' + account)
     })
 
-    res.setHeader('set-cookie', cookies)
+    if (cookies.length > 2) {
+        res.setHeader('set-cookie', cookies)
+    }
 
     return {
         redirect: {
