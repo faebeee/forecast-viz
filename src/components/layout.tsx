@@ -15,7 +15,7 @@ const drawerWidth = 340;
 
 export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutProps) => {
     const context = useFilterContext();
-    const [ showSidebar, setShowSidebar ] = useState(!context.forecastAccountId || !context.harvestAccountId || !context.harvestToken);
+    const [ showSidebar, setShowSidebar ] = useState(false);
 
     return <>
         <AppBar position="fixed" sx={ { zIndex: (theme) => theme.zIndex.drawer + 1 } }>

@@ -15,13 +15,6 @@ export type SettingsProps = {
 
 export const Settings = ({}: SettingsProps) => {
     const filterContext = useFilterContext();
-    const router = useRouter();
-    const harvestClientId = process.env.NEXT_PUBLIC_OAUTH_CLIENT_ID
-
-
-    const onClick = () => {
-        router.push('https://id.getharvest.com/oauth2/authorize?client_id='+harvestClientId+'&response_type=token');
-    }
 
     return <div>
         <Box p={ 2 }>
@@ -53,12 +46,7 @@ export const Settings = ({}: SettingsProps) => {
                                value={filterContext.forecastAccountId}
                                onChange={(e) => filterContext.setForecastAccountId(e.target.value)}/>
                 }
-                <Button color={ 'primary' }
-                    fullWidth
-                    size={ 'large' }
-                    variant={ 'contained' }
-                    onClick={ onClick }
-                >Authenticate</Button>
+
 
             </Stack>
 
