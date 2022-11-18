@@ -44,6 +44,7 @@ import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
+import {withSessionServerSide} from "../src/server/with-session";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -52,44 +53,36 @@ const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => mo
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
+export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+    async ({ query, req }): Promise<{ props: EntriesProps }> => {
+        const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
+        const to = query.to as string ?? format(new Date(), DATE_FORMAT);
 
-    if (!token || !account) {
+        const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
+        const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
+        const userData = await api.getMe();
+        const userId = userData.id;
+
+        const allPeople = await forecast.getPersons();
+        const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+        const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
+        const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
+        const teamId = myTeamEntry!.key;
+        const teamPeople = allPeople
+            .filter((p) => p.roles.includes(teamId!) && !p.archived)
+
+
         return {
             props: {
                 from,
                 to,
-                userName: null,
-                persons: [],
+                persons: teamPeople,
+                userName: userData.first_name,
+                hasAdminAccess,
             }
         }
     }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-    const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
-    const teamId = myTeamEntry!.key;
-    const teamPeople = allPeople
-        .filter((p) => p.roles.includes(teamId!) && !p.archived)
-
-
-    return {
-        props: {
-            from,
-            to,
-            persons: teamPeople,
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
-    }
-}
+)
 
 export type EntriesProps = {
     from: string;
