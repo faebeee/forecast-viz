@@ -5,11 +5,6 @@ import { AdapterDateFns } from '@mui/x-date-pickers-pro/AdapterDateFns';
 import { ThemeProvider } from "@mui/system";
 import { createTheme, CssBaseline, GlobalStyles } from "@mui/material";
 import cookies from "js-cookie";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useEffect, useMemo, useState } from "react";
 import { endOfWeek, format, parse, startOfWeek } from "date-fns";
 import { FilterContext } from '../src/context/filter-context';
@@ -18,6 +13,7 @@ import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { useRouter } from "next/router";
 import { COOKIE_TTL } from "../src/config";
 import mixpanel from 'mixpanel-browser';
+import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../src/context/cookies";
 
 const theme = createTheme({
     palette: {

@@ -8,11 +8,6 @@ import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
@@ -35,6 +30,7 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
+import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../src/context/cookies";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });

@@ -7,11 +7,7 @@ import {
 } from "@mui/material";
 import { useFilterContext } from "../context/filter-context";
 import { useRouter } from "next/router";
-import { useMemo } from "react";
 
-export const COOKIE_HARV_TOKEN_NAME = 'harvest-token';
-export const COOKIE_HARV_ACCOUNTID_NAME = 'harvest-account-id';
-export const COOKIE_FORC_ACCOUNTID_NAME = 'forecast-account-id';
 
 export type SettingsProps = {
 }

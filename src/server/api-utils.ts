@@ -1,7 +1,7 @@
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../components/settings";
 import {NextApiRequest} from "next";
 import {endOfWeek, format, startOfWeek} from "date-fns";
 import {DATE_FORMAT} from "../components/date-range-widget";
+import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../context/cookies";
 
 export const getAuthFromCookies = (req: NextApiRequest): { harvestToken: string, harvestAccount: number, forecastAccount: number } => {
     const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;

@@ -1,13 +1,9 @@
 import {GetServerSideProps} from "next";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import {getHarvest} from "../src/server/get-harvest";
 import {AccountsApi} from "../src/server/harvest-types";
 import ProductName = AccountsApi.ProductName;
+import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../src/context/cookies";
 
 export const getServerSideProps: GetServerSideProps = async ({query, req, res}) => {
     const harvestAccessToken = query.access_token;
