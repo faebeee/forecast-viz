@@ -26,9 +26,6 @@ export const Settings = ({}: SettingsProps) => {
     const onClick = () => {
         router.push('https://id.getharvest.com/oauth2/authorize?client_id='+harvestClientId+'&response_type=token');
     }
-    const isValid = useMemo(() => {
-        return !!filterContext.harvestToken && !!filterContext.harvestAccountId && !!filterContext.forecastAccountId;
-    }, [ filterContext ])
 
     return <div>
         <Box p={ 2 }>
@@ -57,7 +54,6 @@ export const Settings = ({}: SettingsProps) => {
 
                 <Button color={ 'primary' }
                     fullWidth
-                    disabled={ !isValid }
                     size={ 'large' }
                     variant={ 'contained' }
                     onClick={ onClick }
