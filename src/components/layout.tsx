@@ -4,7 +4,6 @@ import { PropsWithChildren, useState } from "react";
 import Link from "next/link";
 import { name, version } from "../../package.json"
 import { Menu } from "@mui/icons-material";
-import { useFilterContext } from "../context/filter-context";
 
 export type LayoutProps = PropsWithChildren<{
     active?: string;
@@ -14,7 +13,6 @@ export type LayoutProps = PropsWithChildren<{
 const drawerWidth = 340;
 
 export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutProps) => {
-    const context = useFilterContext();
     const [ showSidebar, setShowSidebar ] = useState(false);
 
     return <>

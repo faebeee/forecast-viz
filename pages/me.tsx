@@ -36,7 +36,6 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from 'mixpanel-browser';
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../src/context/cookies";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -57,9 +56,6 @@ const RadialGradient = dynamic(() => import('reaviz').then(module => module.Radi
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
     const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
 
     if (!token || !account) {
         return {

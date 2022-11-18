@@ -30,7 +30,6 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../src/context/cookies";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -39,9 +38,6 @@ const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArc
 
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
 
     if (!token || !account) {
         return {

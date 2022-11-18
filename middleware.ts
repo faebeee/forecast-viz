@@ -1,6 +1,5 @@
 import type {NextRequest} from 'next/server'
 import {NextResponse} from 'next/server'
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "./src/context/cookies";
 
 
 const middlewareExceptions = [
@@ -23,7 +22,7 @@ export function middleware(request: NextRequest) {
     }
 
     const cookies = request.cookies;
-    const isLoggedIn = cookies.has(COOKIE_HARV_TOKEN_NAME) && cookies.has(COOKIE_FORC_ACCOUNTID_NAME) && cookies.has(COOKIE_HARV_ACCOUNTID_NAME)
+    const isLoggedIn = false;
     if (!isLoggedIn) {
         return NextResponse.redirect(new URL('/welcome', request.url))
     }
