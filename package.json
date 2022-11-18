@@ -31,6 +31,7 @@
     "cookies": "^0.8.0",
     "date-fns": "^2.29.2",
     "forecast-promise": "^1.2.1",
+    "iron-session": "^6.3.1",
     "js-cookie": "^3.0.1",
     "lodash": "^4.17.21",
     "mixpanel-browser": "^2.45.0",

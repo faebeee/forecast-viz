@@ -258,3 +258,12 @@ export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Dat
 export const filterEntriesForUser = (entries: TimeEntry[], userId: number) => {
     return entries.filter((e) => e.user.id === userId);
 }
+
+export const IRON_SESSION_OPTIONS = {
+    cookieName: "forecast-viz-session",
+    password: process.env.IRON_SESSION_PASSWORD as string,
+    // secure: true should be used in production (HTTPS) but can't be used in development (HTTP)
+    cookieOptions: {
+        secure: process.env.NODE_ENV === "production",
+    },
+};

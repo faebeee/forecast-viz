@@ -18,10 +18,13 @@ Color #ffe290
 # Env Variables
 
 ```
-NEXT_PUBLIC_OAUTH_CLIENT_ID=****
+# redis cache configuration
 REDIS_URL=****
 REDIS_CACHE_TTL=600
 REDIS_ENABLED=false
+
+# session cookie encryption password
+IRON_SESSION_PASSWORD=****
 
 # Optional
 NEXT_PUBLIC_ANALYTICS_ID=****
