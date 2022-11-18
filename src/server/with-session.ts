@@ -12,11 +12,11 @@ import {IRON_SESSION_OPTIONS} from "./utils";
 
 
 
-export function withSessionApiRoute(handler: NextApiHandler) {
+export function withApiRouteSession(handler: NextApiHandler) {
     return withIronSessionApiRoute(handler, IRON_SESSION_OPTIONS);
 }
 
-export function withSessionServerSide<P extends { [key: string]: unknown } = { [key: string]: unknown },
+export function withServerSideSession<P extends { [key: string]: unknown } = { [key: string]: unknown },
     >(
     handler: (
         context: GetServerSidePropsContext,

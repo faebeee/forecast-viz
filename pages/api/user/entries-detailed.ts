@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type SimpleTimeEntry = {
     id: number;
@@ -49,4 +49,4 @@ export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextAp
 
     res.send(result);
 }
-export default withSessionApiRoute(getEntriesDetailedHandler);
+export default withApiRouteSession(getEntriesDetailedHandler);

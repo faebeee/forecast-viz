@@ -3,7 +3,7 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getMyAssignments } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetAssignmentsHandlerResponse = {
     assignments: GetAssignmentsHandlerEntry[]
@@ -67,4 +67,4 @@ export const getAssignmentsHandler = async (req: NextApiRequest, res: NextApiRes
     res.send(result);
 }
 
-export default withSessionApiRoute(getAssignmentsHandler);
+export default withApiRouteSession(getAssignmentsHandler);

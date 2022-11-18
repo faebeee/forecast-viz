@@ -9,7 +9,7 @@ import {
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetProjectsApiHandlerResponse = {
     projects: Forecast.Project[]
@@ -45,4 +45,4 @@ export const getProjectsHandler = async (req: NextApiRequest, res: NextApiRespon
 
     res.send(result);
 }
-export default withSessionApiRoute(getProjectsHandler);
+export default withApiRouteSession(getProjectsHandler);

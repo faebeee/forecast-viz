@@ -15,7 +15,7 @@ import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { sortBy } from "lodash";
 import {DATE_FORMAT} from "../../../src/context/formats";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
@@ -128,4 +128,4 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     res.send(result);
 }
-export default withSessionApiRoute(getStatsHandler);
+export default withApiRouteSession(getStatsHandler);

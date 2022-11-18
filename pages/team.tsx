@@ -34,7 +34,7 @@ import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-
 import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {withSessionServerSide} from "../src/server/with-session";
+import {withServerSideSession} from "../src/server/with-session";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -52,7 +52,7 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
     async ({ query, req }) => {
         const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
         const to = query.to as string ?? format(new Date(), DATE_FORMAT);

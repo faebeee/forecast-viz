@@ -6,7 +6,7 @@ import {
 } from "../../../src/server/utils";
 import { Forecast, getForecast } from "../../../src/server/get-forecast";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
-import { withSessionApiRoute } from "../../../src/server/with-session";
+import { withApiRouteSession } from "../../../src/server/with-session";
 
 export type GetTeamsStatsHandlerResponse = {
     teams: TeamStatsEntry[];
@@ -77,4 +77,4 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
 
     res.send(result);
 }
-export default withSessionApiRoute(getCompanyStatsHandler);
+export default withApiRouteSession(getCompanyStatsHandler);

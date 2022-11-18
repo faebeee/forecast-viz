@@ -29,7 +29,7 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
-import {withSessionServerSide} from "../src/server/with-session";
+import {withServerSideSession} from "../src/server/with-session";
 import {DATE_FORMAT} from "../src/context/formats";
 
 //@ts-ignore
@@ -38,7 +38,7 @@ const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => mo
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
     async function getServerSideProps({req}): Promise<{ props: EntriesProps }>  {
 
 

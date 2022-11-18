@@ -4,7 +4,7 @@ import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { getMyAssignments, getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 
 export type GetEntriesHandlerResponse = {
@@ -34,4 +34,4 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
 
     res.send(result);
 }
-export default withSessionApiRoute(getEntriesHandler);
+export default withApiRouteSession(getEntriesHandler);

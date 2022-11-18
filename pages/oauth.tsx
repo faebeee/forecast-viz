@@ -3,10 +3,10 @@ import "react-datepicker/dist/react-datepicker.css";
 import {getHarvest} from "../src/server/get-harvest";
 import {AccountsApi} from "../src/server/harvest-types";
 import ProductName = AccountsApi.ProductName;
-import {withSessionServerSide} from "../src/server/with-session";
+import {withServerSideSession} from "../src/server/with-session";
 
 
-export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
     async ({query, req, res}) => {
         const harvestAccessToken = query.access_token;
         const harvest = await getHarvest(harvestAccessToken as string)

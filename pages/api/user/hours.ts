@@ -5,7 +5,7 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
 import { getMyAssignments } from "../../../src/server/utils";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetHoursHandlerResponse = ProjectHours[];
 export type ProjectHours = {
@@ -75,4 +75,4 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     res.send(result);
 }
-export default withSessionApiRoute(getHoursHandler);
+export default withApiRouteSession(getHoursHandler);

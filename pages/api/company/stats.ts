@@ -7,7 +7,7 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { orderBy } from "lodash";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
-import {withSessionApiRoute} from "../../../src/server/with-session";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetCompanyStatsHandlerResponse = {
     totalMembers: number;
@@ -89,4 +89,4 @@ export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiRe
 
     res.send(result);
 }
-export default withSessionApiRoute(getCompanyStatsHandler);
+export default withApiRouteSession(getCompanyStatsHandler);

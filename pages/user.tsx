@@ -44,7 +44,7 @@ import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {withSessionServerSide} from "../src/server/with-session";
+import {withServerSideSession} from "../src/server/with-session";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -63,7 +63,7 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
     async ({ query, req }): Promise<{ props: EntriesProps }> => {
         const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
         const to = query.to as string ?? format(new Date(), DATE_FORMAT);
