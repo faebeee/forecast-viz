@@ -1,8 +1,8 @@
 import { getAxios } from "../get-axios";
 import { useCallback, useState } from "react";
 import { GetStatsHandlerResponse } from "../../pages/api/user/stats";
-import { DATE_FORMAT } from "../components/date-range-widget";
 import { format } from "date-fns";
+import {DATE_FORMAT} from "../context/formats";
 
 export const useCurrentStats = () => {
     const [ data, setData ] = useState<GetStatsHandlerResponse | null>(null);

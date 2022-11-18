@@ -4,11 +4,10 @@ import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -30,6 +29,8 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
+import {withSessionServerSide} from "../src/server/with-session";
+import {DATE_FORMAT} from "../src/context/formats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -37,31 +38,27 @@ const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => mo
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
+export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+    async function getServerSideProps({req}): Promise<{ props: EntriesProps }>  {
 
-    if (!token || !account) {
+
+        const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
+        const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
+        const userData = await api.getMe();
+        const userId = userData.id;
+
+        const allPeople = await forecast.getPersons();
+        const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+        const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
+
         return {
             props: {
-                userName: null,
+                userName: userData.first_name,
+                hasAdminAccess,
             }
         }
     }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-
-    return {
-        props: {
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
-    }
-}
+)
 
 
 export type EntriesProps = {

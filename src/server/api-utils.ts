@@ -1,6 +1,6 @@
 import {NextApiRequest} from "next";
 import {endOfWeek, format, startOfWeek} from "date-fns";
-import {DATE_FORMAT} from "../components/date-range-widget";
+import { DATE_FORMAT } from "../context/formats";
 
 export const getAuthFromCookies = (req: NextApiRequest): { harvestToken: string, harvestAccount: number, forecastAccount: number } => {
     return {

@@ -4,7 +4,6 @@ import { GetServerSideProps } from "next";
 import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
@@ -18,6 +17,7 @@ import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 import { getAdminAccess } from "../src/server/has-admin-access";
 import { getForecast } from "../src/server/get-forecast";
 import mixpanel from "mixpanel-browser";
+import {DATE_FORMAT} from "../src/context/formats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });

@@ -1,11 +1,10 @@
-import { differenceInBusinessDays, parse } from "date-fns";
+import { parse } from "date-fns";
 import dynamic from "next/dynamic";
 import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
-import { useMemo } from "react";
 import { useFilterContext } from "../../context/filter-context";
 import { useTeamStatsApiContext } from "../../context/team-stats-api-context";
 import { CircularProgress } from "@mui/material";
-import { DATE_FORMAT } from "../date-range-widget";
+import {DATE_FORMAT} from "../../context/formats";
 //@ts-ignore
 const LineChart = dynamic<Partial<LineChartProps>>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
 //@ts-ignore
@@ -19,7 +18,6 @@ export const TeamHistoryLineChart = () => {
         hoursPerUserHistory,
         isLoading
     } = useTeamStatsApiContext();
-    const { dateRange } = useFilterContext();
 
     if (isLoading || hoursPerUserHistory.length <= 0) {
         return <CircularProgress color={ 'primary' }/>

@@ -12,9 +12,9 @@ import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { sortBy } from "lodash";
+import {DATE_FORMAT} from "../../../src/context/formats";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;

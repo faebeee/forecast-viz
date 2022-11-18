@@ -13,7 +13,6 @@ import {
 } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { Forecast, getForecast } from "../src/server/get-forecast";
 import { debounce, round } from "lodash";
 import { Layout } from "../src/components/layout";
@@ -44,6 +43,7 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from "mixpanel-browser";
+import {DATE_FORMAT} from "../src/context/formats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });

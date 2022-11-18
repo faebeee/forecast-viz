@@ -8,9 +8,9 @@ import { useEffect, useMemo, useState } from "react";
 import { format, parse, startOfWeek } from "date-fns";
 import { FilterContext } from '../src/context/filter-context';
 import qs from "qs";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { useRouter } from "next/router";
 import mixpanel from 'mixpanel-browser';
+import {DATE_FORMAT} from "../src/context/formats";
 
 const theme = createTheme({
     palette: {

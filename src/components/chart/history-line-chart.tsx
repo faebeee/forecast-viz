@@ -1,10 +1,10 @@
 import { differenceInBusinessDays, parse } from "date-fns";
-import { DATE_FORMAT } from "../date-range-widget";
 import dynamic from "next/dynamic";
 import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
 import { useStatsApiContext } from "../../context/stats-api-context";
 import { useMemo } from "react";
 import { useFilterContext } from "../../context/filter-context";
+import {DATE_FORMAT} from "../../context/formats";
 //@ts-ignore
 const LineChart = dynamic<Partial<LineChartProps>>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
 //@ts-ignore

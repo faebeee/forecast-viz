@@ -15,7 +15,7 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 import { parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
+import {DATE_FORMAT} from "../../../src/context/formats";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;

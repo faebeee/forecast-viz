@@ -4,20 +4,23 @@ import "react-datepicker/dist/react-datepicker.css";
 import {Layout} from "../src/components/layout";
 import {ContentHeader} from "../src/components/content-header";
 import {useRouter} from "next/router";
+import {withSessionServerSide} from "../src/server/with-session";
 
 
-export const getServerSideProps: GetServerSideProps = async ({query, req}): Promise<{ props: EntriesProps }> => {
+export const getServerSideProps: GetServerSideProps = withSessionServerSide(
+    async ({query, req}): Promise<{ props: WelcomeProps }> => {
 
-    return {
-        props: {}
+        return {
+            props: {}
+        }
     }
-}
+)
 
 
-export type EntriesProps = {}
+export type WelcomeProps = {}
 
 
-export const Index = ({}: EntriesProps) => {
+export const Index = ({}: WelcomeProps) => {
     const router = useRouter();
 
     const onClick = () => {
