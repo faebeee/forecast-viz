@@ -30,5 +30,8 @@ declare module "iron-session" {
         accessToken?: string
         forecastId?: number
         harvestId?: number
+        hasAdminAccess?: boolean
+        userName?: string
+
     }
 }

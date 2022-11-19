@@ -33,22 +33,12 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
 async ({ query, req }): Promise<{ props: EntriesProps }> => {
             const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
             const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-
-
-
-            const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
-            const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
-            const userData = await api.getMe();
-            const allPeople = await forecast.getPersons();
-            const userId = userData.id;
-            const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-            const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
             return {
                 props: {
                     from,
                     to,
-                    userName: userData.first_name,
-                    hasAdminAccess,
+                    userName: req.session.userName,
+                    hasAdminAccess: req.session.hasAdminAccess ?? false,
                 }
             }
     }

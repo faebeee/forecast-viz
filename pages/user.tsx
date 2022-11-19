@@ -75,7 +75,6 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
 
         const allPeople = await forecast.getPersons();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-        const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
         const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
         const teamId = myTeamEntry!.key;
         const teamPeople = allPeople
@@ -86,8 +85,8 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
                 from,
                 to,
                 persons: teamPeople,
-                userName: userData.first_name,
-                hasAdminAccess,
+                userName: req.session.userName,
+                hasAdminAccess: req.session.hasAdminAccess ?? false,
             }
         }
     }

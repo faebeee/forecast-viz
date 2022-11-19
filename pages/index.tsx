@@ -40,21 +40,10 @@ const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArc
 
 export const getServerSideProps: GetServerSideProps = withServerSideSession(
     async function getServerSideProps({req}): Promise<{ props: EntriesProps }>  {
-
-
-        const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
-        const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
-        const userData = await api.getMe();
-        const userId = userData.id;
-
-        const allPeople = await forecast.getPersons();
-        const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-        const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-
         return {
             props: {
-                userName: userData.first_name,
-                hasAdminAccess,
+                userName: req.session.userName,
+                hasAdminAccess: req.session.hasAdminAccess,
             }
         }
     }
