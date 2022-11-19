@@ -97,11 +97,15 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
+    const leaveTaskIDs = process.env.LEAVE_TASK_IDS ? process.env.LEAVE_TASK_IDS.split(',') : []
+
     const billableHours = entries.reduce((acc, entry) => {
-        if (entry.billable) {
-            acc.billable += entry.hours;
-        } else {
-            acc.nonBillable += entry.hours;
+        if (!leaveTaskIDs.includes(entry.task.id.toString())){
+            if (entry.billable) {
+                acc.billable += entry.hours;
+            } else {
+                acc.nonBillable += entry.hours;
+            }
         }
 
         return acc;
