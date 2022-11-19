@@ -1,26 +1,13 @@
-import {GetServerSideProps} from "next";
 import {Box, Button, Stack, TextField, Typography} from "@mui/material";
 import "react-datepicker/dist/react-datepicker.css";
 import {Layout} from "../src/components/layout";
 import {ContentHeader} from "../src/components/content-header";
 import {useRouter} from "next/router";
-import {withServerSideSession} from "../src/server/with-session";
-
-
-export const getServerSideProps: GetServerSideProps = withServerSideSession(
-    async ({query, req}): Promise<{ props: WelcomeProps }> => {
-
-        return {
-            props: {}
-        }
-    }
-)
-
 
 export type WelcomeProps = {}
 
 
-export const Index = ({}: WelcomeProps) => {
+export const Welcome = ({}: WelcomeProps) => {
     const router = useRouter();
 
     const onClick = () => {
@@ -54,4 +41,4 @@ export const Index = ({}: WelcomeProps) => {
     </>
         ;
 }
-export default Index;
+export default Welcome;
