@@ -56,7 +56,7 @@ export const AreasChart = withTooltip<AreasChartProps, number>(
                     range: [ 0, xMax - margin.right ],
                     domain: extent(data[0].data, (d) => getDate(d)) as [ Date, Date ],
                 }),
-            [ margin.left, data ],
+            [ margin, xMax, data ],
         );
 
         const yScale = useMemo(

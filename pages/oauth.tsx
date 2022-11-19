@@ -1,49 +1,64 @@
 import {GetServerSideProps} from "next";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import {getHarvest} from "../src/server/get-harvest";
 import {AccountsApi} from "../src/server/harvest-types";
 import ProductName = AccountsApi.ProductName;
+import {withServerSideSession} from "../src/server/with-session";
+import {getForecast} from "../src/server/get-forecast";
+import {getAdminAccess} from "../src/server/has-admin-access";
 
-export const getServerSideProps: GetServerSideProps = async ({query, req, res}) => {
-    const harvestAccessToken = query.access_token;
-    const harvest = await getHarvest(harvestAccessToken as string)
-    const accounts = await harvest.getAccounts()
 
-    const cookies = [COOKIE_HARV_TOKEN_NAME + '=' + harvestAccessToken]
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
+    async ({query, req, res}) => {
+        const harvestAccessToken = query.access_token;
+        const harvest = await getHarvest(harvestAccessToken as string)
+        const accounts = await harvest.getAccounts()
 
-    accounts?.accounts.filter(account => {
-        return account.product === ProductName.harvest
-    }).map(account => account.id).forEach(account => {
-        cookies.push(COOKIE_HARV_ACCOUNTID_NAME + '=' + account)
-    })
+        const harvestId = accounts?.accounts.filter(account => {
+            return account.product === ProductName.harvest
+        }).map(account => account.id).shift()
 
-    accounts?.accounts.filter(account => {
-        return account.product === ProductName.forecast
-    }).map(account => account.id).forEach(account => {
-        cookies.push(COOKIE_FORC_ACCOUNTID_NAME + '=' + account)
-    })
+        const forecastId = accounts?.accounts.filter(account => {
+            return account.product === ProductName.forecast
+        }).map(account => account.id).shift()
 
-    if (cookies.length > 2) {
-        res.setHeader('set-cookie', cookies)
+        req.session.accessToken = harvestAccessToken as string
+        req.session.harvestId = harvestId
+        req.session.forecastId = forecastId
+
+
+        const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
+        const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
+        const userData = await api.getMe();
+        const userId = userData.id;
+
+        const allPeople = await forecast.getPersons();
+        const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+
+        req.session.hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
+        req.session.userName = accounts?.user.first_name
+
+
+        await req.session.save()
+
+
+
+
+        // TODO: Exception and invalid data handling
+
+        return {
+            redirect: {
+                destination: '/',
+                permanent: false,
+            },
+        }
     }
-
-    return {
-        redirect: {
-            destination: '/',
-            permanent: false,
-        },
-    }
-}
+)
 
 
-export const Index = ({}) => {
+export const OAuth = ({}) => {
     return <>
     </>
         ;
 }
-export default Index;
+export default OAuth;

@@ -58,7 +58,7 @@ export const AreaChart = withTooltip<AreaChartProps, HourPerDayEntry>(
                     range: [ 0, xMax - margin.right ],
                     domain: extent(data, (d) => getDate(d)) as [ Date, Date ],
                 }),
-            [ margin.left, data ],
+            [ margin.left, data, xMax, ],
         );
 
         const yScale = useMemo(

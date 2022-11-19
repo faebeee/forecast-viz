@@ -12,9 +12,10 @@ import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { sortBy } from "lodash";
+import { DATE_FORMAT } from "../../../src/context/formats";
+import { withApiRouteSession } from "../../../src/server/with-session";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
@@ -98,6 +99,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
+    const leaveTaskIDs = process.env.LEAVE_TASK_IDS ? process.env.LEAVE_TASK_IDS.split(',') : []
 
     const billableHoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
         if (!acc[entry.spent_date]) {
@@ -119,11 +121,14 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         return acc;
     }, getRecord()));
 
+
     const billableHours = entries.reduce((acc, entry) => {
-        if (entry.billable) {
-            acc.billable += entry.hours;
-        } else {
-            acc.nonBillable += entry.hours;
+        if (!leaveTaskIDs.includes(entry.task.id.toString())) {
+            if (entry.billable) {
+                acc.billable += entry.hours;
+            } else {
+                acc.nonBillable += entry.hours;
+            }
         }
 
         return acc;
@@ -152,4 +157,4 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     res.send(result);
 }
-export default getStatsHandler;
+export default withApiRouteSession(getStatsHandler);

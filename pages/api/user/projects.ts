@@ -3,18 +3,13 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
     filterActiveAssignments,
-    getDates,
-    getHoursPerTask,
     getMyAssignments,
-    getProjectsFromEntries, HourPerTaskObject
+    getProjectsFromEntries
 } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
-import { HourPerDayEntry } from "../../../src/type";
-import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import { sortBy } from "lodash";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetProjectsApiHandlerResponse = {
     projects: Forecast.Project[]
@@ -50,4 +45,4 @@ export const getProjectsHandler = async (req: NextApiRequest, res: NextApiRespon
 
     res.send(result);
 }
-export default getProjectsHandler;
+export default withApiRouteSession(getProjectsHandler);

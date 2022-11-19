@@ -1,18 +1,9 @@
-import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format, startOfWeek } from 'date-fns';
-import { GetServerSideProps } from "next";
+import { differenceInBusinessDays, format } from 'date-fns';
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
-import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
@@ -26,7 +17,6 @@ import { useCurrentStats } from "../src/hooks/use-current-stats";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
 import { WeeklyCapacityStats } from "../src/components/stats/weekly-capacity-stats";
@@ -44,62 +34,23 @@ import { COLORS } from "../src/config";
 import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
+import { DATE_FORMAT } from "../src/context/formats";
+import { useMe } from '../src/hooks/use-me';
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
-
-    if (!token || !account) {
-        return {
-            props: {
-                from,
-                to,
-                userName: null,
-            }
-        }
-    }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-
+export async function getStaticProps() {
     return {
-        props: {
-            from,
-            to,
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
+        props: {},
+        revalidate: 10 * 60, // ten minutes
     }
 }
 
 
-export type EntriesProps = {
-    from: string;
-    to: string;
-    userName?: string | null;
-    hasAdminAccess?: boolean;
-}
-
-
-export const Index = ({
-                          userName,
-                          from,
-                          to,
-                          hasAdminAccess,
-                      }: EntriesProps) => {
+export const Me = () => {
     const { dateRange } = useFilterContext();
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
@@ -107,11 +58,13 @@ export const Index = ({
     const assignmentsApi = useAssignments();
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
+    const me = useMe()
 
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+        me.load()
         entriesDetailedApi.load(from, to);
         entriesApi.load(from, to);
         statsApi.load(from, to);
@@ -132,7 +85,7 @@ export const Index = ({
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'me' }>
+                <Layout hasAdminAccess={ me.hasAdminAccess } userName={ me.userName ?? '' } active={ 'me' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Dashboard' }/>
@@ -198,21 +151,22 @@ export const Index = ({
                                 <Grid item xs={ 12 } xl={ 12 }>
                                     <Typography variant={ 'body1' }>Total Hours per day</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading && <ParentSize debounceTime={ 10 }>
-                                        { ({ width }) => (
-                                            <AreaChart data={ statsApi.hoursPerDay }
-                                                width={ width }
-                                                height={ 400 }
-                                                label={ 'Hours' }
-                                                references={ [
-                                                    {
-                                                        y: statsApi.totalHoursPerDayCapacity,
-                                                        label: 'Capacity',
-                                                        color: getColor(0)
-                                                    },
-                                                    { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
-                                                ] }/>) }
-                                    </ParentSize> }
+                                    { !statsApi.isLoading && statsApi.hoursPerDay &&
+                                        <ParentSize enableDebounceLeadingCall debounceTime={ 10 }>
+                                            { ({ width }) => (
+                                                <AreaChart data={ statsApi.hoursPerDay }
+                                                    width={ width }
+                                                    height={ 400 }
+                                                    label={ 'Hours' }
+                                                    references={ [
+                                                        {
+                                                            y: statsApi.totalHoursPerDayCapacity,
+                                                            label: 'Capacity',
+                                                            color: getColor(0)
+                                                        },
+                                                        { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
+                                                    ] }/>) }
+                                        </ParentSize> }
                                 </Grid>
 
                                 <Grid item xs={ 12 } xl={ 12 }>
@@ -358,4 +312,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Me;

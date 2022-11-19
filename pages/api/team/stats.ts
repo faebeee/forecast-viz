@@ -15,7 +15,8 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 import { parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
+import {DATE_FORMAT} from "../../../src/context/formats";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -146,4 +147,4 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }
     res.send(result);
 }
-export default getTeamStatsHandler;
+export default withApiRouteSession(getTeamStatsHandler);

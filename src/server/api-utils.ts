@@ -1,22 +1,17 @@
-import {COOKIE_FORC_ACCOUNTID_NAME, COOKIE_HARV_ACCOUNTID_NAME, COOKIE_HARV_TOKEN_NAME} from "../components/settings";
 import {NextApiRequest} from "next";
 import {endOfWeek, format, startOfWeek} from "date-fns";
-import {DATE_FORMAT} from "../components/date-range-widget";
+import { DATE_FORMAT } from "../context/formats";
 
 export const getAuthFromCookies = (req: NextApiRequest): { harvestToken: string, harvestAccount: number, forecastAccount: number } => {
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
-
     return {
-        harvestAccount: account,
-        harvestToken: token,
-        forecastAccount: forecastAccount,
+        harvestAccount: req.session.harvestId!,
+        harvestToken: req.session.accessToken!,
+        forecastAccount: req.session.forecastId!,
     }
 }
 
 export const hasApiAccess = (req: NextApiRequest) => {
-    return !!req.cookies[COOKIE_HARV_TOKEN_NAME] && !!req.cookies[COOKIE_HARV_ACCOUNTID_NAME] && !!req.cookies[COOKIE_FORC_ACCOUNTID_NAME];
+    return req.session.accessToken && req.session.forecastId && req.session.harvestId;
 }
 
 export const getRange = (req: NextApiRequest): { from: string, to: string } => {

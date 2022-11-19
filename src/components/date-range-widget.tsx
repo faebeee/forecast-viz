@@ -1,14 +1,13 @@
-import { Card, CardContent, TextField, Typography } from "@mui/material";
+import { TextField } from "@mui/material";
 import DatePicker from "react-datepicker";
 import { useEffect, useState } from "react";
+import {DATE_FORMAT} from "../context/formats";
 
 export type DateRangeWidgetProps = {
     dateRange: [ Date, Date ]
     onChange: (d: [ Date, Date ]) => void;
     onClose?: () => void;
 }
-
-export const DATE_FORMAT = 'yyyy-MM-dd';
 
 
 export const DateRangeWidget = ({ dateRange, onChange, onClose }: DateRangeWidgetProps) => {
