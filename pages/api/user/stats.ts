@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    filterActiveAssignments,
+    billableHourPercentage,
+    filterActiveAssignments, getBillableHours,
     getDates,
     getHoursPerTask,
     getMyAssignments,
@@ -97,20 +98,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
-    const leaveTaskIDs = process.env.LEAVE_TASK_IDS ? process.env.LEAVE_TASK_IDS.split(',') : []
-
-    const billableHours = entries.reduce((acc, entry) => {
-        if (!leaveTaskIDs.includes(entry.task.id.toString())){
-            if (entry.billable) {
-                acc.billable += entry.hours;
-            } else {
-                acc.nonBillable += entry.hours;
-            }
-        }
-
-        return acc;
-    }, { billable: 0, nonBillable: 0 });
-
+    const billableHours = getBillableHours(entries);
     const hoursPerTask = getHoursPerTask(entries);
     const lastEntryDate = entries[0]?.spent_date;
 
@@ -119,7 +107,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         totalPlannedHours,
         totalProjects,
         hoursPerDay: sortBy(hoursPerDay, 'date'),
-        billableHoursPercentage: 100 / (billableHours.billable + billableHours.nonBillable) * billableHours.billable,
+        billableHoursPercentage: billableHourPercentage(billableHours),
         billableHours: billableHours.billable,
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),

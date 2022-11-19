@@ -44,6 +44,11 @@ export type TeamHoursEntry = {
     userId: number;
     projects: Record<string, TeamHoursProjectEntry>
 }
+export type BillableHours = {
+    billable: number;
+    nonBillable: number
+}
+
 export const getTeamHours = (teamEntries: TimeEntry[]): Record<number, TeamHoursEntry> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.user.id]) {
@@ -230,6 +235,28 @@ export const getHoursPerTask = (entries: TimeEntry[]): HourPerTaskObject[] => {
     }, {} as Record<string, HourPerTaskObject>));
 }
 
+export const excludeLeaveTasks = (entries: TimeEntry[]): TimeEntry[] => {
+    const leaveTaskIDs = process.env.LEAVE_TASK_IDS ? process.env.LEAVE_TASK_IDS.split(',') : []
+    return entries.filter((entry) => {
+        return !leaveTaskIDs.includes(entry.task.id.toString())
+    })
+}
+
+
+export const getBillableHours = (entries: TimeEntry[]) : {billable: number, nonBillable: number} => {
+    const filteredEntries = excludeLeaveTasks(entries)
+
+    return filteredEntries.reduce((acc, entry) => {
+        if (entry.billable) {
+            acc.billable += entry.hours;
+        } else {
+            acc.nonBillable += entry.hours;
+        }
+        return acc;
+    }, { billable: 0, nonBillable: 0 });
+}
+
+
 export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Date): HoursPerUserItemHistory[] => {
     const days = getDates(from, to);
 
@@ -257,6 +284,10 @@ export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Dat
 
 export const filterEntriesForUser = (entries: TimeEntry[], userId: number) => {
     return entries.filter((e) => e.user.id === userId);
+}
+
+export const billableHourPercentage = (billableHours: BillableHours) => {
+    return 100 / (billableHours.billable + billableHours.nonBillable) * billableHours.billable
 }
 
 export const IRON_SESSION_OPTIONS = {

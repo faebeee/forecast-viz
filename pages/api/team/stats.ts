@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    filterEntriesForUser,
+    billableHourPercentage, BillableHours,
+    filterEntriesForUser, getBillableHours,
     getHoursPerTask,
     getHoursPerUser,
     getHoursPerUserHistory,
@@ -17,6 +18,7 @@ import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-en
 import { parse } from "date-fns";
 import {DATE_FORMAT} from "../../../src/context/formats";
 import {withApiRouteSession} from "../../../src/server/with-session";
+import {round} from "lodash";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -26,8 +28,8 @@ export type GetTeamStatsHandlerResponse = {
     plannedHoursPerUser: HoursPerUserItem[];
     hoursPerUserHistory: HoursPerUserItemHistory[];
     hoursPerTask: HourPerTaskObject[];
-    hours: { billable: number, nonBillable: number },
-    statsPerUser: { user: string, lastEntryDate: string }[]
+    hours: BillableHours,
+    statsPerUser: { user: string, lastEntryDate: string, billableRate: number }[]
 }
 export type HoursPerUserItemHistory = {
     user: string;
@@ -108,24 +110,19 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }, new Map<number, HoursPerUserItem>());
 
 
-    const billableHours = entries.reduce((acc, entry) => {
-        if (entry.billable) {
-            acc.billable += entry.hours;
-        } else {
-            acc.nonBillable += entry.hours;
-        }
-
-        return acc;
-    }, { billable: 0, nonBillable: 0 });
+    const billableHours = getBillableHours(entries)
 
     const hoursPerTask = getHoursPerTask(entries);
 
     const statsPerUser = teamPeople.map((person) => {
         const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
         const lastEntryDate = usersEntries[0]?.spent_date ?? '?';
+        const billableHoursPerUser = getBillableHours(usersEntries);
+        const billableRatePerUser = billableHourPercentage(billableHoursPerUser)
         return {
             user: `${ person.first_name } ${ person.last_name }`,
             lastEntryDate,
+            billableRate: round(billableRatePerUser, 2)
         }
     })
 

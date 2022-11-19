@@ -27,7 +27,7 @@ import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
 import { round } from "lodash";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
-import { SpentProjectHours } from "../src/server/utils";
+import {billableHourPercentage, SpentProjectHours} from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { getAdminAccess } from "../src/server/has-admin-access";
 import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-chart";
@@ -108,6 +108,7 @@ export const Team = ({
     const teamStatsApi = useTeamStats();
     const teamHoursApi = useTeamHours();
     const teamEntriesApi = useTeamEntries();
+    const teamBillableHours = billableHourPercentage(teamStatsApi.hours)
 
     useEffect(() => {
         teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
@@ -172,7 +173,7 @@ export const Team = ({
                                         { teamStatsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                         { !teamStatsApi.isLoading && teamStatsApi.hours &&
                                             <Typography
-                                                variant={ 'h2' }>{ round(100 / (teamStatsApi.hours.billable + teamStatsApi.hours.nonBillable) * teamStatsApi.hours.billable, 1) }%</Typography>
+                                                variant={ 'h2' }>{ round(teamBillableHours, 1) }%</Typography>
                                         }
                                     </CardContent>
                                     <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -317,7 +318,7 @@ export const Team = ({
                                         { field: 'userId', headerName: 'User ID', flex: 1 },
                                         { field: 'user', headerName: 'User', flex: 1 },
                                         { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                        { field: 'billable', headerName: 'Billable', flex: 1 },
+                                        { field: 'nonBillableHours', headerName: 'nonBillableHours', flex: 1 },
                                         {
                                             field: 'hours', headerName: 'Hours', flex: 1,
                                             renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
@@ -368,6 +369,7 @@ export const Team = ({
                                     columns={ [
                                         { field: 'user', headerName: 'User', flex: 1 },
                                         { field: 'lastEntryDate', headerName: 'Last entry date', flex: 1 },
+                                        { field: 'billableRate', headerName: 'Billable Rate', flex: 1 },
                                     ] }
                                     disableSelectionOnClick
                                     experimentalFeatures={ { newEditingApi: true } }/>
