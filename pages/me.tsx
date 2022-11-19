@@ -1,9 +1,8 @@
 import { getHarvest } from "../src/server/get-harvest";
 import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
-import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { getForecast } from "../src/server/get-forecast";
@@ -41,6 +40,10 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from 'mixpanel-browser';
+import { AreaChart } from "../src/components/chart/area-chart";
+import { COLORS } from "../src/config";
+import { ParentSize } from "@visx/responsive";
+import { AreasChart } from "../src/components/chart/areas-chart";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -222,10 +225,52 @@ export const Index = ({
                                         />
                                     }
                                 </Grid>
+
+
                                 <Grid item xs={ 12 } xl={ 12 }>
-                                    <Typography variant={ 'body1' }>Hours per day</Typography>
+                                    <Typography variant={ 'body1' }>Total Hours per day</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading && <HistoryLineChart/> }
+                                    { !statsApi.isLoading && <ParentSize debounceTime={ 10 }>
+                                        { ({ width }) => (
+                                            <AreaChart data={ statsApi.hoursPerDay }
+                                                width={ width }
+                                                height={ 600 }
+                                                label={ 'Hours' }
+                                                references={ [
+                                                    {
+                                                        y: statsApi.totalHoursPerDayCapacity,
+                                                        label: 'Capacity',
+                                                        color: COLORS[3]
+                                                    },
+                                                    { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
+                                                ] }/>) }
+                                    </ParentSize> }
+                                </Grid>
+
+                                <Grid item xs={ 12 } xl={ 12 }>
+                                    <Typography variant={ 'body1' }>Billable/Non Billable hours per day</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading && statsApi.billableHoursPerDay &&
+                                        <ParentSize debounceTime={ 10 }>
+                                            { ({ width }) => (
+                                                <AreasChart data={ [
+                                                    {
+                                                        key: 'billable',
+                                                        label: 'Billable Hours',
+                                                        color: COLORS[0],
+                                                        data: statsApi.billableHoursPerDay,
+                                                    },
+                                                    {
+                                                        key: 'non-billable',
+                                                        label: 'Non Billable',
+                                                        color: COLORS[3],
+                                                        data: statsApi.nonBillableHoursPerDay,
+                                                    }
+                                                ] }
+                                                    width={ width }
+                                                    height={ 600 }
+                                                />) }
+                                        </ParentSize> }
                                 </Grid>
 
                                 <Grid item xs={ 12 } lg={ 4 }>
