@@ -1,5 +1,5 @@
 import { LinearGradient } from "@visx/gradient";
-import { AreaClosed, Bar, Line } from "@visx/shape";
+import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
 import { useCallback, useMemo } from "react";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { bisector, extent } from "d3-array";
@@ -16,14 +16,14 @@ import { Text } from '@visx/text';
 import { Typography } from "@mui/material";
 
 const bisectDate = bisector<HourPerDayEntry, Date>((d) => parse(d.date, PARSE_DATE_FORMAT, new Date())).left;
-type AreasChartProps = {
+type LinesChartProps = {
     data: { key: string, label: string, color?: string, data: HourPerDayEntry[] }[];
     width?: number;
     height?: number;
     maxY?: number;
     references?: { y: number, label: string, color?: string }[]
 }
-export const AreasChart = withTooltip<AreasChartProps, number>(
+export const LinesChart = withTooltip<LinesChartProps, number>(
     ({
          data,
          maxY,
@@ -35,7 +35,7 @@ export const AreasChart = withTooltip<AreasChartProps, number>(
          tooltipData,
          tooltipTop = 0,
          tooltipLeft = 0,
-     }: AreasChartProps & WithTooltipProvidedProps<number>) => {
+     }: LinesChartProps & WithTooltipProvidedProps<number>) => {
         const getDate = (e: HourPerDayEntry) => parse(e.date, PARSE_DATE_FORMAT, new Date())
 
         const margin = {
@@ -101,20 +101,14 @@ export const AreasChart = withTooltip<AreasChartProps, number>(
                         <AxisBottom top={ yMax } scale={ xScale }/>
 
                         { data.map((dataEntry) => (<g key={ dataEntry.key }>
-                                <LinearGradient id={ `area-${ dataEntry.key }` }
-                                    from={ dataEntry.color }
-                                    to={ dataEntry.color }
-                                    toOpacity={ 0.4 }/>
-                                <AreaClosed
+                                <LinePath
                                     key={ dataEntry.key }
                                     data={ dataEntry.data }
                                     x={ (d) => xScale(getDate(d)) ?? 0 }
                                     y={ (d) => yScale(d.hours) ?? 0 }
-                                    yScale={ yScale }
-                                    strokeWidth={ 1 }
+                                    strokeWidth={ 2 }
                                     pointerEvents="none"
-                                    stroke={ `url(#area-${ dataEntry.key })` }
-                                    fill={ `url(#area-${ dataEntry.key })` }
+                                    stroke={ dataEntry.color }
                                     curve={ curveLinear }
                                 />
                             </g>

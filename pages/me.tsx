@@ -1,5 +1,5 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
+import { differenceInBusinessDays, format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
@@ -27,7 +27,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellPar
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { getAdminAccess } from "../src/server/has-admin-access";
-import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
 import { WeeklyCapacityStats } from "../src/components/stats/weekly-capacity-stats";
@@ -44,22 +43,12 @@ import { AreaChart } from "../src/components/chart/area-chart";
 import { COLORS } from "../src/config";
 import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
+import { getColor } from "../src/utils/get-color";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
-//@ts-ignore
-const RadialAreaChart = dynamic(() => import('reaviz').then(module => module.RadialAreaChart), { ssr: false });
-//@ts-ignore
-const RadialAreaSeries = dynamic(() => import('reaviz').then(module => module.RadialAreaSeries), { ssr: false });
-//@ts-ignore
-const RadialAxis = dynamic(() => import('reaviz').then(module => module.RadialAxis), { ssr: false });
-//@ts-ignore
-const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialArea), { ssr: false });
-//@ts-ignore
-const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
-
 
 export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
     const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
@@ -183,47 +172,26 @@ export const Index = ({
                                     <div/>
                                 </Grid>
 
-                                <Grid item xs={ 12 } xl={ 6 }>
-                                    <Typography variant={ 'body1' }>Reported Hours</Typography>
+                                <Grid item xs={ 12 } xl={ 12 }>
+                                    <Typography variant={ 'body1' }>Overtime per day </Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !statsApi.isLoading &&
-                                        <RadialAreaChart
-                                            data={ statsApi.hoursPerDay?.filter((e) => e.hours > 0)
-                                                .map((h, index) => ({
-                                                    id: index.toString(),
-                                                    key: parse(h.date, DATE_FORMAT, new Date()),
-                                                    data: h.hours,
-                                                })) ?? [] }
-                                            height={ 400 }
-                                            series={ <RadialAreaSeries
-                                                area={ <RadialArea gradient={ <RadialGradient/> }/> }
-                                                interpolation={ 'linear' }/> }
-                                            axis={ <RadialAxis
-                                                // @ts-ignore
-                                                type="category"/> }
-                                        />
-                                    }
-                                </Grid>
-                                <Grid item xs={ 12 } xl={ 6 }>
-                                    <Typography variant={ 'body1' }>Reported Overtime</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading &&
-                                        <RadialAreaChart
-                                            data={ statsApi.overtimePerDay?.filter((e) => e.hours > 0)
-                                                .map((h, index) => ({
-                                                    id: index.toString(),
-                                                    key: parse(h.date, DATE_FORMAT, new Date()),
-                                                    data: h.hours,
-                                                })) ?? [] }
-                                            height={ 400 }
-                                            series={ <RadialAreaSeries
-                                                area={ <RadialArea gradient={ <RadialGradient/> }/> }
-                                                interpolation={ 'linear' }/> }
-                                            axis={ <RadialAxis
-                                                // @ts-ignore
-                                                type="category"/> }
-                                        />
-                                    }
+                                        <ParentSize debounceTime={ 10 }>
+                                            { ({ width }) => (
+                                                <AreasChart
+                                                    maxY={ 8 }
+                                                    data={ [
+                                                        {
+                                                            key: 'overtime',
+                                                            label: 'Overtime',
+                                                            color: getColor(0),
+                                                            data: statsApi.overtimePerDay,
+                                                        }
+                                                    ] }
+                                                    width={ width }
+                                                    height={ 400 }
+                                                />) }
+                                        </ParentSize> }
                                 </Grid>
 
 
@@ -234,13 +202,13 @@ export const Index = ({
                                         { ({ width }) => (
                                             <AreaChart data={ statsApi.hoursPerDay }
                                                 width={ width }
-                                                height={ 600 }
+                                                height={ 400 }
                                                 label={ 'Hours' }
                                                 references={ [
                                                     {
                                                         y: statsApi.totalHoursPerDayCapacity,
                                                         label: 'Capacity',
-                                                        color: COLORS[3]
+                                                        color: getColor(0)
                                                     },
                                                     { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
                                                 ] }/>) }
@@ -257,18 +225,18 @@ export const Index = ({
                                                     {
                                                         key: 'billable',
                                                         label: 'Billable Hours',
-                                                        color: COLORS[0],
+                                                        color: getColor(0),
                                                         data: statsApi.billableHoursPerDay,
                                                     },
                                                     {
                                                         key: 'non-billable',
                                                         label: 'Non Billable',
-                                                        color: COLORS[3],
+                                                        color: getColor(1),
                                                         data: statsApi.nonBillableHoursPerDay,
                                                     }
                                                 ] }
                                                     width={ width }
-                                                    height={ 600 }
+                                                    height={ 400 }
                                                 />) }
                                         </ParentSize> }
                                 </Grid>

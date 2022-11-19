@@ -188,6 +188,8 @@ export const AreaChart = withTooltip<AreaChartProps, HourPerDayEntry>(
                             top={ tooltipTop - 12 }
                             left={ tooltipLeft + 12 }
                         >
+                            <Typography
+                                fontWeight={ '700' }>{ `Date: ${ (tooltipData.date) }` }</Typography>
                             <Typography color={ color }>{ `${ label }: ${ getValue(tooltipData) }` }</Typography>
                             { references.map((ref) => (
                                 <Typography color={ ref.color }

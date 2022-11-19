@@ -1,22 +1,19 @@
 import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
+import { format, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import {
     Autocomplete,
     Box,
-    Card,
-    CardActions,
-    CardContent,
     CircularProgress,
     FormControl,
     Grid,
     InputLabel,
     MenuItem,
-    Select, TextField,
+    Select,
+    TextField,
     Typography
 } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
-import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
 import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { Forecast, getForecast } from "../src/server/get-forecast";
@@ -28,7 +25,7 @@ import {
     COOKIE_HARV_TOKEN_NAME
 } from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -37,21 +34,14 @@ import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
-import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { TEAMS } from "../src/config";
 import { getAdminAccess } from "../src/server/has-admin-access";
-import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { StatsApiContext } from "../src/context/stats-api-context";
-import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
-import { WeeklyCapacityStats } from "../src/components/stats/weekly-capacity-stats";
-import { ProjectsStats } from "../src/components/stats/projects-stats";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
-import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
-import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { useProjects } from "../src/hooks/use-projects";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
@@ -202,11 +192,6 @@ export const Index = ({
                                     <BillableHoursStats/>
                                 </Grid>
 
-                                <Grid item xs={ 12 } lg={ 12 }>
-                                    <Typography variant={ 'body1' }>Hours per day</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading && <HistoryLineChart/> }
-                                </Grid>
 
                                 <Grid item xs={ 12 } lg={ 4 }>
                                     <Typography variant={ 'body1' }>Hours spent</Typography>

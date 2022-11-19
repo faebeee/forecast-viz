@@ -40,7 +40,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellPar
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { getAdminAccess } from "../src/server/has-admin-access";
-import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-chart";
 import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 import mixpanel from "mixpanel-browser";
