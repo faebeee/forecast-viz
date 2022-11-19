@@ -49,6 +49,14 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 //@ts-ignore
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
+export async function getStaticProps() {
+  return {
+    props: {
+    },
+      revalidate: 10 * 60, // ten minutes
+  }
+}
+
 
 export const Me = () => {
     const { dateRange } = useFilterContext();
@@ -64,6 +72,7 @@ export const Me = () => {
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+        me.load()
         entriesDetailedApi.load(from, to);
         entriesApi.load(from, to);
         statsApi.load(from, to);
