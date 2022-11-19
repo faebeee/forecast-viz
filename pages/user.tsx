@@ -101,7 +101,7 @@ export type EntriesProps = {
 }
 
 
-export const Index = ({
+export const User = ({
                           userName,
                           from,
                           to,
@@ -361,4 +361,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default User;

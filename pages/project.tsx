@@ -4,9 +4,6 @@ import { GetServerSideProps } from "next";
 import {
     Autocomplete,
     Box,
-    Card,
-    CardActions,
-    CardContent,
     CircularProgress,
     FormControl,
     Grid,
@@ -21,7 +18,7 @@ import { Forecast, getForecast } from "../src/server/get-forecast";
 import { debounce, round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect,  useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
@@ -34,7 +31,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellPar
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { TEAMS } from "../src/config";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
@@ -92,7 +88,7 @@ export type EntriesProps = {
 }
 
 
-export const Index = ({
+export const Project = ({
                           userName,
                           from,
                           to,
@@ -302,4 +298,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Project;

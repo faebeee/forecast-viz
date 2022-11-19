@@ -1,10 +1,8 @@
-import { getHarvest } from "../src/server/get-harvest";
-import { differenceInBusinessDays, format } from 'date-fns';
+import {  format } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useEffect } from "react";
@@ -19,7 +17,6 @@ import { useCurrentStats } from "../src/hooks/use-current-stats";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
@@ -29,8 +26,9 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
-import {withServerSideSession} from "../src/server/with-session";
 import {DATE_FORMAT} from "../src/context/formats";
+import { useMe } from "../src/hooks/use-me";
+import {useRouter} from "next/router";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -38,28 +36,17 @@ const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => mo
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = withServerSideSession(
-    async function getServerSideProps({req}): Promise<{ props: EntriesProps }>  {
-        return {
-            props: {
-                userName: req.session.userName,
-                hasAdminAccess: req.session.hasAdminAccess,
-            }
-        }
-    }
-)
-
-
-export type EntriesProps = {
-    userName?: string | null;
-    hasAdminAccess?: boolean;
+export async function getStaticProps() {
+  return {
+    props: {
+    },
+      revalidate: 10 * 60, // ten minutes
+  }
 }
 
+export const Index = () => {
 
-export const Index = ({
-                          userName,
-                          hasAdminAccess,
-                      }: EntriesProps) => {
+    const myApi = useMe()
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
@@ -70,6 +57,7 @@ export const Index = ({
     useEffect(() => {
         const from = format(new Date(), DATE_FORMAT)
         const to = format(new Date(), DATE_FORMAT)
+        myApi.load()
         entriesApi.load(from, to);
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
@@ -88,7 +76,7 @@ export const Index = ({
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'day' }>
+                <Layout hasAdminAccess={ myApi.hasAdminAccess } userName={ myApi.userName ?? '' } active={ 'day' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Day' } showPicker={ false }/>

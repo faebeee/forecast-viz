@@ -56,9 +56,9 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
 )
 
 
-export const Index = ({}) => {
+export const OAuth = ({}) => {
     return <>
     </>
         ;
 }
-export default Index;
+export default OAuth;

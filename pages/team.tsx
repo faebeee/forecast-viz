@@ -93,7 +93,7 @@ export type EntriesProps = {
 }
 
 
-export const Index = ({
+export const Team = ({
                           userName,
                           from,
                           to,
@@ -380,4 +380,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Team;

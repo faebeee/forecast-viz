@@ -1,10 +1,8 @@
-import { getHarvest } from "../src/server/get-harvest";
 import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
-import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
@@ -20,7 +18,6 @@ import { useCurrentStats } from "../src/hooks/use-current-stats";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
@@ -35,7 +32,7 @@ import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from 'mixpanel-browser';
 import {DATE_FORMAT} from "../src/context/formats";
-import {withServerSideSession} from "../src/server/with-session";
+import { useMe } from '../src/hooks/use-me';
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -53,37 +50,7 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = withServerSideSession(
-    async ({ query, req }): Promise<{ props: EntriesProps }> => {
-        const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-        const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-
-        return {
-            props: {
-                from,
-                to,
-                userName: req.session.userName,
-                hasAdminAccess: req.session.hasAdminAccess ?? false,
-            }
-        }
-    }
-)
-
-
-export type EntriesProps = {
-    from: string;
-    to: string;
-    userName?: string | null;
-    hasAdminAccess?: boolean;
-}
-
-
-export const Index = ({
-                          userName,
-                          from,
-                          to,
-                          hasAdminAccess,
-                      }: EntriesProps) => {
+export const Me = () => {
     const { dateRange } = useFilterContext();
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
@@ -91,6 +58,7 @@ export const Index = ({
     const assignmentsApi = useAssignments();
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
+    const me = useMe()
 
 
     useEffect(() => {
@@ -116,7 +84,7 @@ export const Index = ({
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'me' }>
+                <Layout hasAdminAccess={ me.hasAdminAccess } userName={ me.userName ?? '' } active={ 'me' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Dashboard' }/>
@@ -321,4 +289,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Me;
