@@ -23,7 +23,7 @@ REDIS_URL=****
 REDIS_CACHE_TTL=600
 REDIS_ENABLED=false
 
-# session cookie encryption password
+# session cookie encryption password, must be at least a 32 characters long password 
 IRON_SESSION_PASSWORD=****
 
 # Optional
