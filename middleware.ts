@@ -28,7 +28,6 @@ export async function middleware(request: NextRequest) {
 
 
     const isLoggedIn = session.accessToken && session.forecastId && session.harvestId;
-    console.log(request.nextUrl.pathname, isLoggedIn, session)
     if (!isLoggedIn) {
         return NextResponse.redirect(new URL('/welcome', request.url))
     }
