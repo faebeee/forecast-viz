@@ -2,31 +2,20 @@ import { getHarvest } from "../src/server/get-harvest";
 import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
 import {
-    Autocomplete,
     Box,
-    Card,
-    CardActions,
-    CardContent,
     CircularProgress,
     FormControl,
     Grid,
     InputLabel,
     MenuItem,
-    Select, TextField,
+    Select,
     Typography
 } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
-import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { Forecast, getForecast } from "../src/server/get-forecast";
 import { debounce, round } from "lodash";
 import { Layout } from "../src/components/layout";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
@@ -37,7 +26,6 @@ import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
-import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
@@ -52,10 +40,11 @@ import { BillableHoursStats } from "../src/components/stats/billable-hours-stats
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
-import { useProjects } from "../src/hooks/use-projects";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from "mixpanel-browser";
+import {DATE_FORMAT} from "../src/context/formats";
+import {withServerSideSession} from "../src/server/with-session";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -74,46 +63,34 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
 
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
+    async ({ query, req }): Promise<{ props: EntriesProps }> => {
+        const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
+        const to = query.to as string ?? format(new Date(), DATE_FORMAT);
 
-    if (!token || !account) {
+        const api = await getHarvest(req.session.accessToken!, req.session.harvestId);
+        const forecast = getForecast(req.session.accessToken!, req.session.forecastId!);
+        const userData = await api.getMe();
+        const userId = userData.id;
+
+        const allPeople = await forecast.getPersons();
+        const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+        const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
+        const teamId = myTeamEntry!.key;
+        const teamPeople = allPeople
+            .filter((p) => p.roles.includes(teamId!) && !p.archived)
+
         return {
             props: {
                 from,
                 to,
-                userName: null,
-                persons: [],
+                persons: teamPeople,
+                userName: req.session.userName,
+                hasAdminAccess: req.session.hasAdminAccess ?? false,
             }
         }
     }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-    const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
-    const teamId = myTeamEntry!.key;
-    const teamPeople = allPeople
-        .filter((p) => p.roles.includes(teamId!) && !p.archived)
-
-    return {
-        props: {
-            from,
-            to,
-            persons: teamPeople,
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
-    }
-}
+)
 
 export type EntriesProps = {
     from: string;
@@ -124,7 +101,7 @@ export type EntriesProps = {
 }
 
 
-export const Index = ({
+export const User = ({
                           userName,
                           from,
                           to,
@@ -384,4 +361,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default User;

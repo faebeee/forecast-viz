@@ -2,8 +2,9 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
-import { getMyAssignments, getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
+import {  getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 
 export type GetEntriesHandlerResponse = {
@@ -24,7 +25,6 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
 
     const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId);
     const assignments = await forecast.getAssignments(range.from, range.to, projectId);
-    const myAssignments = getMyAssignments(assignments, userId);
     const myEntries = getTeamHoursEntries(entries, assignments);
 
     const result = {
@@ -33,4 +33,4 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
 
     res.send(result);
 }
-export default getEntriesHandler;
+export default withApiRouteSession(getEntriesHandler);

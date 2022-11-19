@@ -1,19 +1,10 @@
-import { getHarvest } from "../src/server/get-harvest";
 import { differenceInBusinessDays, format, parse, startOfWeek } from 'date-fns';
 import { GetServerSideProps } from "next";
-import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
+import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
-import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
-import { getForecast } from "../src/server/get-forecast";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
@@ -27,7 +18,6 @@ import { useCurrentStats } from "../src/hooks/use-current-stats";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { HistoryLineChart } from "../src/components/chart/history-line-chart";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
@@ -41,6 +31,8 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from 'mixpanel-browser';
+import {DATE_FORMAT} from "../src/context/formats";
+import { useMe } from '../src/hooks/use-me';
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -57,57 +49,16 @@ const RadialArea = dynamic(() => import('reaviz').then(module => module.RadialAr
 //@ts-ignore
 const RadialGradient = dynamic(() => import('reaviz').then(module => module.RadialGradient), { ssr: false });
 
-
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
-
-    if (!token || !account) {
-        return {
-            props: {
-                from,
-                to,
-                userName: null,
-            }
-        }
-    }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const userId = userData.id;
-
-    const allPeople = await forecast.getPersons();
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-
-    return {
-        props: {
-            from,
-            to,
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
-    }
+export async function getStaticProps() {
+  return {
+    props: {
+    },
+      revalidate: 10 * 60, // ten minutes
+  }
 }
 
 
-export type EntriesProps = {
-    from: string;
-    to: string;
-    userName?: string | null;
-    hasAdminAccess?: boolean;
-}
-
-
-export const Index = ({
-                          userName,
-                          from,
-                          to,
-                          hasAdminAccess,
-                      }: EntriesProps) => {
+export const Me = () => {
     const { dateRange } = useFilterContext();
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
@@ -115,11 +66,13 @@ export const Index = ({
     const assignmentsApi = useAssignments();
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
+    const me = useMe()
 
 
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+        me.load()
         entriesDetailedApi.load(from, to);
         entriesApi.load(from, to);
         statsApi.load(from, to);
@@ -140,7 +93,7 @@ export const Index = ({
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'me' }>
+                <Layout hasAdminAccess={ me.hasAdminAccess } userName={ me.userName ?? '' } active={ 'me' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Dashboard' }/>
@@ -345,4 +298,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Me;
