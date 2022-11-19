@@ -3,7 +3,11 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { getForecast } from "../../../src/server/get-forecast";
-import {  getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
+import {
+    excludeLeaveTasks,
+    getTeamHoursEntries,
+    SpentProjectHours
+} from "../../../src/server/utils";
 import {withApiRouteSession} from "../../../src/server/with-session";
 
 
@@ -24,8 +28,9 @@ export const getEntriesHandler = async (req: NextApiRequest, res: NextApiRespons
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
 
     const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId);
+    const attendanceEntries = excludeLeaveTasks(entries)
     const assignments = await forecast.getAssignments(range.from, range.to, projectId);
-    const myEntries = getTeamHoursEntries(entries, assignments);
+    const myEntries = getTeamHoursEntries(attendanceEntries, assignments);
 
     const result = {
         entries: myEntries,

@@ -234,6 +234,60 @@ export const Me = () => {
                                     }
                                 </Grid>
 
+                                <Grid item xs={ 12 } lg={ 4 }>
+                                    <Typography variant={ 'body1' }>Billable Projects</Typography>
+                                    { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !assignmentsApi.isLoading &&
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (entriesApi.entries ?? []).map((h) => ({
+                                                key: h.projectName ?? '?',
+                                                data: h.hours ?? 0
+                                            })) ?? [] }/>
+                                    }
+                                </Grid>
+
+                                <Grid item xs={ 12 } lg={ 4 }>
+                                    <Typography variant={ 'body1' }>Non-Billable Projects</Typography>
+                                    { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !assignmentsApi.isLoading &&
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (entriesApi.entries ?? []).map((h) => ({
+                                                key: h.projectName ?? '?',
+                                                data: h.nonBillableHours ?? 0
+                                            })) ?? [] }/>
+                                    }
+                                </Grid>
+
+                                <Grid item xs={ 12 } lg={ 4 }>
+                                    <Typography variant={ 'body1' }>Non-Billable Tasks</Typography>
+                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                    { !statsApi.isLoading &&
+                                        <PieChart height={ 600 }
+                                            series={ <PieArcSeries
+                                                cornerRadius={ 4 }
+                                                padAngle={ 0.02 }
+                                                padRadius={ 200 }
+                                                doughnut={ true }
+                                            /> }
+                                            data={ (statsApi.hoursPerNonBillableTasks ?? []).map((h) => ({
+                                                key: h.task,
+                                                data: h.hours ?? 0
+                                            })) ?? [] }/>
+                                    }
+                                </Grid>
+
                                 <Grid item xs={ 12 }>
                                     <Typography mb={ 2 } variant={ 'h5' }>My Hours</Typography>
 

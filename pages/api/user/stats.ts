@@ -2,8 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    billableHourPercentage,
-    filterActiveAssignments, getBillableHours,
+    billableHourPercentage, excludeLeaveTasks,
+    filterActiveAssignments, filterNonBillableEntries, getBillableHours,
     getDates,
     getHoursPerTask,
     getMyAssignments,
@@ -32,6 +32,7 @@ export type GetStatsHandlerResponse = {
     hoursPerDay: HourPerDayEntry[];
     overtimePerDay: HourPerDayEntry[];
     hoursPerTask: HourPerTaskObject[];
+    hoursPerNonBillableTasks: HourPerTaskObject[];
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
@@ -100,6 +101,9 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
 
     const billableHours = getBillableHours(entries);
     const hoursPerTask = getHoursPerTask(entries);
+    const attendanceEntries = excludeLeaveTasks(entries)
+    const nonBillableAttendanceEntries = filterNonBillableEntries(attendanceEntries)
+    const hoursPerNonBillableTasks = getHoursPerTask(nonBillableAttendanceEntries)
     const lastEntryDate = entries[0]?.spent_date;
 
     const result = {
@@ -116,6 +120,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         hoursPerTask,
         lastEntryDate,
         overtimePerDay,
+        hoursPerNonBillableTasks
     }
 
     res.send(result);
