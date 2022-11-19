@@ -307,6 +307,27 @@ export const Team = ({
                                 }
                             </Grid>
 
+                            {teamEntriesApi.internalTeamHoursEntries.length > 0 &&
+                                <Grid item xs={12} lg={6}>
+                                  <Typography variant={'body1'}>Internal Project Hours</Typography>
+                                  {teamEntriesApi.isLoading && <CircularProgress color={'primary'}/>}
+                                  {!teamEntriesApi.isLoading &&
+                                    <PieChart height={600}
+                                              series={<PieArcSeries
+                                                cornerRadius={4}
+                                                padAngle={0.02}
+                                                padRadius={200}
+                                                doughnut={true}
+                                              />}
+                                              data={teamEntriesApi.internalTeamHoursEntries?.map((h, index) => ({
+                                                id: index.toString(),
+                                                key: h.name,
+                                                data: h.hours,
+                                              })) ?? []}/>
+                                  }
+                                </Grid>
+                            }
+
                             <Grid item xs={ 12 }>
                                 <Typography variant={ 'h5' }>Team Hours</Typography>
                                 <DataGrid

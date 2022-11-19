@@ -48,6 +48,10 @@ export type BillableHours = {
     billable: number;
     nonBillable: number
 }
+export type UserHours = {
+    name: string
+    hours: number
+}
 
 export const getTeamHours = (teamEntries: TimeEntry[]): Record<number, TeamHoursEntry> => {
     return teamEntries.reduce((acc, entry) => {
@@ -298,3 +302,22 @@ export const IRON_SESSION_OPTIONS = {
         secure: process.env.NODE_ENV === "production",
     },
 };
+
+export const filterNonBillableEntries = (entries: TimeEntry[]): TimeEntry[] => {
+    return entries.filter((entry) => !entry.billable);
+}
+
+export const getInternalTeamTaskEntries = (entries: TimeEntry[]) : UserHours[] => {
+    const internalTeamTaskID = process.env.INTERNAL_TEAM_TASK_ID ? process.env.INTERNAL_TEAM_TASK_ID : ''
+    const teamEntriesInternal = entries.filter((entry) => entry.task.id.toString() === internalTeamTaskID);
+    return Object.values(teamEntriesInternal.reduce((acc, entry) => {
+        if (!acc[entry.user.name]) {
+            acc[entry.user.name] = {
+                name: entry.user.name,
+                hours: 0
+            }
+        }
+        acc[entry.user.name].hours += entry.hours
+        return acc;
+    }, {} as Record<string, UserHours>))
+}
