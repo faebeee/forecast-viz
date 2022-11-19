@@ -27,6 +27,7 @@ export function withServerSideSession<P extends { [key: string]: unknown } = { [
 
 declare module "iron-session" {
     interface IronSessionData {
+        clientId?: string
         accessToken?: string
         forecastId?: number
         harvestId?: number
