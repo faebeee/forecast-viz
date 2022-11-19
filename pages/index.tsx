@@ -1,5 +1,4 @@
 import {  format } from 'date-fns';
-import { GetServerSideProps } from "next";
 import { Box, CircularProgress, Grid, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
@@ -28,7 +27,6 @@ import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
 import { useMe } from "../src/hooks/use-me";
-import {useRouter} from "next/router";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });

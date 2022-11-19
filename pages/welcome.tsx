@@ -3,15 +3,31 @@ import "react-datepicker/dist/react-datepicker.css";
 import {Layout} from "../src/components/layout";
 import {ContentHeader} from "../src/components/content-header";
 import {useRouter} from "next/router";
+import {GetServerSideProps} from "next";
+import {withServerSideSession} from "../src/server/with-session";
 
-export type WelcomeProps = {}
+
+export const getServerSideProps: GetServerSideProps = withServerSideSession(
+    async ({query, req}): Promise<{ props: WelcomeProps }> => {
+        const harvestClientId = query.clientId as string ?? '';
+        return {
+            props: {
+                harvestClientId,
+            }
+        }
+    }
+)
+
+export type WelcomeProps = {
+    harvestClientId:string
+}
 
 
-export const Welcome = ({}: WelcomeProps) => {
+export const Welcome = ({harvestClientId}: WelcomeProps) => {
     const router = useRouter();
 
     const onClick = () => {
-        router.push('https://id.getharvest.com/oauth2/authorize?client_id=' + router.query.clientId + '&response_type=token');
+        router.push('https://id.getharvest.com/oauth2/authorize?client_id=' + harvestClientId + '&response_type=token');
     }
 
     return <>
@@ -22,8 +38,8 @@ export const Welcome = ({}: WelcomeProps) => {
                     <TextField variant={'outlined'}
                                label={'Harvest Client Id'}
                                fullWidth
-                               value={router.query.clientId}
-                               onChange={(e) => router.replace({query: {...router.query, clientId: e.target.value}})}/>
+                               value={harvestClientId}
+                    />
 
                 </Stack>
 
