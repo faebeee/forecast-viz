@@ -104,7 +104,7 @@ export const AreasChart = withTooltip<AreasChartProps, number>(
                                 <LinearGradient id={ `area-${ dataEntry.key }` }
                                     from={ dataEntry.color }
                                     to={ dataEntry.color }
-                                    toOpacity={ 0.4 }/>
+                                    toOpacity={ 0.8 }/>
                                 <AreaClosed
                                     key={ dataEntry.key }
                                     data={ dataEntry.data }

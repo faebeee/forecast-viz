@@ -131,7 +131,7 @@ export const Me = () => {
                                                     {
                                                         key: 'overtime',
                                                         label: 'Overtime',
-                                                        color: getColor(1),
+                                                        color: getColor(15),
                                                         data: statsApi.overtimePerDay,
                                                     } ] }
                                                     width={ width }
@@ -179,6 +179,7 @@ export const Me = () => {
                                     { !hoursApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }
@@ -196,6 +197,7 @@ export const Me = () => {
                                     { !statsApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }
@@ -214,6 +216,7 @@ export const Me = () => {
                                     { !assignmentsApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }

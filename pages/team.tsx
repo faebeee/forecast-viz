@@ -22,7 +22,7 @@ import { useFilterContext } from "../src/context/filter-context";
 import { ContentHeader } from "../src/components/content-header";
 import Image from "next/image";
 import { useTeamStats } from "../src/hooks/use-team-stats";
-import { TEAMS } from "../src/config";
+import { COLORS, TEAMS } from "../src/config";
 import { useTeamHours } from "../src/hooks/use-team-hours";
 import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
@@ -233,6 +233,7 @@ export const Team = ({
                                 { !teamHoursApi.isLoading &&
                                     <PieChart height={ 600 }
                                         series={ <PieArcSeries
+                                            colorScheme={COLORS}
                                             cornerRadius={ 4 }
                                             padAngle={ 0.02 }
                                             padRadius={ 200 }
@@ -252,6 +253,7 @@ export const Team = ({
                                 { !teamStatsApi.isLoading &&
                                     <PieChart height={ 600 }
                                         series={ <PieArcSeries
+                                            colorScheme={COLORS}
                                             cornerRadius={ 4 }
                                             padAngle={ 0.02 }
                                             padRadius={ 200 }
@@ -276,6 +278,7 @@ export const Team = ({
                                         })) ?? [] }
                                         height={ 600 }
                                         series={ <RadialAreaSeries
+                                            colorScheme={COLORS}
                                             area={ <RadialArea gradient={ <RadialGradient/> }/> }
                                             interpolation={ 'linear' }/> }
                                         axis={ <RadialAxis
@@ -297,6 +300,7 @@ export const Team = ({
                                         })) ?? [] }
                                         height={ 600 }
                                         series={ <RadialAreaSeries
+                                            colorScheme={COLORS}
                                             area={ <RadialArea gradient={ <RadialGradient/> }/> }
                                             interpolation={ 'linear' }/> }
                                         axis={ <RadialAxis

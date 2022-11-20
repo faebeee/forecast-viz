@@ -247,6 +247,7 @@ export const User = ({
                                     { !hoursApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }
@@ -265,6 +266,7 @@ export const User = ({
                                     { !statsApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }
@@ -283,6 +285,7 @@ export const User = ({
                                     { !assignmentsApi.isLoading &&
                                         <PieChart height={ 600 }
                                             series={ <PieArcSeries
+                                                colorScheme={COLORS}
                                                 cornerRadius={ 4 }
                                                 padAngle={ 0.02 }
                                                 padRadius={ 200 }

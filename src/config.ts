@@ -1,14 +1,7 @@
 export const COLORS = [
-    '#004c6d',
-    '#115e80',
-    '#1f7192',
-    '#2d85a5',
-    '#3b99b8',
-    '#4aaeca',
-    '#59c3dc',
-    '#69d8ee',
-    '#7aeeff',
-];
+    "#4599f2", "#01adf4", "#00bdf0", "#00cde7", "#00e1d6", "#00f5af", "#00ff6e"
+
+]
 
 export const TEAMS = [
     {
