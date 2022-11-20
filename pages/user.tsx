@@ -24,7 +24,6 @@ import { COLORS, TEAMS } from "../src/config";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { TotalHoursStats } from "../src/components/stats/total-hours-stats";
 import { WeeklyCapacityStats } from "../src/components/stats/weekly-capacity-stats";
-import { ProjectsStats } from "../src/components/stats/projects-stats";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
@@ -33,7 +32,6 @@ import { LastEntryStats } from "../src/components/stats/last-entry-stats";
 import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from "mixpanel-browser";
 import { ParentSize } from "@visx/responsive";
-import { AreaChart } from "../src/components/chart/area-chart";
 import { getColor } from "../src/utils/get-color";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { DATE_FORMAT } from "../src/context/formats";
@@ -180,13 +178,8 @@ export const User = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <ProjectsStats/>
-                                </Grid>
-
-                                <Grid item xs={ 6 } xl={ 4 }>
                                     <WeeklyCapacityStats/>
                                 </Grid>
-
 
                                 <Grid item xs={ 12 } xl={ 12 }>
                                     <Typography variant={ 'body1' }>Hours per day</Typography>
