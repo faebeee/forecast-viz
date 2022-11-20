@@ -189,45 +189,37 @@ export const User = ({
 
 
                                 <Grid item xs={ 12 } xl={ 12 }>
-                                    <Typography variant={ 'body1' }>Overtime per day </Typography>
+                                    <Typography variant={ 'body1' }>Hours per day</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading &&
+                                    { !statsApi.isLoading && statsApi.billableHoursPerDay &&
                                         <ParentSize debounceTime={ 10 }>
                                             { ({ width }) => (
-                                                <AreasChart
-                                                    maxY={ 8 }
-                                                    data={ [
+                                                <AreasChart data={ [
+                                                    {
+                                                        key: 'hours',
+                                                        label: 'Hours',
+                                                        color: getColor(0),
+                                                        data: statsApi.hoursPerDay,
+                                                    },
+                                                    {
+                                                        key: 'overtime',
+                                                        label: 'Overtime',
+                                                        color: getColor(1),
+                                                        data: statsApi.overtimePerDay,
+                                                    }
+                                                ] }
+                                                    references={ [
                                                         {
-                                                            key: 'overtime',
-                                                            label: 'Overtime',
-                                                            color: getColor(0),
-                                                            data: statsApi.overtimePerDay,
-                                                        }
+                                                            y: statsApi.totalHoursPerDayCapacity,
+                                                            label: 'Capacity',
+                                                            color: getColor(0)
+                                                        },
+                                                        { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
                                                     ] }
                                                     width={ width }
                                                     height={ 400 }
                                                 />) }
                                         </ParentSize> }
-                                </Grid>
-
-                                <Grid item xs={ 12 } xl={ 12 }>
-                                    <Typography variant={ 'body1' }>Total Hours per day</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading && <ParentSize debounceTime={ 10 }>
-                                        { ({ width }) => (
-                                            <AreaChart data={ statsApi.hoursPerDay }
-                                                width={ width }
-                                                height={ 400 }
-                                                label={ 'Hours' }
-                                                references={ [
-                                                    {
-                                                        y: statsApi.totalHoursPerDayCapacity,
-                                                        label: 'Capacity',
-                                                        color: getColor(0)
-                                                    },
-                                                    { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
-                                                ] }/>) }
-                                    </ParentSize> }
                                 </Grid>
 
                                 <Grid item xs={ 12 } xl={ 12 }>

@@ -93,9 +93,7 @@ export const AreasChart = withTooltip<AreasChartProps, number>(
 
         return (
             <div>
-
                 <svg width={ width } height={ height }>
-                    <rect width={ width } height={ height } fill="transparent" rx={ 14 }/>
                     <Group left={ margin.left } top={ margin.top }>
                         <AxisLeft scale={ yScale }/>
                         <AxisBottom top={ yMax } scale={ xScale }/>

@@ -1,15 +1,14 @@
-import {GetServerSideProps} from "next";
+import { GetServerSideProps } from "next";
 import "react-datepicker/dist/react-datepicker.css";
-import {getHarvest} from "../src/server/get-harvest";
-import {AccountsApi} from "../src/server/harvest-types";
+import { getHarvest } from "../src/server/get-harvest";
+import { AccountsApi } from "../src/server/harvest-types";
+import { withServerSideSession } from "../src/server/with-session";
+import { getForecast } from "../src/server/get-forecast";
 import ProductName = AccountsApi.ProductName;
-import {withServerSideSession} from "../src/server/with-session";
-import {getForecast} from "../src/server/get-forecast";
-import {getAdminAccess} from "../src/server/has-admin-access";
 
 
 export const getServerSideProps: GetServerSideProps = withServerSideSession(
-    async ({query, req, res}) => {
+    async ({ query, req, res }) => {
         const harvestAccessToken = query.access_token;
         const harvest = await getHarvest(harvestAccessToken as string)
         const accounts = await harvest.getAccounts()
@@ -35,13 +34,11 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         const allPeople = await forecast.getPersons();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
-        req.session.hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
+        req.session.hasAdminAccess = myDetails?.admin ?? false;
         req.session.userName = accounts?.user.first_name
 
 
         await req.session.save()
-
-
 
 
         // TODO: Exception and invalid data handling

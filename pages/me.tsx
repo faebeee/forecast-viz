@@ -126,38 +126,26 @@ export const Me = () => {
                                 </Grid>
 
                                 <Grid item xs={ 12 } xl={ 12 }>
-                                    <Typography variant={ 'body1' }>Overtime per day </Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading &&
-                                        <ParentSize debounceTime={ 10 }>
-                                            { ({ width }) => (
-                                                <AreasChart
-                                                    maxY={ 8 }
-                                                    data={ [
-                                                        {
-                                                            key: 'overtime',
-                                                            label: 'Overtime',
-                                                            color: getColor(0),
-                                                            data: statsApi.overtimePerDay,
-                                                        }
-                                                    ] }
-                                                    width={ width }
-                                                    height={ 400 }
-                                                />) }
-                                        </ParentSize> }
-                                </Grid>
-
-
-                                <Grid item xs={ 12 } xl={ 12 }>
                                     <Typography variant={ 'body1' }>Total Hours per day</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
                                     { !statsApi.isLoading && statsApi.hoursPerDay &&
                                         <ParentSize enableDebounceLeadingCall debounceTime={ 10 }>
                                             { ({ width }) => (
-                                                <AreaChart data={ statsApi.hoursPerDay }
+                                                <AreasChart data={ [
+                                                    {
+                                                        key: 'hours',
+                                                        label: 'Hours',
+                                                        color: getColor(0),
+                                                        data: statsApi.hoursPerDay,
+                                                    },
+                                                    {
+                                                        key: 'overtime',
+                                                        label: 'Overtime',
+                                                        color: getColor(1),
+                                                        data: statsApi.overtimePerDay,
+                                                    } ] }
                                                     width={ width }
                                                     height={ 400 }
-                                                    label={ 'Hours' }
                                                     references={ [
                                                         {
                                                             y: statsApi.totalHoursPerDayCapacity,

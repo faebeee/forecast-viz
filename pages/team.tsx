@@ -4,7 +4,8 @@ import { GetServerSideProps } from "next";
 import {
     Autocomplete,
     Box,
-    Card, CardActions,
+    Card,
+    CardActions,
     CardContent,
     CircularProgress,
     Grid,
@@ -29,12 +30,11 @@ import { round } from "lodash";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
-import { getAdminAccess } from "../src/server/has-admin-access";
 import { TeamHistoryLineChart } from "../src/components/chart/team-history-line-chart";
 import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 import mixpanel from "mixpanel-browser";
-import {DATE_FORMAT} from "../src/context/formats";
-import {withServerSideSession} from "../src/server/with-session";
+import { DATE_FORMAT } from "../src/context/formats";
+import { withServerSideSession } from "../src/server/with-session";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -94,13 +94,13 @@ export type EntriesProps = {
 
 
 export const Team = ({
-                          userName,
-                          from,
-                          to,
-                          teamId,
-                          hasAdminAccess,
-                          projects
-                      }: EntriesProps) => {
+                         userName,
+                         from,
+                         to,
+                         teamId,
+                         hasAdminAccess,
+                         projects
+                     }: EntriesProps) => {
     const router = useRouter();
     const { dateRange } = useFilterContext();
     const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
