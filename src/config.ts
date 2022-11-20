@@ -1,12 +1,13 @@
 export const COLORS = [
-    '#003f5c',
-    '#ffa600',
-    '#2f4b7c',
-    '#ff7c43',
-    '#665191',
-    '#d45087',
-    '#a05195',
-    '#f95d6a',
+    '#004c6d',
+    '#115e80',
+    '#1f7192',
+    '#2d85a5',
+    '#3b99b8',
+    '#4aaeca',
+    '#59c3dc',
+    '#69d8ee',
+    '#7aeeff',
 ];
 
 export const TEAMS = [

@@ -111,8 +111,10 @@ export const LinesChart = withTooltip<LinesChartProps, number>(
         return <div>
             <svg width={ width } height={ height }>
                 <Group left={ margin.left } top={ margin.top }>
-                    <AxisLeft scale={ yScale }/>
-                    <AxisBottom top={ yMax } scale={ xScale }/>
+                    <AxisLeft stroke={ '#fff' } tickLabelProps={ () => ({ fill: '#fff', textAnchor: "end" }) }
+                        scale={ yScale }/>
+                    <AxisBottom stroke={ '#fff' } tickLabelProps={ () => ({ fill: '#fff' }) } top={ yMax }
+                        scale={ xScale }/>
 
                     { data.map((dataEntry) => (<g key={ dataEntry.key }>
                             <Text

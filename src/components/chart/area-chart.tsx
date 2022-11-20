@@ -98,8 +98,8 @@ export const AreaChart = withTooltip<AreaChartProps, HourPerDayEntry>(
                     <rect width={ width } height={ height } fill="transparent" rx={ 14 }/>
                     <Group left={ margin.left } top={ margin.top }>
                         <LinearGradient id="area" from={ color } to={ color } toOpacity={ 0.4 }/>
-                        <AxisLeft scale={ yScale }/>
-                        <AxisBottom top={ yMax } scale={ xScale }/>
+                        <AxisLeft stroke={ '#fff' } scale={ yScale }/>
+                        <AxisBottom stroke={ '#fff' } top={ yMax } scale={ xScale }/>
 
                         <AreaClosed
                             data={ data }

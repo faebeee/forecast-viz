@@ -14,9 +14,9 @@ import { DATE_FORMAT } from "../src/context/formats";
 
 const theme = createTheme({
     palette: {
-        mode: 'light',
+        mode: 'dark',
         primary: {
-            main: '#333',
+            main: '#7aeeff',
         },
         secondary: {
             main: '#ffe290',
@@ -35,7 +35,7 @@ const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    background: "linear-gradient(to right, #283048, #859398)",
+                    background: 'linear-gradient(115deg, #2b5876, #4e4376)',
                     color: 'white',
                 }
             }
@@ -68,7 +68,7 @@ function MyApp({ Component, pageProps }: AppProps) {
     return <LocalizationProvider dateAdapter={ AdapterDateFns }>
         <ThemeProvider theme={ theme }>
             <CssBaseline/>
-            <GlobalStyles styles={ { body: { background: 'rgba(255, 255, 255, 0.9)' } } }/>
+            <GlobalStyles styles={ { body: { background: '#121212' } } }/>
             <FilterContext.Provider value={ {
                 dateRange,
                 setDateRange,
