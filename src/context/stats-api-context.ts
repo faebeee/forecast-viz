@@ -6,6 +6,7 @@ type Value = GetStatsHandlerResponse & {
 };
 
 export const StatsApiContextValue: Value = {
+    billableHoursPerDay: [], nonBillableHoursPerDay: [],
     overtimePerDay: [],
     lastEntryDate: "",
     hoursPerTask: [],
