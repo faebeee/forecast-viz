@@ -1,6 +1,11 @@
 export const COLORS = [
-    "#4599f2", "#01adf4", "#00bdf0", "#00cde7", "#00e1d6", "#00f5af", "#00ff6e"
-
+    "#4599f2",
+    "#01adf4",
+    "#00bdf0",
+    "#00cde7",
+    "#00e1d6",
+    "#00f5af",
+    "#00ff6e"
 ]
 
 export const TEAMS = [

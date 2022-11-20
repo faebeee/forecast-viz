@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Drawer, Stack, Typography } from "@mui/material";
+import { Box, Button, Container, Divider, Drawer, Stack, Typography } from "@mui/material";
 import { PropsWithChildren, useState } from "react";
 import Link from "next/link";
 import { name, version } from "../../package.json"
@@ -8,11 +8,25 @@ export type LayoutProps = PropsWithChildren<{
     active?: string;
     userName?: string | null;
     hasAdminAccess?: boolean;
+    hideDrawer?: boolean;
 }>;
 const drawerWidth = 180;
 
-export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutProps) => {
+export const Layout = ({ children, active, userName, hasAdminAccess, hideDrawer }: LayoutProps) => {
     const [ showSidebar, setShowSidebar ] = useState(false);
+
+    if (hideDrawer) {
+        return <Container>
+            <Box sx={ {
+                marginTop: 4,
+                backgroundColor: '#141e30',
+                paddingTop: 10,
+                paddingBottom: 10,
+            } }>
+                { children }
+            </Box>
+        </Container>
+    }
 
     return <div>
         <Drawer
@@ -27,7 +41,7 @@ export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutPro
             } }
             variant="persistent"
             anchor="left"
-            open={ true }>
+            open={ !hideDrawer }>
             <Box sx={ { padding: 2 } }>
                 <Stack spacing={ 2 }>
                     <Typography textAlign={ 'center' } color={ 'secondary' }>
@@ -101,6 +115,8 @@ export const Layout = ({ children, active, userName, hasAdminAccess }: LayoutPro
             marginLeft: `${ drawerWidth }px`,
             marginTop: 4,
             backgroundColor: '#141e30',
+            paddingTop: 10,
+            paddingBottom: 10,
             borderTopLeftRadius: 20
         } }>
             { children }

@@ -27,7 +27,7 @@ export const ContentHeader = ({ title, children, showPicker = true }: ContentHea
     const latest7Days = () => setDateRange([ sub(new Date(), { days: 7 }), new Date() ]);
     const selectLastMonth = () => setDateRange([ startOfMonth(sub(new Date(), { months: 1 })), endOfMonth(sub(new Date(), { months: 1 })) ]);
 
-    return <Box sx={ { display: 'flex', justifyContent: 'space-between', mb: 7, mt: 5 } }>
+    return <Box sx={ { display: 'flex', justifyContent: 'space-between', mb: 7} }>
         <Box sx={ { display: 'flex', marginBottom: 4 } }>
             <Typography sx={ { mr: 2 } } variant={ "h3" } color={ 'textSecondary' }>
                 { title }
