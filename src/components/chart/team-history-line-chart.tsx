@@ -28,7 +28,7 @@ export const TeamHistoryLineChart = () => {
 
     return <ParentSize debounceTime={ 10 }>
         { ({ width }) => (<>
-            <LinesChart width={ width } height={ 400 } data={ data }/>)
+            <LinesChart width={ width } height={ 400 } data={ data }/>
         </>) }
     </ParentSize>
 }

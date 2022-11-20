@@ -1,9 +1,8 @@
-import { LinearGradient } from "@visx/gradient";
-import { AreaClosed, Bar, Line, LinePath } from "@visx/shape";
-import { useCallback, useMemo } from "react";
+import { Bar, Line, LinePath } from "@visx/shape";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { scaleLinear, scaleTime } from "@visx/scale";
 import { bisector, extent } from "d3-array";
-import { COLORS, PARSE_DATE_FORMAT } from "../../config";
+import { PARSE_DATE_FORMAT } from "../../config";
 import { parse } from "date-fns";
 import { HourPerDayEntry } from "../../type";
 import { curveLinear } from '@visx/curve';
@@ -37,6 +36,7 @@ export const LinesChart = withTooltip<LinesChartProps, number>(
          tooltipLeft = 0,
      }: LinesChartProps & WithTooltipProvidedProps<number>) => {
         const getDate = (e: HourPerDayEntry) => parse(e.date, PARSE_DATE_FORMAT, new Date())
+        const [ activeLineId, setActiveLineId ] = useState<null | string>(null);
 
         const margin = {
             left: 50,
@@ -91,103 +91,134 @@ export const LinesChart = withTooltip<LinesChartProps, number>(
             [ showTooltip, xScale, yScale, data ],
         );
 
-        return (
-            <div>
+        const getOpacity = (id: string) => {
+            if (!activeLineId) {
+                return 1;
+            }
 
-                <svg width={ width } height={ height }>
-                    <rect width={ width } height={ height } fill="transparent" rx={ 14 }/>
-                    <Group left={ margin.left } top={ margin.top }>
-                        <AxisLeft scale={ yScale }/>
-                        <AxisBottom top={ yMax } scale={ xScale }/>
+            if (id === activeLineId) {
+                return 1;
+            }
+            return 0.2;
+        }
 
-                        { data.map((dataEntry) => (<g key={ dataEntry.key }>
-                                <LinePath
-                                    key={ dataEntry.key }
-                                    data={ dataEntry.data }
-                                    x={ (d) => xScale(getDate(d)) ?? 0 }
-                                    y={ (d) => yScale(d.hours) ?? 0 }
-                                    strokeWidth={ 2 }
-                                    pointerEvents="none"
-                                    stroke={ dataEntry.color }
-                                    curve={ curveLinear }
-                                />
-                            </g>
-                        )) }
+        useEffect(() => {
+            if (!tooltipData) {
+                setActiveLineId(null);
+            }
+        }, [ tooltipData ]);
 
-                        { references.map((ref) => (<g key={ ref.label }>
-                            <Line
-                                from={ { x: 0, y: yScale(ref.y) } }
-                                to={ { x: xMax, y: yScale(ref.y) } }
-                                strokeWidth={ 1 }
-                                stroke={ ref.color ?? '#000' }
-                                pointerEvents="none"
-                                strokeDasharray="5,2"
-                            />
+        return <div>
+            <svg width={ width } height={ height }>
+                <Group left={ margin.left } top={ margin.top }>
+                    <AxisLeft scale={ yScale }/>
+                    <AxisBottom top={ yMax } scale={ xScale }/>
+
+                    { data.map((dataEntry) => (<g key={ dataEntry.key }>
                             <Text
-                                x={ xMax - 50 }
-                                y={ yScale(ref.y) }
-                                width={ 50 }
+                                x={ 0 }
+                                y={ yScale(dataEntry.data[0].hours) ?? 0 }
+                                width={ 80 }
                                 dy={ -10 }
                                 verticalAnchor="middle"
                                 scaleToFit
-                                fill={ ref.color ?? '#000' }
+                                onMouseOver={ () => setActiveLineId(dataEntry.key) }
+                                onMouseLeave={ () => setActiveLineId(null) }
+                                opacity={ getOpacity(dataEntry.key) }
+                                fill={ dataEntry.color }
                             >
-                                { ref.label }
+                                { dataEntry.key }
                             </Text>
-                        </g>)) }
+                            <LinePath
+                                pointerEvents="none"
+                                data={ dataEntry.data }
+                                x={ (d) => xScale(getDate(d)) ?? 0 }
+                                y={ (d) => yScale(d.hours) ?? 0 }
+                                strokeWidth={ 2 }
+                                opacity={ getOpacity(dataEntry.key) }
+                                stroke={ dataEntry.color }
+                                curve={ curveLinear }
+                            />
+                        </g>
+                    )) }
 
-                        { tooltipData && (
-                            <g>
-                                <Line
-                                    from={ { x: tooltipLeft, y: 0 } }
-                                    to={ { x: tooltipLeft, y: height - margin.bottom } }
-                                    strokeWidth={ 1 }
-                                    stroke={ '#000' }
-                                    pointerEvents="none"
-                                    strokeDasharray="5,2"
-                                />
-                            </g>
-                        ) }
-
-                        <Bar
-                            x={ margin.left }
-                            y={ margin.top }
-                            width={ width }
-                            height={ height }
-                            fill="transparent"
-                            onTouchStart={ handleTooltip }
-                            onTouchMove={ handleTooltip }
-                            onMouseMove={ handleTooltip }
-                            onMouseLeave={ () => hideTooltip() }
+                    { references.map((ref) => (<g key={ ref.label }>
+                        <Line
+                            from={ { x: 0, y: yScale(ref.y) } }
+                            to={ { x: xMax, y: yScale(ref.y) } }
+                            strokeWidth={ 1 }
+                            stroke={ ref.color ?? '#000' }
+                            pointerEvents="none"
+                            strokeDasharray="5,2"
                         />
-                    </Group>
-                </svg>
-
-                { tooltipData && (
-                    <div>
-                        <TooltipWithBounds
-                            key={ Math.random() }
-                            top={ tooltipTop - 12 }
-                            left={ tooltipLeft + 12 }
+                        <Text
+                            x={ xMax - 50 }
+                            y={ yScale(ref.y) }
+                            width={ 50 }
+                            dy={ -10 }
+                            verticalAnchor="middle"
+                            scaleToFit
+                            pointerEvents="none"
+                            fill={ ref.color ?? '#000' }
                         >
-                            <Typography
-                                fontWeight={ '700' }>{ `Date: ${ (data[0].data[tooltipData].date) }` }</Typography>
-                            { data.map((d) => (
-                                <>{ d.data[tooltipData] &&
-                                    <Typography key={ d.key }
-                                        color={ d.color }>{ `${ d.label }: ${ getValue(d.data[tooltipData]) }` }</Typography>
-                                }</>
-                            )) }
-                            { references.map((ref) => (
-                                <Typography color={ ref.color }
-                                    key={ ref.label }>
-                                    { `${ ref.label }: ${ ref.y }` }
-                                </Typography>
-                            )) }
-                        </TooltipWithBounds>
-                    </div>
-                ) }
+                            { ref.label }
+                        </Text>
+                    </g>)) }
+
+                    { tooltipData && (
+                        <g>
+                            <Line
+                                from={ { x: tooltipLeft, y: 0 } }
+                                to={ { x: tooltipLeft, y: height - margin.bottom } }
+                                strokeWidth={ 1 }
+                                stroke={ '#000' }
+                                pointerEvents="none"
+                                strokeDasharray="5,2"
+                            />
+                        </g>
+                    ) }
+
+                    <Bar
+                        x={ margin.left }
+                        y={ margin.top }
+                        width={ width }
+                        height={ height }
+                        fill="transparent"
+                        onTouchStart={ handleTooltip }
+                        onTouchMove={ handleTooltip }
+                        onMouseMove={ handleTooltip }
+                        onMouseLeave={ () => hideTooltip() }
+                    />
+                </Group>
+            </svg>
+
+            { tooltipData && <div>
+                <TooltipWithBounds
+                    key={ Math.random() }
+                    top={ tooltipTop - 12 }
+                    left={ tooltipLeft + 12 }
+                >
+                    <Typography
+                        fontWeight={ '700' }>{ `Date: ${ (data[0].data[tooltipData].date) }` }</Typography>
+                    { data.map((d) => (
+                        <>{ d.data[tooltipData] &&
+                            <Typography key={ d.key }
+                                style={ { opacity: getOpacity(d.key) } }
+                                sx={ { opacity: getOpacity(d.key) } }
+                                onMouseOver={ () => setActiveLineId(d.key) }
+                                onMouseLeave={ () => setActiveLineId(null) }
+                                color={ d.color }>{ `${ d.label }: ${ getValue(d.data[tooltipData]) }` }</Typography>
+                        }</>
+                    )) }
+                    { references.map((ref) => (
+                        <Typography color={ ref.color }
+                            key={ ref.label }>
+                            { `${ ref.label }: ${ ref.y }` }
+                        </Typography>
+                    )) }
+                </TooltipWithBounds>
             </div>
-        );
+            }
+        </div>;
     });
 
