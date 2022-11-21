@@ -32,12 +32,17 @@ import { TEAMS } from "../src/config";
 import { StatsApiContext } from "../src/context/stats-api-context";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
-import { useProjects } from "../src/hooks/use-projects";
 import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours} from "../src/hooks/use-remote";
+import {
+    useAssignments,
+    useEntries,
+    useEntriesDetailed,
+    useHours,
+    useProjects
+} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -96,7 +101,7 @@ export const Project = ({
     const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
     const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
 
-    const apiParams : DefaultParams = {
+    const apiParams  = {
         from, to, uid: userId, projectId: selectedProject?.id.toString()
     }
 
@@ -106,14 +111,10 @@ export const Project = ({
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const hoursApi = useHours(apiParams);
-    const projectsApi = useProjects();
+    const projectsApi = useProjects(apiParams, {projects: []});
 
 
     const debounceLoad = debounce(() => {
-        if (userId) {
-            projectsApi.load(from, to, userId);
-        }
-
         if (!userId || !selectedProject?.id) {
             return;
         }
@@ -152,10 +153,10 @@ export const Project = ({
                                     </FormControl>
                                 }
                                 <Autocomplete
-                                    options={ projectsApi.projects.map((p) => ({
+                                    options={ projectsApi.data?.projects.map((p) => ({
                                         label: `${ p.code } - ${ p.name }`,
                                         id: p.harvest_id ?? p.id as number
-                                    })) }
+                                    })) ?? [] }
                                     sx={ { width: 300 } }
                                     onChange={ (event, data) => setSelectedProject(data) }
                                     renderInput={ (params) => <TextField { ...params } label="Project"/> }
