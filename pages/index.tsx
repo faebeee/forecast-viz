@@ -26,7 +26,7 @@ import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import { useMe } from "../src/hooks/use-me";
+import {useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -44,7 +44,7 @@ export async function getStaticProps() {
 
 export const Index = () => {
 
-    const myApi = useMe()
+    const me = useMe()
     const entriesApi = useEntries();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
@@ -55,7 +55,6 @@ export const Index = () => {
     useEffect(() => {
         const from = format(new Date(), DATE_FORMAT)
         const to = format(new Date(), DATE_FORMAT)
-        myApi.load()
         entriesApi.load(from, to);
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
@@ -74,7 +73,7 @@ export const Index = () => {
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ myApi.hasAdminAccess } userName={ myApi.userName ?? '' } active={ 'day' }>
+                <Layout hasAdminAccess={ me.data?.hasAdminAccess } userName={ me.data?.userName ?? '' } active={ 'day' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Day' } showPicker={ false }/>

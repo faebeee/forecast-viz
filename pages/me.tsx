@@ -32,7 +32,7 @@ import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
 import { DATE_FORMAT } from "../src/context/formats";
-import { useMe } from '../src/hooks/use-me';
+import { useMe } from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -61,7 +61,6 @@ export const Me = () => {
     useEffect(() => {
         const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
         const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
-        me.load()
         entriesDetailedApi.load(from, to);
         entriesApi.load(from, to);
         statsApi.load(from, to);
@@ -82,7 +81,7 @@ export const Me = () => {
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
             <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ me.hasAdminAccess } userName={ me.userName ?? '' } active={ 'me' }>
+                <Layout hasAdminAccess={ me.data?.hasAdminAccess } userName={ me.data?.userName ?? '' } active={ 'me' }>
                     <Box sx={ { flexGrow: 1, } }>
                         <Box p={ 4 }>
                             <ContentHeader title={ 'My Dashboard' }/>

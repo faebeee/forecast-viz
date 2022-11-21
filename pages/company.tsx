@@ -14,7 +14,7 @@ import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
 import {useRouter} from "next/router";
-import { useMe } from "../src/hooks/use-me";
+import {useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -30,7 +30,6 @@ export const Company = () => {
     const me  = useMe()
 
     useEffect(() => {
-        me.load()
         statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
         teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         const from = router.query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
@@ -45,7 +44,7 @@ export const Company = () => {
     }, [ dateRange ])
 
     return <>
-        <Layout hasAdminAccess={ me.hasAdminAccess } userName={ me.userName ?? '' } active={ 'company' }>
+        <Layout hasAdminAccess={ me.data?.hasAdminAccess } userName={ me.data?.userName ?? '' } active={ 'company' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ 'Company Dashboard' }>
