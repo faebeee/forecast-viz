@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         }
         return {
             props: {
-                harvestClientId: req.session.clientId ?? '',
+                harvestClientId: req.session.clientId ?? process.env.HARVEST_CLIENT_ID,
             }
         }
     }
@@ -48,6 +48,7 @@ export const Welcome = ({ harvestClientId }: WelcomeProps) => {
                         Harvest. Please login in order to connect and use forecast-viz</Typography>
 
                     <TextField variant={ 'outlined' }
+                        disabled
                         label={ 'Harvest Client Id' }
                         fullWidth
                         value={ harvestClient }
