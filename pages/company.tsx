@@ -9,11 +9,10 @@ import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
-import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
 import {useRouter} from "next/router";
-import {useCompanyStats, useMe} from "../src/hooks/use-remote";
+import {useCompanyStats, useCompanyTeamsStats, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -22,20 +21,20 @@ const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArc
 
 
 export const Company = () => {
+    const router = useRouter()
+
     const { dateRange } = useFilterContext();
     const apiParams = {
         from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
         to: format(dateRange[1] ?? new Date(), DATE_FORMAT)
     }
-
-    const statsApi = useCompanyStats(apiParams);
-
-    const teamsStats = useCompanyTeamsStats();
-    const router = useRouter()
     const me  = useMe()
+    const statsApi = useCompanyStats(apiParams);
+    const teamsStats = useCompanyTeamsStats(apiParams);
+
+
 
     useEffect(() => {
-        teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         const from = router.query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
         const to = router.query.to as string ?? format(new Date(), DATE_FORMAT);
 
@@ -177,7 +176,7 @@ export const Company = () => {
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.roles ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
@@ -195,7 +194,7 @@ export const Company = () => {
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.teams ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
@@ -213,7 +212,7 @@ export const Company = () => {
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.roles ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.members
                                     })) ?? [] }/>
@@ -231,7 +230,7 @@ export const Company = () => {
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.teams ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.members
                                     })) ?? [] }/>
