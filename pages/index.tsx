@@ -19,11 +19,10 @@ import { CurrentStatsApiContext } from "../src/context/current-stats-api-context
 import { CurrentHoursStats } from "../src/components/stats/current-hours-stats";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
-import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {DefaultParams, useAssignments, useEntries, useHours, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -43,19 +42,17 @@ export const Index = () => {
     const from = format(new Date(), DATE_FORMAT), to = from
     const apiParams : DefaultParams = { from, to }
 
-    const me = useMe()
-    const entriesApi = useEntries(apiParams);
-    const assignmentsApi = useAssignments(apiParams);
-
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
 
+    const me = useMe()
+    const entriesApi = useEntries(apiParams);
+    const assignmentsApi = useAssignments(apiParams);
     const hoursApi = useHours(apiParams);
-    const detailedEntriesApi = useEntriesDetailed();
+    const detailedEntriesApi = useEntriesDetailed(apiParams);
 
     useEffect(() => {
         statsApi.load(from, to);
-        detailedEntriesApi.load(from, to);
         currentStatsApi.load();
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -191,7 +188,7 @@ export const Index = () => {
                                     <DataGrid
                                         autoHeight
                                         loading={ detailedEntriesApi.isLoading }
-                                        rows={ detailedEntriesApi.entries }
+                                        rows={ detailedEntriesApi.data ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             {

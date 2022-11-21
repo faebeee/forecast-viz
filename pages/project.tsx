@@ -33,12 +33,11 @@ import { StatsApiContext } from "../src/context/stats-api-context";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
 import { useProjects } from "../src/hooks/use-projects";
-import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {DefaultParams, useAssignments, useEntries, useHours} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -103,7 +102,7 @@ export const Project = ({
 
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
-    const detailedEntriesApi = useEntriesDetailed();
+    const detailedEntriesApi = useEntriesDetailed(apiParams);
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const hoursApi = useHours(apiParams);
@@ -119,7 +118,6 @@ export const Project = ({
             return;
         }
         statsApi.load(from, to, userId, selectedProject?.id as number);
-        detailedEntriesApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -271,7 +269,7 @@ export const Project = ({
                                     <DataGrid
                                         autoHeight
                                         loading={ detailedEntriesApi.isLoading }
-                                        rows={ detailedEntriesApi.entries }
+                                        rows={ detailedEntriesApi.data ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'spent', headerName: 'Date', flex: 1 },

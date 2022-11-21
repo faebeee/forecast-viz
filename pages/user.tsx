@@ -26,14 +26,13 @@ import { CurrentStatsApiContext } from "../src/context/current-stats-api-context
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
-import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from "mixpanel-browser";
 import { ParentSize } from "@visx/responsive";
 import { getColor } from "../src/utils/get-color";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {DefaultParams, useAssignments, useEntries, useHours} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -95,6 +94,7 @@ export const User = ({
                          hasAdminAccess,
                          persons,
                      }: EntriesProps) => {
+
     const [ userId, setUID ] = useState('');
     const { dateRange } = useFilterContext();
 
@@ -105,13 +105,13 @@ export const User = ({
         from, to, uid: userId
     }
 
+    const currentStatsApi = useCurrentStats();
+    const statsApi = useStats();
+
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
     const hoursApi = useHours(apiParams);
-
-    const entriesDetailedApi = useEntriesDetailed();
-    const currentStatsApi = useCurrentStats();
-    const statsApi = useStats();
+    const entriesDetailedApi = useEntriesDetailed(apiParams);
 
 
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
@@ -120,7 +120,6 @@ export const User = ({
         if (!userId) {
             return;
         }
-        entriesDetailedApi.load(from, to, userId);
         statsApi.load(from, to, userId);
         currentStatsApi.load(userId);
 
@@ -341,7 +340,7 @@ export const User = ({
                                     <DataGrid
                                         autoHeight
                                         loading={ entriesDetailedApi.isLoading }
-                                        rows={ entriesDetailedApi.entries }
+                                        rows={ entriesDetailedApi.data ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'client', headerName: 'Client', flex: 1 },

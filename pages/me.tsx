@@ -22,14 +22,13 @@ import { BillableHoursStats } from "../src/components/stats/billable-hours-stats
 import { RemainingCapacityStats } from "../src/components/stats/remaining-capacity-stats";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import { LastEntryStats } from "../src/components/stats/last-entry-stats";
-import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import mixpanel from 'mixpanel-browser';
 import { COLORS } from "../src/config";
 import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
 import { DATE_FORMAT } from "../src/context/formats";
-import {DefaultParams, useAssignments, useEntries, useHours, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -57,13 +56,12 @@ export const Me = () => {
 
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
-    const entriesDetailedApi = useEntriesDetailed();
+    const entriesDetailedApi = useEntriesDetailed(apiParams);
     const hoursApi = useHours(apiParams);
     const me = useMe()
 
 
     useEffect(() => {
-        entriesDetailedApi.load(from, to);
         statsApi.load(from, to);
         currentStatsApi.load();
 
@@ -270,7 +268,7 @@ export const Me = () => {
                                     <DataGrid
                                         autoHeight
                                         loading={ entriesDetailedApi.isLoading }
-                                        rows={ entriesDetailedApi.entries }
+                                        rows={ entriesDetailedApi.data ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'client', headerName: 'Client', flex: 1 },
