@@ -22,7 +22,6 @@ import { ContentHeader } from "../src/components/content-header";
 import Image from "next/image";
 import { useTeamStats } from "../src/hooks/use-team-stats";
 import { COLORS, TEAMS } from "../src/config";
-import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
 import { round } from "lodash";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
@@ -33,7 +32,7 @@ import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import { useTeamHours } from "../src/hooks/use-remote";
+import {useTeamEntries, useTeamHours} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -112,11 +111,10 @@ export const Team = ({
 
     const teamStatsApi = useTeamStats();
     const teamHoursApi = useTeamHours(apiParams);
-    const teamEntriesApi = useTeamEntries();
+    const teamEntriesApi = useTeamEntries(apiParams);
 
     useEffect(() => {
         teamStatsApi.load(apiParams.from, apiParams.to, selectedProject?.id as number);
-        teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
             mixpanel.track('filter', {
@@ -319,7 +317,7 @@ export const Team = ({
                                 <DataGrid
                                     autoHeight
                                     loading={ teamEntriesApi.isLoading }
-                                    rows={ teamEntriesApi.entries }
+                                    rows={ teamEntriesApi.data?.entries ?? [] }
                                     rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                     columns={ [
                                         { field: 'userId', headerName: 'User ID', flex: 1 },
