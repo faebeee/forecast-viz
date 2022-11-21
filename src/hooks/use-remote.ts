@@ -17,11 +17,23 @@ export interface RemoteCall<T> {
     isLoading: boolean
     error?: Error
     data?: T
-
 }
 
+export interface RangeParams {
+    from: string
+    to: string
+}
+export interface ProjectParam {
+    projectId: string
+}
+export interface UserParam {
+    uid: string
+}
+
+export type DefaultParams = RangeParams & Partial<ProjectParam> & Partial<UserParam>
+
 export const useMe = (): RemoteCall<GetMyUserHandlerResponse> => useRemote(`/user/me`)
-export const useEntries = (params: { from: string, to: string, uid?: string, projectId?: string }): RemoteCall<GetEntriesHandlerResponse> => useRemote(`/user/entries`, params)
+export const useEntries = (params: DefaultParams ): RemoteCall<GetEntriesHandlerResponse> => useRemote(`/user/entries`, params)
 
 export const useFilteredStats = (params: { uid?: string }): RemoteCall<GetStatsHandlerResponse> => {
     // can only be used within a FilterContext (inside a component wrapped in a React.Context / FilterContext)
@@ -35,8 +47,12 @@ export const useFilteredStats = (params: { uid?: string }): RemoteCall<GetStatsH
     })
 }
 
+
+
+
+
 export const useStats = (params: { from: string, to: string, uid?: string, projectId?: string }, fallbackData?: any): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
-export const useAssignments = (params: { from: string, to: string, uid: string, projectId: string }, fallbackData?: any): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
+export const useAssignments = (params: DefaultParams, fallbackData?: any): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
 export const useHours = (params: { from: string, to: string, uid: string, projectId: string }, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/hours`, params, fallbackData)
 export const useEntriesDetailed = (params: { from: string, to: string, uid: string, projectId: string }, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/entries-detailed`, params, fallbackData)
 

@@ -22,7 +22,6 @@ import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
@@ -40,7 +39,7 @@ import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {useEntries} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -97,19 +96,20 @@ export const Project = ({
     const { dateRange } = useFilterContext();
     const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
     const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+    const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
 
-    const apiParams = {
-        from, to, uid: userId
+    const apiParams : DefaultParams = {
+        from, to, uid: userId, projectId: selectedProject?.id.toString()
     }
 
     const entriesApi = useEntries(apiParams);
+    const assignmentsApi = useAssignments(apiParams);
     const detailedEntriesApi = useEntriesDetailed();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
-    const assignmentsApi = useAssignments();
     const hoursApi = useHours();
     const projectsApi = useProjects();
-    const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
+
 
     const debounceLoad = debounce(() => {
         if (userId) {
@@ -120,7 +120,6 @@ export const Project = ({
             return;
         }
         statsApi.load(from, to, userId, selectedProject?.id as number);
-        assignmentsApi.load(from, to, userId, selectedProject?.id as number);
         hoursApi.load(from, to, userId, selectedProject?.id as number);
         detailedEntriesApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
@@ -225,7 +224,7 @@ export const Project = ({
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                            data={ (assignmentsApi.data?.assignments ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.totalHours ?? 0
                                             })) ?? [] }/>

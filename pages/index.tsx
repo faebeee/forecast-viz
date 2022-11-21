@@ -7,7 +7,6 @@ import { Layout } from "../src/components/layout";
 import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
@@ -25,7 +24,7 @@ import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {useEntries, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -43,19 +42,20 @@ export async function getStaticProps() {
 
 export const Index = () => {
     const from = format(new Date(), DATE_FORMAT), to = from
-    const apiParams = {from, to}
+    const apiParams : DefaultParams = { from, to }
+
     const me = useMe()
     const entriesApi = useEntries(apiParams);
+    const assignmentsApi = useAssignments(apiParams);
+
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
-    const assignmentsApi = useAssignments();
     const hoursApi = useHours();
     const detailedEntriesApi = useEntriesDetailed();
 
     useEffect(() => {
 
         statsApi.load(from, to);
-        assignmentsApi.load(from, to);
         hoursApi.load(from, to);
         detailedEntriesApi.load(from, to);
         currentStatsApi.load();
@@ -125,7 +125,7 @@ export const Index = () => {
                                                     padRadius={ 200 }
                                                     doughnut={ true }
                                                 /> }
-                                                data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                                data={ (assignmentsApi.data?.assignments ?? []).map((h) => ({
                                                     key: h.name ?? h.code ?? '?',
                                                     data: h.totalHours ?? 0
                                                 })) ?? [] }/>

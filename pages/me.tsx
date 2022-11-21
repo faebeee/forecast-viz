@@ -8,7 +8,6 @@ import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
@@ -31,7 +30,7 @@ import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
 import { DATE_FORMAT } from "../src/context/formats";
-import {useEntries, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -50,7 +49,7 @@ export const Me = () => {
     const { dateRange } = useFilterContext();
     const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
     const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
-    const apiParams = {
+    const apiParams : DefaultParams = {
         from, to
     }
 
@@ -58,7 +57,7 @@ export const Me = () => {
     const statsApi = useStats();
 
     const entriesApi = useEntries(apiParams);
-    const assignmentsApi = useAssignments();
+    const assignmentsApi = useAssignments(apiParams);
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
     const me = useMe()
@@ -67,7 +66,6 @@ export const Me = () => {
     useEffect(() => {
         entriesDetailedApi.load(from, to);
         statsApi.load(from, to);
-        assignmentsApi.load(from, to);
         hoursApi.load(from, to);
         currentStatsApi.load();
 
@@ -224,7 +222,7 @@ export const Me = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (assignmentsApi.assignments ?? []).map((h) => ({
+                                            data={ (assignmentsApi.data?.assignments ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.totalHours ?? 0
                                             })) ?? [] }/>
