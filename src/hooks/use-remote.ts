@@ -34,18 +34,18 @@ export type DefaultParams = RangeParams & Partial<ProjectParam> & Partial<UserPa
 
 
 export const useMe = (): RemoteCall<GetMyUserHandlerResponse> => useRemote(`/user/me`)
-export const useHours = (params: DefaultParams, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/hours`, params, fallbackData)
+export const useHours = (params: DefaultParams, fallbackData?: GetHoursHandlerResponse): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/hours`, params, fallbackData)
 export const useEntries = (params: DefaultParams ): RemoteCall<GetEntriesHandlerResponse> => useRemote(`/user/entries`, params)
-export const useAssignments = (params: DefaultParams, fallbackData?: any): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
-export const useEntriesDetailed = (params: DefaultParams , fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/entries-detailed`, params, fallbackData)
+export const useAssignments = (params: DefaultParams, fallbackData?: GetAssignmentsHandlerResponse): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
+export const useEntriesDetailed = (params: DefaultParams , fallbackData?: GetHoursHandlerResponse): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/entries-detailed`, params, fallbackData)
 
-export const useStats = (params: { from: string, to: string, uid?: string, projectId?: string }, fallbackData?: any): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
+export const useStats = (params: { from: string, to: string, uid?: string, projectId?: string }, fallbackData?: GetStatsHandlerResponse): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
+export const useTeamStats = (params: RangeParams & Partial<ProjectParam>, fallbackData?: GetTeamStatsHandlerResponse): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)
 export const useProjects = (params: RangeParams & UserParam, fallbackData?: any): RemoteCall<GetProjectsApiHandlerResponse> => useRemote(`/user/projects`, params, fallbackData)
-export const useTeamStats = (params: RangeParams & Partial<ProjectParam>, fallbackData?: any): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)
-export const useTeamHours = (params: RangeParams & Partial<ProjectParam>, fallbackData?: any): RemoteCall<GetTeamHoursHandlerResponse> => useRemote(`/team/hours`, params, fallbackData)
-export const useTeamEntries = (params: RangeParams & Partial<ProjectParam>, fallbackData?: any): RemoteCall<GetTeamEntriesHandlerResponse> => useRemote(`/team/entries`, params, fallbackData)
-export const useCompanyStats = (params: RangeParams, fallbackData?: any): RemoteCall<GetCompanyStatsHandlerResponse> => useRemote(`/company/stats`, params, fallbackData)
-export const useCompanyTeamsStats = (params: RangeParams , fallbackData?: any): RemoteCall<GetTeamsStatsHandlerResponse> => useRemote(`/company/teams`, params, fallbackData)
+export const useTeamHours = (params: RangeParams & Partial<ProjectParam>, fallbackData?: GetTeamHoursHandlerResponse): RemoteCall<GetTeamHoursHandlerResponse> => useRemote(`/team/hours`, params, fallbackData)
+export const useTeamEntries = (params: RangeParams & Partial<ProjectParam>, fallbackData?: GetTeamEntriesHandlerResponse): RemoteCall<GetTeamEntriesHandlerResponse> => useRemote(`/team/entries`, params, fallbackData)
+export const useCompanyStats = (params: RangeParams, fallbackData?: GetCompanyStatsHandlerResponse): RemoteCall<GetCompanyStatsHandlerResponse> => useRemote(`/company/stats`, params, fallbackData)
+export const useCompanyTeamsStats = (params: RangeParams , fallbackData?: GetTeamsStatsHandlerResponse): RemoteCall<GetTeamsStatsHandlerResponse> => useRemote(`/company/teams`, params, fallbackData)
 
 
 export const useRemote = <T>(url: string, params?: any, fallbackData?: T): RemoteCall<T> => {
