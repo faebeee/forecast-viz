@@ -4,6 +4,7 @@ import { getHarvest } from "../src/server/get-harvest";
 import { AccountsApi } from "../src/server/harvest-types";
 import { withServerSideSession } from "../src/server/with-session";
 import { getForecast } from "../src/server/get-forecast";
+import { getAdminAccess } from "../src/server/has-admin-access";
 import ProductName = AccountsApi.ProductName;
 
 
@@ -34,7 +35,7 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         const allPeople = await forecast.getPersons();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
-        req.session.hasAdminAccess = myDetails?.admin ?? false;
+        req.session.hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
         req.session.userName = accounts?.user.first_name
 
 
