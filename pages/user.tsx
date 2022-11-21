@@ -10,7 +10,6 @@ import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
 import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
@@ -36,6 +35,7 @@ import { getColor } from "../src/utils/get-color";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
+import {useEntries} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -94,14 +94,20 @@ export type EntriesProps = {
 
 export const User = ({
                          userName,
-                         from,
-                         to,
                          hasAdminAccess,
                          persons,
                      }: EntriesProps) => {
     const [ userId, setUID ] = useState('');
     const { dateRange } = useFilterContext();
-    const entriesApi = useEntries();
+
+    const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
+    const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+
+    const apiParams = {
+        from, to, uid: userId
+    }
+
+    const entriesApi = useEntries(apiParams);
     const entriesDetailedApi = useEntriesDetailed();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
@@ -111,12 +117,9 @@ export const User = ({
     const amountOfDays = useMemo(() => differenceInBusinessDays(dateRange[1], dateRange[0]) + 1, [ dateRange ]);
 
     const debounceLoad = debounce(() => {
-        const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
-        const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
         if (!userId) {
             return;
         }
-        entriesApi.load(from, to, userId);
         entriesDetailedApi.load(from, to, userId);
         statsApi.load(from, to, userId);
         assignmentsApi.load(from, to, userId);
@@ -304,7 +307,7 @@ export const User = ({
                                     <DataGrid
                                         autoHeight
                                         loading={ entriesApi.isLoading }
-                                        rows={ entriesApi.entries }
+                                        rows={ entriesApi.data?.entries ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'projectName', headerName: 'Project Name', flex: 1 },

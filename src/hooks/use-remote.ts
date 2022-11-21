@@ -21,7 +21,7 @@ export interface RemoteCall<T> {
 }
 
 export const useMe = (): RemoteCall<GetMyUserHandlerResponse> => useRemote(`/user/me`)
-export const useEntries = (params: { from: string, to: string, uid: string, projectId: string }): RemoteCall<GetEntriesHandlerResponse> => useRemote(`/user/entries`, params)
+export const useEntries = (params: { from: string, to: string, uid?: string, projectId?: string }): RemoteCall<GetEntriesHandlerResponse> => useRemote(`/user/entries`, params)
 
 export const useFilteredStats = (params: { uid?: string }): RemoteCall<GetStatsHandlerResponse> => {
     // can only be used within a FilterContext (inside a component wrapped in a React.Context / FilterContext)

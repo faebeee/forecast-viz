@@ -7,7 +7,6 @@ import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
 import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
@@ -32,7 +31,7 @@ import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
 import { DATE_FORMAT } from "../src/context/formats";
-import { useMe } from "../src/hooks/use-remote";
+import {useEntries, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -49,9 +48,16 @@ export async function getStaticProps() {
 
 export const Me = () => {
     const { dateRange } = useFilterContext();
-    const entriesApi = useEntries();
+    const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
+    const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
+    const apiParams = {
+        from, to
+    }
+
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
+
+    const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments();
     const entriesDetailedApi = useEntriesDetailed();
     const hoursApi = useHours();
@@ -59,10 +65,7 @@ export const Me = () => {
 
 
     useEffect(() => {
-        const from = format(dateRange[0] ?? new Date(), DATE_FORMAT)
-        const to = format(dateRange[1] ?? new Date(), DATE_FORMAT)
         entriesDetailedApi.load(from, to);
-        entriesApi.load(from, to);
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
         hoursApi.load(from, to);
@@ -234,7 +237,7 @@ export const Me = () => {
                                     <DataGrid
                                         autoHeight
                                         loading={ entriesApi.isLoading }
-                                        rows={ entriesApi.entries }
+                                        rows={ entriesApi.data?.entries ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'projectName', headerName: 'Project Name', flex: 1 },

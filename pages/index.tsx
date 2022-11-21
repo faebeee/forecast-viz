@@ -6,7 +6,6 @@ import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useEntries } from "../src/hooks/use-entries";
 import { useStats } from "../src/hooks/use-stats";
 import { useAssignments } from "../src/hooks/use-assignments";
 import { useHours } from "../src/hooks/use-hours";
@@ -26,7 +25,7 @@ import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {useMe} from "../src/hooks/use-remote";
+import {useEntries, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -43,9 +42,10 @@ export async function getStaticProps() {
 }
 
 export const Index = () => {
-
+    const from = format(new Date(), DATE_FORMAT), to = from
+    const apiParams = {from, to}
     const me = useMe()
-    const entriesApi = useEntries();
+    const entriesApi = useEntries(apiParams);
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
     const assignmentsApi = useAssignments();
@@ -53,9 +53,7 @@ export const Index = () => {
     const detailedEntriesApi = useEntriesDetailed();
 
     useEffect(() => {
-        const from = format(new Date(), DATE_FORMAT)
-        const to = format(new Date(), DATE_FORMAT)
-        entriesApi.load(from, to);
+
         statsApi.load(from, to);
         assignmentsApi.load(from, to);
         hoursApi.load(from, to);
@@ -159,7 +157,7 @@ export const Index = () => {
                                     <DataGrid
                                         autoHeight
                                         loading={ entriesApi.isLoading }
-                                        rows={ entriesApi.entries }
+                                        rows={ entriesApi.data?.entries ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'projectName', headerName: 'Project Name', flex: 1 },
