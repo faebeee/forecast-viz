@@ -105,11 +105,11 @@ export const Project = ({
         from, to, uid: userId, projectId: selectedProject?.id.toString()
     }
 
+    const statsApi = useStats();
+    const currentStatsApi = useCurrentStats();
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
     const detailedEntriesApi = useEntriesDetailed(apiParams);
-    const currentStatsApi = useCurrentStats();
-    const statsApi = useStats();
     const hoursApi = useHours(apiParams);
     const projectsApi = useProjects(apiParams, {projects: []});
 

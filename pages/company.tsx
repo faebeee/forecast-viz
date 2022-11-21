@@ -9,12 +9,11 @@ import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
-import { useCompanyStats } from "../src/hooks/use-company-stats";
 import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
 import {useRouter} from "next/router";
-import {useMe} from "../src/hooks/use-remote";
+import {useCompanyStats, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -24,13 +23,18 @@ const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArc
 
 export const Company = () => {
     const { dateRange } = useFilterContext();
-    const statsApi = useCompanyStats();
+    const apiParams = {
+        from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
+        to: format(dateRange[1] ?? new Date(), DATE_FORMAT)
+    }
+
+    const statsApi = useCompanyStats(apiParams);
+
     const teamsStats = useCompanyTeamsStats();
     const router = useRouter()
     const me  = useMe()
 
     useEffect(() => {
-        statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
         teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
         const from = router.query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
         const to = router.query.to as string ?? format(new Date(), DATE_FORMAT);
@@ -72,7 +76,7 @@ export const Company = () => {
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                            variant={ 'h2' }>{ round(statsApi.data?.totalHours ?? 0, 2) }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -90,17 +94,17 @@ export const Company = () => {
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Team Billable Hours</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
-                                    { !statsApi.isLoading && statsApi.hours &&
+                                    { !statsApi.isLoading && statsApi.data?.hours &&
                                         <Typography
-                                            variant={ 'h2' }>{ round(100 / (statsApi.hours.billable + statsApi.hours.nonBillable) * statsApi.hours.billable, 1) }%</Typography>
+                                            variant={ 'h2' }>{ round(100 / (statsApi.data?.hours.billable + statsApi.data?.hours.nonBillable) * statsApi.data?.hours.billable, 1) }%</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
                                 </Box>
-                                { !statsApi.isLoading && statsApi.hours && <CardActions>
+                                { !statsApi.isLoading && statsApi.data?.hours && <CardActions>
                                     Billable/Non
-                                    Billable: { round(statsApi.hours.billable, 1) }/{ round(statsApi.hours.nonBillable, 1) }
+                                    Billable: { round(statsApi.data?.hours.billable, 1) }/{ round(statsApi.data?.hours.nonBillable, 1) }
                                 </CardActions> }
                             </Card>
                         </Grid>
@@ -115,7 +119,7 @@ export const Company = () => {
                                     <Typography variant={ 'body1' }>Company Members</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
+                                        <Typography variant={ 'h2' }>{ statsApi.data?.totalMembers }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -134,7 +138,7 @@ export const Company = () => {
                                     <Typography variant={ 'body1' }>Company Projects</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                        <Typography variant={ 'h2' }>{ statsApi.data?.totalProjects }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -154,7 +158,7 @@ export const Company = () => {
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                    data={ (statsApi.data?.hoursPerProject ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
