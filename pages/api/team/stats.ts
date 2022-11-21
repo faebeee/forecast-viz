@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    billableHourPercentage, BillableHours,
+    billableHourPercentage, BillableHours, excludeLeaveTasks,
     filterEntriesForUser, getBillableHours,
     getHoursPerTask,
     getHoursPerUser,
@@ -110,14 +110,16 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }, new Map<number, HoursPerUserItem>());
 
 
-    const billableHours = getBillableHours(entries)
+    const attendanceEntries = excludeLeaveTasks(entries)
+    const billableHours = getBillableHours(attendanceEntries)
 
     const hoursPerTask = getHoursPerTask(entries);
 
     const statsPerUser = teamPeople.map((person) => {
         const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
         const lastEntryDate = usersEntries[0]?.spent_date ?? '?';
-        const billableHoursPerUser = getBillableHours(usersEntries);
+        const attendanceEntries = excludeLeaveTasks(entries)
+        const billableHoursPerUser = getBillableHours(attendanceEntries);
         const billableRatePerUser = billableHourPercentage(billableHoursPerUser)
         return {
             user: `${ person.first_name } ${ person.last_name }`,

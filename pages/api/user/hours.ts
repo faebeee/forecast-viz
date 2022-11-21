@@ -3,7 +3,7 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
-import { getMyAssignments } from "../../../src/server/utils";
+import {excludeLeaveTasks, getMyAssignments} from "../../../src/server/utils";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import {withApiRouteSession} from "../../../src/server/with-session";
 
@@ -33,10 +33,11 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
         getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId),
         forecast.getAssignments(range.from, range.to, projectId)
     ]);
+    const filteredEntries = excludeLeaveTasks(entries)
     const myAssignments = getMyAssignments(assignments, userId);
 
     const projectMap: Record<number | string, ProjectHours> = {};
-    entries.forEach((e) => {
+    filteredEntries.forEach((e) => {
         if (!projectMap[e.project?.id]) {
             projectMap[e.project?.id] = {
                 hoursSpent: 0,
@@ -60,7 +61,7 @@ export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<
         }
     });
 
-    entries.forEach((e) => {
+    filteredEntries.forEach((e) => {
         projectMap[e.project?.id].hoursSpent += e.hours;
     });
 

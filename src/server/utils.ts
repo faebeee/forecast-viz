@@ -248,9 +248,7 @@ export const excludeLeaveTasks = (entries: TimeEntry[]): TimeEntry[] => {
 
 
 export const getBillableHours = (entries: TimeEntry[]) : {billable: number, nonBillable: number} => {
-    const filteredEntries = excludeLeaveTasks(entries)
-
-    return filteredEntries.reduce((acc, entry) => {
+    return entries.reduce((acc, entry) => {
         if (entry.billable) {
             acc.billable += entry.hours;
         } else {

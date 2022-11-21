@@ -3,6 +3,7 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import {withApiRouteSession} from "../../../src/server/with-session";
+import {excludeLeaveTasks} from "../../../src/server/utils";
 
 export type SimpleTimeEntry = {
     id: number;
@@ -31,7 +32,8 @@ export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextAp
     const userId = req.query.uid ? parseInt(req.query.uid as string) : userData.id;
     const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const entries = await getTimeEntriesForUser(harvest, userId, range.from, range.to, projectId);
-    const flattedEntries: SimpleTimeEntry[] = entries.map((e) => ({
+    const filteredEntries = excludeLeaveTasks(entries)
+    const flattedEntries: SimpleTimeEntry[] = filteredEntries.map((e) => ({
         id: e.id,
         client: e.client.name,
         notes: e.notes,

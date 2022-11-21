@@ -99,9 +99,9 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
-    const billableHours = getBillableHours(entries);
-    const hoursPerTask = getHoursPerTask(entries);
     const attendanceEntries = excludeLeaveTasks(entries)
+    const billableHours = getBillableHours(attendanceEntries);
+    const hoursPerTask = getHoursPerTask(attendanceEntries);
     const nonBillableAttendanceEntries = filterNonBillableEntries(attendanceEntries)
     const hoursPerNonBillableTasks = getHoursPerTask(nonBillableAttendanceEntries)
     const lastEntryDate = entries[0]?.spent_date;
