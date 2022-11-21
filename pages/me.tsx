@@ -54,11 +54,11 @@ export const Me = () => {
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
 
+    const me = useMe()
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
-    const entriesDetailedApi = useEntriesDetailed(apiParams);
     const hoursApi = useHours(apiParams);
-    const me = useMe()
+    const detailedEntriesApi = useEntriesDetailed(apiParams);
 
 
     useEffect(() => {
@@ -267,8 +267,8 @@ export const Me = () => {
 
                                     <DataGrid
                                         autoHeight
-                                        loading={ entriesDetailedApi.isLoading }
-                                        rows={ entriesDetailedApi.data ?? [] }
+                                        loading={ detailedEntriesApi.isLoading }
+                                        rows={ detailedEntriesApi.data ?? [] }
                                         rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                         columns={ [
                                             { field: 'client', headerName: 'Client', flex: 1 },

@@ -41,10 +41,10 @@ export const useEntriesDetailed = (params: DefaultParams , fallbackData?: any): 
 
 export const useStats = (params: { from: string, to: string, uid?: string, projectId?: string }, fallbackData?: any): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
 export const useProjects = (params: { from: string, to: string, uid: string }, fallbackData?: any): RemoteCall<GetProjectsApiHandlerResponse> => useRemote(`/user/projects`, params, fallbackData)
-export const useTeamStats = (params: { from: string, to: string, projectId: string | undefined }, fallbackData?: any): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)
+export const useTeamStats = (params: RangeParams & Partial<ProjectParam>, fallbackData?: any): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)
 export const useTeamHours = (params: { from: string, to: string, projectId: string | undefined }, fallbackData?: any): RemoteCall<GetTeamHoursHandlerResponse> => useRemote(`/team/hours`, params, fallbackData)
 export const useTeamEntries = (params: { from: string, to: string, projectId: string | undefined }, fallbackData?: any): RemoteCall<GetTeamEntriesHandlerResponse> => useRemote(`/team/entries`, params, fallbackData)
-export const useCompanyStats = (params: { from: string, to: string }, fallbackData?: any): RemoteCall<GetCompanyStatsHandlerResponse> => useRemote(`/company/stats`, params, fallbackData)
+export const useCompanyStats = (params: RangeParams, fallbackData?: any): RemoteCall<GetCompanyStatsHandlerResponse> => useRemote(`/company/stats`, params, fallbackData)
 export const useCompanyTeamsStats = (params: RangeParams , fallbackData?: any): RemoteCall<GetTeamsStatsHandlerResponse> => useRemote(`/company/teams`, params, fallbackData)
 
 
@@ -60,7 +60,7 @@ export const useRemote = <T>(url: string, params?: any, fallbackData?: T): Remot
     }
 };
 
-export const useFilteredStats = (params: { uid?: string }): RemoteCall<GetStatsHandlerResponse> => {
+export const useFilteredStats = (params: Partial<UserParam>): RemoteCall<GetStatsHandlerResponse> => {
     // can only be used within a FilterContext (inside a component wrapped in a React.Context / FilterContext)
     const filterContext = useFilterContext()
     const from = filterContext.dateRange[0]
