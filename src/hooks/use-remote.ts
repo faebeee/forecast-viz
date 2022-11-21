@@ -53,7 +53,7 @@ export const useFilteredStats = (params: { uid?: string }): RemoteCall<GetStatsH
 
 export const useStats = (params: { from: string, to: string, uid?: string, projectId?: string }, fallbackData?: any): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
 export const useAssignments = (params: DefaultParams, fallbackData?: any): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
-export const useHours = (params: { from: string, to: string, uid: string, projectId: string }, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/hours`, params, fallbackData)
+export const useHours = (params: DefaultParams, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/hours`, params, fallbackData)
 export const useEntriesDetailed = (params: { from: string, to: string, uid: string, projectId: string }, fallbackData?: any): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/entries-detailed`, params, fallbackData)
 
 export const useTeamStats = (params: { from: string, to: string, projectId: string | undefined }, fallbackData?: any): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)

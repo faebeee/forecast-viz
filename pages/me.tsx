@@ -8,7 +8,6 @@ import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -30,7 +29,7 @@ import { ParentSize } from "@visx/responsive";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { getColor } from "../src/utils/get-color";
 import { DATE_FORMAT } from "../src/context/formats";
-import {DefaultParams, useAssignments, useEntries, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useHours, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -59,14 +58,13 @@ export const Me = () => {
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
     const entriesDetailedApi = useEntriesDetailed();
-    const hoursApi = useHours();
+    const hoursApi = useHours(apiParams);
     const me = useMe()
 
 
     useEffect(() => {
         entriesDetailedApi.load(from, to);
         statsApi.load(from, to);
-        hoursApi.load(from, to);
         currentStatsApi.load();
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -185,7 +183,7 @@ export const Me = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (hoursApi.hours ?? []).map((h) => ({
+                                            data={ (hoursApi.data ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.hoursSpent
                                             })) ?? [] }/> }

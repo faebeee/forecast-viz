@@ -22,7 +22,6 @@ import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -39,7 +38,7 @@ import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {DefaultParams, useAssignments, useEntries} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useHours} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -107,7 +106,7 @@ export const Project = ({
     const detailedEntriesApi = useEntriesDetailed();
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
-    const hoursApi = useHours();
+    const hoursApi = useHours(apiParams);
     const projectsApi = useProjects();
 
 
@@ -120,7 +119,6 @@ export const Project = ({
             return;
         }
         statsApi.load(from, to, userId, selectedProject?.id as number);
-        hoursApi.load(from, to, userId, selectedProject?.id as number);
         detailedEntriesApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
 
@@ -188,7 +186,7 @@ export const Project = ({
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (hoursApi.hours ?? []).map((h) => ({
+                                            data={ (hoursApi.data ?? []).map((h) => ({
                                                 key: h.name ?? h.code ?? '?',
                                                 data: h.hoursSpent
                                             })) ?? [] }/> }

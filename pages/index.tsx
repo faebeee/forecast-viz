@@ -7,7 +7,6 @@ import { Layout } from "../src/components/layout";
 import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import { useStats } from "../src/hooks/use-stats";
-import { useHours } from "../src/hooks/use-hours";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -24,7 +23,7 @@ import { useEntriesDetailed } from "../src/hooks/use-entries-detailed";
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {DefaultParams, useAssignments, useEntries, useMe} from "../src/hooks/use-remote";
+import {DefaultParams, useAssignments, useEntries, useHours, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -50,13 +49,12 @@ export const Index = () => {
 
     const currentStatsApi = useCurrentStats();
     const statsApi = useStats();
-    const hoursApi = useHours();
+
+    const hoursApi = useHours(apiParams);
     const detailedEntriesApi = useEntriesDetailed();
 
     useEffect(() => {
-
         statsApi.load(from, to);
-        hoursApi.load(from, to);
         detailedEntriesApi.load(from, to);
         currentStatsApi.load();
 
@@ -108,7 +106,7 @@ export const Index = () => {
                                                     padRadius={ 200 }
                                                     doughnut={ true }
                                                 /> }
-                                                data={ (hoursApi.hours ?? []).map((h) => ({
+                                                data={ (hoursApi.data ?? []).map((h) => ({
                                                     key: h.name ?? h.code ?? '?',
                                                     data: h.hoursSpent
                                                 })) ?? [] }/> }
