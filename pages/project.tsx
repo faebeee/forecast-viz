@@ -29,7 +29,6 @@ import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellPar
 import { SpentProjectHours } from "../src/server/utils";
 import { StatusIndicator } from "../src/components/status-indicator";
 import { TEAMS } from "../src/config";
-import { StatsApiContext } from "../src/context/stats-api-context";
 import { BillableHoursStats } from "../src/components/stats/billable-hours-stats";
 import { CurrentStatsApiContext } from "../src/context/current-stats-api-context";
 import { SpentPlannedStats } from "../src/components/stats/spent-planned-stats";
@@ -136,157 +135,155 @@ export const Project = ({
 
     return <>
         <CurrentStatsApiContext.Provider value={ currentStatsApi }>
-            <StatsApiContext.Provider value={ statsApi }>
-                <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'project' }>
-                    <Box sx={ { flexGrow: 1, } }>
-                        <Box p={ 4 }>
-                            <ContentHeader title={ 'Dashboard' }>
-                                { hasAdminAccess &&
-                                    <FormControl sx={ { width: 280, mr: 1 } }>
-                                        <InputLabel>Select User</InputLabel>
-                                        <Select label={ 'Select User' } value={ userId }
-                                            onChange={ (e) => setUID(e.target.value) }>
-                                            { persons.map((p) => (
-                                                <MenuItem key={ p.id }
-                                                    value={ p.harvest_user_id }>{ p.first_name } { p.last_name }</MenuItem>)) }
-                                        </Select>
-                                    </FormControl>
+            <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'project' }>
+                <Box sx={ { flexGrow: 1, } }>
+                    <Box p={ 4 }>
+                        <ContentHeader title={ 'Dashboard' }>
+                            { hasAdminAccess &&
+                                <FormControl sx={ { width: 280, mr: 1 } }>
+                                    <InputLabel>Select User</InputLabel>
+                                    <Select label={ 'Select User' } value={ userId }
+                                        onChange={ (e) => setUID(e.target.value) }>
+                                        { persons.map((p) => (
+                                            <MenuItem key={ p.id }
+                                                value={ p.harvest_user_id }>{ p.first_name } { p.last_name }</MenuItem>)) }
+                                    </Select>
+                                </FormControl>
+                            }
+                            <Autocomplete
+                                options={ projectsApi.data?.projects.map((p) => ({
+                                    label: `${ p.code } - ${ p.name }`,
+                                    id: p.harvest_id ?? p.id as number
+                                })) ?? [] }
+                                sx={ { width: 300 } }
+                                onChange={ (event, data) => setSelectedProject(data) }
+                                renderInput={ (params) => <TextField { ...params } label="Project"/> }
+                            />
+                        </ContentHeader>
+                        { userId && <Grid container spacing={ 10 }>
+
+                            <Grid item xs={ 6 } xl={ 6 }>
+                                <SpentPlannedStats { ...apiParams } />
+
+                            </Grid>
+
+                            <Grid item xs={ 6 } xl={ 6 }>
+                                <BillableHoursStats { ...apiParams } />
+                            </Grid>
+
+
+                            <Grid item xs={ 12 } lg={ 4 }>
+                                <Typography variant={ 'body1' }>Hours spent</Typography>
+                                { hoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !hoursApi.isLoading &&
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (hoursApi.data ?? []).map((h) => ({
+                                            key: h.name ?? h.code ?? '?',
+                                            data: h.hoursSpent
+                                        })) ?? [] }/> }
+                            </Grid>
+
+
+                            <Grid item xs={ 12 } lg={ 4 }>
+                                <Typography variant={ 'body1' }>Hours spent per task</Typography>
+                                { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !statsApi.isLoading &&
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                            key: h.task,
+                                            data: h.hours ?? 0
+                                        })) ?? [] }/>
                                 }
-                                <Autocomplete
-                                    options={ projectsApi.data?.projects.map((p) => ({
-                                        label: `${ p.code } - ${ p.name }`,
-                                        id: p.harvest_id ?? p.id as number
-                                    })) ?? [] }
-                                    sx={ { width: 300 } }
-                                    onChange={ (event, data) => setSelectedProject(data) }
-                                    renderInput={ (params) => <TextField { ...params } label="Project"/> }
-                                />
-                            </ContentHeader>
-                            { userId && <Grid container spacing={ 10 }>
+                            </Grid>
 
-                                <Grid item xs={ 6 } xl={ 6 }>
-                                    <SpentPlannedStats { ...apiParams } />
+                            <Grid item xs={ 12 } lg={ 4 }>
+                                <Typography variant={ 'body1' }>Hours planned</Typography>
+                                { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
+                                { !assignmentsApi.isLoading &&
+                                    <PieChart height={ 600 }
+                                        series={ <PieArcSeries
+                                            cornerRadius={ 4 }
+                                            padAngle={ 0.02 }
+                                            padRadius={ 200 }
+                                            doughnut={ true }
+                                        /> }
+                                        data={ (assignmentsApi.data?.assignments ?? []).map((h) => ({
+                                            key: h.name ?? h.code ?? '?',
+                                            data: h.totalHours ?? 0
+                                        })) ?? [] }/>
+                                }
+                            </Grid>
 
-                                </Grid>
+                            <Grid item xs={ 12 }>
+                                <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
 
-                                <Grid item xs={ 6 } xl={ 6 }>
-                                    <BillableHoursStats { ...apiParams } />
-                                </Grid>
+                                <DataGrid
+                                    autoHeight
+                                    loading={ entriesApi.isLoading }
+                                    rows={ entriesApi.data?.entries ?? [] }
+                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                    columns={ [
+                                        { field: 'projectName', headerName: 'Project Name', flex: 1 },
+                                        {
+                                            field: 'nonBillableHours', headerName: 'Non Billable Hours', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours', headerName: 'Hours', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_forecast', headerName: 'Forecast', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_delta', headerName: 'Delta', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
+                                        },
+                                        {
+                                            field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
+                                            renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
+                                                <StatusIndicator value={ data.row[data.field] as number }/>
+                                            </>
+                                        },
+                                    ] }
+                                    disableSelectionOnClick/>
+                            </Grid>
 
+                            <Grid item xs={ 12 }>
+                                <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
 
-                                <Grid item xs={ 12 } lg={ 4 }>
-                                    <Typography variant={ 'body1' }>Hours spent</Typography>
-                                    { hoursApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !hoursApi.isLoading &&
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (hoursApi.data ?? []).map((h) => ({
-                                                key: h.name ?? h.code ?? '?',
-                                                data: h.hoursSpent
-                                            })) ?? [] }/> }
-                                </Grid>
+                                <DataGrid
+                                    autoHeight
+                                    loading={ detailedEntriesApi.isLoading }
+                                    rows={ detailedEntriesApi.data ?? [] }
+                                    rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
+                                    columns={ [
+                                        { field: 'spent', headerName: 'Date', flex: 1 },
+                                        { field: 'task', headerName: 'Task', flex: 1 },
+                                        { field: 'notes', headerName: 'Notes', flex: 1 },
+                                        { field: 'billable', headerName: 'Billable', flex: 1 },
+                                        { field: 'hours', headerName: 'Hours', flex: 1 },
 
-
-                                <Grid item xs={ 12 } lg={ 4 }>
-                                    <Typography variant={ 'body1' }>Hours spent per task</Typography>
-                                    { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !statsApi.isLoading &&
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (statsApi.hoursPerTask ?? []).map((h) => ({
-                                                key: h.task,
-                                                data: h.hours ?? 0
-                                            })) ?? [] }/>
-                                    }
-                                </Grid>
-
-                                <Grid item xs={ 12 } lg={ 4 }>
-                                    <Typography variant={ 'body1' }>Hours planned</Typography>
-                                    { assignmentsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                    { !assignmentsApi.isLoading &&
-                                        <PieChart height={ 600 }
-                                            series={ <PieArcSeries
-                                                cornerRadius={ 4 }
-                                                padAngle={ 0.02 }
-                                                padRadius={ 200 }
-                                                doughnut={ true }
-                                            /> }
-                                            data={ (assignmentsApi.data?.assignments ?? []).map((h) => ({
-                                                key: h.name ?? h.code ?? '?',
-                                                data: h.totalHours ?? 0
-                                            })) ?? [] }/>
-                                    }
-                                </Grid>
-
-                                <Grid item xs={ 12 }>
-                                    <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
-
-                                    <DataGrid
-                                        autoHeight
-                                        loading={ entriesApi.isLoading }
-                                        rows={ entriesApi.data?.entries ?? [] }
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        columns={ [
-                                            { field: 'projectName', headerName: 'Project Name', flex: 1 },
-                                            {
-                                                field: 'nonBillableHours', headerName: 'Non Billable Hours', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours', headerName: 'Hours', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_forecast', headerName: 'Forecast', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta', headerName: 'Delta', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>{ round(data.row[data.field] as number, 2) }</>
-                                            },
-                                            {
-                                                field: 'hours_delta_percentage', headerName: 'Delta %', flex: 1,
-                                                renderCell: (data: GridRenderCellParams<SpentProjectHours>) => <>
-                                                    <StatusIndicator value={ data.row[data.field] as number }/>
-                                                </>
-                                            },
-                                        ] }
-                                        disableSelectionOnClick/>
-                                </Grid>
-
-                                <Grid item xs={ 12 }>
-                                    <Typography mb={ 2 } variant={ 'h5' }>Entries</Typography>
-
-                                    <DataGrid
-                                        autoHeight
-                                        loading={ detailedEntriesApi.isLoading }
-                                        rows={ detailedEntriesApi.data ?? [] }
-                                        rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
-                                        columns={ [
-                                            { field: 'spent', headerName: 'Date', flex: 1 },
-                                            { field: 'task', headerName: 'Task', flex: 1 },
-                                            { field: 'notes', headerName: 'Notes', flex: 1 },
-                                            { field: 'billable', headerName: 'Billable', flex: 1 },
-                                            { field: 'hours', headerName: 'Hours', flex: 1 },
-
-                                        ] }
-                                        disableSelectionOnClick/>
-                                </Grid>
-                            </Grid> }
-                        </Box>
+                                    ] }
+                                    disableSelectionOnClick/>
+                            </Grid>
+                        </Grid> }
                     </Box>
-                </Layout>
-            </StatsApiContext.Provider>
+                </Box>
+            </Layout>
         </CurrentStatsApiContext.Provider>
     </>
         ;
