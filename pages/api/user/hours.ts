@@ -17,10 +17,6 @@ export type ProjectHours = {
 }
 
 export const getHoursHandler = async (req: NextApiRequest, res: NextApiResponse<GetHoursHandlerResponse>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send([]);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
