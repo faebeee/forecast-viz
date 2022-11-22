@@ -100,7 +100,7 @@ export const Me = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <LastEntryStats/>
+                                    <LastEntryStats { ...apiParams } />
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
