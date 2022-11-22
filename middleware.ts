@@ -26,20 +26,16 @@ export async function middleware(request: NextRequest) {
 
     const session = await getIronSession(request, response, IRON_SESSION_OPTIONS);
     const isLoggedIn = session.accessToken && session.forecastId && session.harvestId;
-
-    // handle api requests, only allow them if user is logged in
-    let isApiRoute = request.nextUrl.pathname.startsWith('/api');
-    if (isApiRoute && !isLoggedIn) {
-        // immediatly return a not authenticated response if user is not logged in
-        return new NextResponse(null, {status: 403, headers: {'content-type': 'application/json'}})
-    } else if (isApiRoute && isLoggedIn) {
-        // return here, as we don't require more logic for api routes
-        return response
-    }
+    const isApiRoute = request.nextUrl.pathname.startsWith('/api');
 
     // if the user is not logged in, we redirect him/hear to the welcome page
     if (!isLoggedIn) {
-        return NextResponse.redirect(new URL('/welcome', request.url))
+        if (isApiRoute) {
+            // in case of api routes, we don't want to redirect
+            return new NextResponse(null, {status: 403, headers: {'content-type': 'application/json'}})
+        } else {
+            return NextResponse.redirect(new URL('/welcome', request.url))
+        }
     }
     return response
 }
