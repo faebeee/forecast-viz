@@ -1,10 +1,12 @@
 import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/material";
 import { round } from "lodash";
 import Image from "next/image";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
-export const WeeklyCapacityStats = () => {
-    const statsApi = useStatsApiContext();
+
+export const WeeklyCapacityStats = (params:DefaultParams) => {
+
+    const statsApi = useStats(params);
 
     return <Card sx={ {
         position: 'relative',
@@ -17,11 +19,11 @@ export const WeeklyCapacityStats = () => {
             { !statsApi.isLoading &&
                 <Typography
                     variant={ 'h2' }>
-                    { round(statsApi.totalWeeklyCapacity ?? 0, 1) }
+                    { round(statsApi.data?.totalWeeklyCapacity ?? 0, 1) }
                     <Typography
                         component={ 'span' }
                         variant={ 'caption' }>
-                        with { round(statsApi.totalHoursPerDayCapacity ?? 0, 1) } per day
+                        with { round(statsApi.data?.totalHoursPerDayCapacity ?? 0, 1) } per day
                     </Typography>
                 </Typography> }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>

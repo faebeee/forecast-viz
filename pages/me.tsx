@@ -104,7 +104,7 @@ export const Me = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <WeeklyCapacityStats/>
+                                    <WeeklyCapacityStats { ...apiParams } />
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>

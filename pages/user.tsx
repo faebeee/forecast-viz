@@ -178,7 +178,7 @@ export const User = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <WeeklyCapacityStats/>
+                                    <WeeklyCapacityStats { ...apiParams } />
                                 </Grid>
 
                                 <Grid item xs={ 12 } xl={ 12 }>
