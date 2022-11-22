@@ -11,6 +11,7 @@ import qs from "qs";
 import { useRouter } from "next/router";
 import mixpanel from 'mixpanel-browser';
 import { DATE_FORMAT } from "../src/context/formats";
+import Head from "next/head";
 
 const theme = createTheme({
     palette: {
@@ -73,6 +74,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                 dateRange,
                 setDateRange,
             } }>
+                <Head><meta name="viewport" content="initial-scale=1, width=device-width" /></Head>
                 <Component { ...pageProps } />
             </FilterContext.Provider>
         </ThemeProvider>
