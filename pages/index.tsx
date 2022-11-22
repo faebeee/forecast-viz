@@ -6,7 +6,6 @@ import { round } from "lodash";
 import { Layout } from "../src/components/layout";
 import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useStats } from "../src/hooks/use-stats";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -21,7 +20,15 @@ import { RemainingCapacityStats } from "../src/components/stats/remaining-capaci
 import { TotalOvertimeStats } from "../src/components/stats/total-overtime-stats";
 import mixpanel from "mixpanel-browser";
 import {DATE_FORMAT} from "../src/context/formats";
-import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours, useMe} from "../src/hooks/use-remote";
+import {
+    DefaultParams,
+    useAssignments,
+    useEntries,
+    useEntriesDetailed,
+    useHours,
+    useMe,
+    useStats
+} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -42,7 +49,7 @@ export const Index = () => {
     const apiParams : DefaultParams = { from, to }
 
     const currentStatsApi = useCurrentStats();
-    const statsApi = useStats();
+    const statsApi = useStats(apiParams);
 
     const me = useMe()
     const entriesApi = useEntries(apiParams);
@@ -51,7 +58,6 @@ export const Index = () => {
     const detailedEntriesApi = useEntriesDetailed(apiParams);
 
     useEffect(() => {
-        statsApi.load(from, to);
         currentStatsApi.load();
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -136,7 +142,7 @@ export const Index = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                            data={ (statsApi.data?.hoursPerTask ?? []).map((h) => ({
                                                 key: h.task,
                                                 data: h.hours ?? 0
                                             })) ?? [] }/>

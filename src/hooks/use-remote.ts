@@ -39,7 +39,7 @@ export const useEntries = (params: DefaultParams ): RemoteCall<GetEntriesHandler
 export const useAssignments = (params: DefaultParams, fallbackData?: GetAssignmentsHandlerResponse): RemoteCall<GetAssignmentsHandlerResponse> => useRemote(`/user/assignments`, params, fallbackData)
 export const useEntriesDetailed = (params: DefaultParams , fallbackData?: GetHoursHandlerResponse): RemoteCall<GetHoursHandlerResponse> => useRemote(`/user/entries-detailed`, params, fallbackData)
 
-export const useStats = (params: DefaultParams, fallbackData?: GetStatsHandlerResponse): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, fallbackData)
+export const useStats = (params: DefaultParams): RemoteCall<GetStatsHandlerResponse> => useRemote(`/user/stats`, params, StatsDefaultValue)
 export const useTeamStats = (params: RangeParams & Partial<ProjectParam>, fallbackData?: GetTeamStatsHandlerResponse): RemoteCall<GetTeamStatsHandlerResponse> => useRemote(`/team/stats`, params, fallbackData)
 export const useProjects = (params: RangeParams & UserParam, fallbackData?: any): RemoteCall<GetProjectsApiHandlerResponse> => useRemote(`/user/projects`, params, fallbackData)
 export const useTeamHours = (params: RangeParams & Partial<ProjectParam>, fallbackData?: GetTeamHoursHandlerResponse): RemoteCall<GetTeamHoursHandlerResponse> => useRemote(`/team/hours`, params, fallbackData)
@@ -47,6 +47,23 @@ export const useTeamEntries = (params: RangeParams & Partial<ProjectParam>, fall
 export const useCompanyStats = (params: RangeParams, fallbackData?: GetCompanyStatsHandlerResponse): RemoteCall<GetCompanyStatsHandlerResponse> => useRemote(`/company/stats`, params, fallbackData)
 export const useCompanyTeamsStats = (params: RangeParams , fallbackData?: GetTeamsStatsHandlerResponse): RemoteCall<GetTeamsStatsHandlerResponse> => useRemote(`/company/teams`, params, fallbackData)
 
+export const StatsDefaultValue: GetStatsHandlerResponse = {
+    billableHoursPerDay: [], nonBillableHoursPerDay: [],
+    overtimePerDay: [],
+    lastEntryDate: "",
+    hoursPerTask: [],
+    avgPerDay: 0,
+    totalHours: 0,
+    totalPlannedHours: 0,
+    totalProjects: 0,
+    billableHours: 0,
+    billableHoursPercentage: 0,
+    hoursPerDay: [],
+    nonBillableHours: 0,
+    totalHoursPerDayCapacity: 0,
+    totalWeeklyCapacity: 0
+
+}
 
 export const useRemote = <T>(url: string, params?: any, fallbackData?: T): RemoteCall<T> => {
     const {

@@ -21,7 +21,6 @@ import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useStats } from "../src/hooks/use-stats";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -40,7 +39,7 @@ import {
     useEntries,
     useEntriesDetailed,
     useHours,
-    useProjects
+    useProjects, useStats
 } from "../src/hooks/use-remote";
 
 //@ts-ignore
@@ -104,7 +103,7 @@ export const Project = ({
         from, to, uid: userId, projectId: selectedProject?.id.toString()
     }
 
-    const statsApi = useStats();
+    const statsApi = useStats(apiParams);
     const currentStatsApi = useCurrentStats();
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
@@ -117,7 +116,6 @@ export const Project = ({
         if (!userId || !selectedProject?.id) {
             return;
         }
-        statsApi.load(from, to, userId, selectedProject?.id as number);
         currentStatsApi.load(userId);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -201,7 +199,7 @@ export const Project = ({
                                             padRadius={ 200 }
                                             doughnut={ true }
                                         /> }
-                                        data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                        data={ (statsApi.data?.hoursPerTask ?? []).map((h) => ({
                                             key: h.task,
                                             data: h.hours ?? 0
                                         })) ?? [] }/>

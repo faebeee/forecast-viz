@@ -10,7 +10,6 @@ import { Layout } from "../src/components/layout";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect, useMemo, useState } from "react";
 import { ContentHeader } from "../src/components/content-header";
-import { useStats } from "../src/hooks/use-stats";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
 import { useCurrentStats } from "../src/hooks/use-current-stats";
@@ -31,7 +30,14 @@ import { getColor } from "../src/utils/get-color";
 import { AreasChart } from "../src/components/chart/areas-chart";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
-import {DefaultParams, useAssignments, useEntries, useEntriesDetailed, useHours} from "../src/hooks/use-remote";
+import {
+    DefaultParams,
+    useAssignments,
+    useEntries,
+    useEntriesDetailed,
+    useHours,
+    useStats
+} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -95,7 +101,7 @@ export const User = ({
     }
 
     const currentStatsApi = useCurrentStats();
-    const statsApi = useStats();
+    const statsApi = useStats(apiParams);
 
     const entriesApi = useEntries(apiParams);
     const assignmentsApi = useAssignments(apiParams);
@@ -109,7 +115,6 @@ export const User = ({
         if (!userId) {
             return;
         }
-        statsApi.load(from, to, userId);
         currentStatsApi.load(userId);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
@@ -172,7 +177,7 @@ export const User = ({
                             <Grid item xs={ 12 } xl={ 12 }>
                                 <Typography variant={ 'body1' }>Hours per day</Typography>
                                 { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                { !statsApi.isLoading && statsApi.billableHoursPerDay &&
+                                { !statsApi.isLoading && statsApi.data?.billableHoursPerDay &&
                                     <ParentSize debounceTime={ 10 }>
                                         { ({ width }) => (
                                             <AreasChart data={ [
@@ -180,22 +185,22 @@ export const User = ({
                                                     key: 'hours',
                                                     label: 'Hours',
                                                     color: getColor(0),
-                                                    data: statsApi.hoursPerDay,
+                                                    data: statsApi.data?.hoursPerDay ?? [],
                                                 },
                                                 {
                                                     key: 'overtime',
                                                     label: 'Overtime',
                                                     color: getColor(1),
-                                                    data: statsApi.overtimePerDay,
+                                                    data: statsApi.data?.overtimePerDay ?? [],
                                                 }
                                             ] }
                                                 references={ [
                                                     {
-                                                        y: statsApi.totalHoursPerDayCapacity,
+                                                        y: statsApi.data?.totalHoursPerDayCapacity ?? 0,
                                                         label: 'Capacity',
                                                         color: getColor(0)
                                                     },
-                                                    { y: statsApi.avgPerDay, label: 'Average', color: COLORS[6] },
+                                                    { y: statsApi.data?.avgPerDay ?? 0, label: 'Average', color: COLORS[6] },
                                                 ] }
                                                 width={ width }
                                                 height={ 400 }
@@ -206,7 +211,7 @@ export const User = ({
                             <Grid item xs={ 12 } xl={ 12 }>
                                 <Typography variant={ 'body1' }>Billable/Non Billable hours per day</Typography>
                                 { statsApi.isLoading && <CircularProgress color={ 'primary' }/> }
-                                { !statsApi.isLoading && statsApi.billableHoursPerDay &&
+                                { !statsApi.isLoading && statsApi.data?.billableHoursPerDay &&
                                     <ParentSize debounceTime={ 10 }>
                                         { ({ width }) => (
                                             <AreasChart data={ [
@@ -214,13 +219,13 @@ export const User = ({
                                                     key: 'billable',
                                                     label: 'Billable Hours',
                                                     color: getColor(0),
-                                                    data: statsApi.billableHoursPerDay,
+                                                    data: statsApi.data?.billableHoursPerDay ?? [],
                                                 },
                                                 {
                                                     key: 'non-billable',
                                                     label: 'Non Billable',
                                                     color: getColor(1),
-                                                    data: statsApi.nonBillableHoursPerDay,
+                                                    data: statsApi.data?.nonBillableHoursPerDay ?? [],
                                                 }
                                             ] }
                                                 width={ width }
@@ -260,7 +265,7 @@ export const User = ({
                                             padRadius={ 200 }
                                             doughnut={ true }
                                         /> }
-                                        data={ (statsApi.hoursPerTask ?? []).map((h) => ({
+                                        data={ (statsApi.data?.hoursPerTask ?? []).map((h) => ({
                                             key: h.task,
                                             data: h.hours ?? 0
                                         })) ?? [] }/>
