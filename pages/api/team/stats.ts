@@ -38,10 +38,6 @@ export type HoursPerUserItem = {
 }
 
 export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);

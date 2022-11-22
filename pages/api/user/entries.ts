@@ -11,10 +11,6 @@ export type GetEntriesHandlerResponse = {
     entries: SpentProjectHours[];
 }
 export const getEntriesHandler = async (req: NextApiRequest, res: NextApiResponse<GetEntriesHandlerResponse>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send({ entries: [] });
-        return;
-    }
     const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);

@@ -8,11 +8,6 @@ export type GetMyUserHandlerResponse = {
     hasAdminAccess: boolean
 }
 export const getMyUserHandler = async (req: NextApiRequest, res: NextApiResponse<GetMyUserHandlerResponse>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send({userName: undefined, hasAdminAccess: false});
-        return;
-    }
-
     res.send({
         userName: req.session.userName,
         hasAdminAccess: req.session.hasAdminAccess ?? false
