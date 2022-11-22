@@ -92,7 +92,7 @@ export const Me = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <RemainingCapacityStats amountOfDays={ amountOfDays }/>
+                                    <RemainingCapacityStats params={ apiParams } amountOfDays={ amountOfDays }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
