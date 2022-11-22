@@ -88,7 +88,7 @@ export const Me = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalOvertimeStats amountOfDays={ amountOfDays }/>
+                                    <TotalOvertimeStats params={ apiParams } amountOfDays={ amountOfDays }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>

@@ -84,7 +84,7 @@ export const Index = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <TotalOvertimeStats amountOfDays={ 1 }/>
+                                    <TotalOvertimeStats params={ apiParams }  amountOfDays={ 1 }/>
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>

@@ -2,20 +2,21 @@ import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/mater
 import { round } from "lodash";
 import Image from "next/image";
 import { useMemo } from "react";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
 export type TotalOvertimeProps = {
     amountOfDays: number;
+    params: DefaultParams
 }
 
-export const TotalOvertimeStats = ({ amountOfDays }: TotalOvertimeProps) => {
-    const statsApi = useStatsApiContext();
+export const TotalOvertimeStats = ( {amountOfDays, params}: TotalOvertimeProps) => {
+    const statsApi = useStats(params);
     const totalOvertime = useMemo(() => {
-        if (!statsApi.totalHours || !statsApi.totalHoursPerDayCapacity) {
+        if (!statsApi.data?.totalHours || !statsApi.data?.totalHoursPerDayCapacity) {
             return 0;
         }
-        return statsApi.totalHours - (statsApi.totalHoursPerDayCapacity * amountOfDays);
-    }, [ statsApi.totalHours, statsApi.totalHoursPerDayCapacity, amountOfDays ]);
+        return statsApi.data?.totalHours - (statsApi.data?.totalHoursPerDayCapacity * amountOfDays);
+    }, [ statsApi.data?.totalHours, statsApi.data?.totalHoursPerDayCapacity, amountOfDays ]);
 
     return <Card sx={ {
         position: 'relative',
