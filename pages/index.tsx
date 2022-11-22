@@ -88,7 +88,7 @@ export const Index = () => {
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 4 }>
-                                    <BillableHoursStats/>
+                                    <BillableHoursStats {...apiParams}/>
                                 </Grid>
 
                                 <Grid container item xs={ 12 }>

@@ -170,7 +170,7 @@ export const Project = ({
                                 </Grid>
 
                                 <Grid item xs={ 6 } xl={ 6 }>
-                                    <BillableHoursStats/>
+                                    <BillableHoursStats { ...apiParams } />
                                 </Grid>
 
 
