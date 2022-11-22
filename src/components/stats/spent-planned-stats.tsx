@@ -1,12 +1,11 @@
-import { Box, Card, CardActions, CardContent, CircularProgress, Typography } from "@mui/material";
+import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/material";
 import { round } from "lodash";
 import Image from "next/image";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
-export type TotalHoursStatsProps = {}
 
-export const SpentPlannedStats = ({}: TotalHoursStatsProps) => {
-    const statsApi = useStatsApiContext();
+export const SpentPlannedStats = (params: DefaultParams) => {
+    const statsApi = useStats(params);
 
     return <Card sx={ {
         position: 'relative',
@@ -18,9 +17,9 @@ export const SpentPlannedStats = ({}: TotalHoursStatsProps) => {
             { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
             { !statsApi.isLoading &&
                 <Typography
-                    variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 1) }
+                    variant={ 'h2' }>{ round(statsApi.data?.totalHours ?? 0, 1) }
                     <Typography variant={ 'body2' } component={ 'span' }>
-                        of { round(statsApi.totalPlannedHours, 2) } planned
+                        of { round(statsApi.data?.totalPlannedHours ?? 0, 2) } planned
                     </Typography>
                 </Typography> }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>

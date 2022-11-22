@@ -165,7 +165,7 @@ export const Project = ({
                             { userId && <Grid container spacing={ 10 }>
 
                                 <Grid item xs={ 6 } xl={ 6 }>
-                                    <SpentPlannedStats/>
+                                    <SpentPlannedStats { ...apiParams } />
 
                                 </Grid>
 
