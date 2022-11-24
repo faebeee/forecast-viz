@@ -16,15 +16,12 @@ import { DataGrid } from '@mui/x-data-grid';
 import "react-datepicker/dist/react-datepicker.css";
 import { Forecast, getForecast } from "../src/server/get-forecast";
 import { Layout } from "../src/components/layout";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useFilterContext } from "../src/context/filter-context";
 import { ContentHeader } from "../src/components/content-header";
 import Image from "next/image";
 import { useTeamStats } from "../src/hooks/use-team-stats";
 import { COLORS, TEAMS } from "../src/config";
-import { useTeamHours } from "../src/hooks/use-team-hours";
-import { useTeamEntries } from "../src/hooks/use-team-entries";
 import dynamic from "next/dynamic";
 import { round } from "lodash";
 import { GridRenderCellParams } from "@mui/x-data-grid/models/params/gridCellParams";
@@ -35,6 +32,7 @@ import { TeamStatsApiContext } from "../src/context/team-stats-api-context";
 import mixpanel from "mixpanel-browser";
 import { DATE_FORMAT } from "../src/context/formats";
 import { withServerSideSession } from "../src/server/with-session";
+import {useTeamEntries, useTeamHours} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -101,18 +99,22 @@ export const Team = ({
                          hasAdminAccess,
                          projects
                      }: EntriesProps) => {
-    const router = useRouter();
+
     const { dateRange } = useFilterContext();
     const [ selectedProject, setSelectedProject ] = useState<null | { label: string, id: number | string }>(null);
 
+    const apiParams = {
+        from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
+        to: format(dateRange[1] ?? new Date(), DATE_FORMAT),
+        projectId: selectedProject?.id.toString()
+    }
+
     const teamStatsApi = useTeamStats();
-    const teamHoursApi = useTeamHours();
-    const teamEntriesApi = useTeamEntries();
+    const teamHoursApi = useTeamHours(apiParams);
+    const teamEntriesApi = useTeamEntries(apiParams);
 
     useEffect(() => {
-        teamStatsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
-        teamHoursApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
-        teamEntriesApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT), selectedProject?.id as number);
+        teamStatsApi.load(apiParams.from, apiParams.to, selectedProject?.id as number);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
             mixpanel.track('filter', {
@@ -239,7 +241,7 @@ export const Team = ({
                                             padRadius={ 200 }
                                             doughnut={ true }
                                         /> }
-                                        data={ teamHoursApi.hours?.map((h, index) => ({
+                                        data={ teamHoursApi.data?.hours.map((h, index) => ({
                                             id: index.toString(),
                                             key: h.projectName,
                                             data: h.hours,
@@ -315,7 +317,7 @@ export const Team = ({
                                 <DataGrid
                                     autoHeight
                                     loading={ teamEntriesApi.isLoading }
-                                    rows={ teamEntriesApi.entries }
+                                    rows={ teamEntriesApi.data?.entries ?? [] }
                                     rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                     columns={ [
                                         { field: 'userId', headerName: 'User ID', flex: 1 },
@@ -350,7 +352,7 @@ export const Team = ({
                                     autoHeight
                                     getRowId={ (r) => r.projectName }
                                     loading={ teamHoursApi.isLoading }
-                                    rows={ teamHoursApi.hours ?? [] }
+                                    rows={ teamHoursApi.data?.hours ?? [] }
                                     rowsPerPageOptions={ [ 5, 10, 20, 50, 100 ] }
                                     columns={ [
                                         { field: 'projectId', headerName: 'Project ID', width: 90 },

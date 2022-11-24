@@ -58,7 +58,8 @@
     "react-dom": "18.2.0",
     "reaviz": "^13.1.9",
     "recharts": "2.1.12",
-    "redis": "^4.3.1"
+    "redis": "^4.3.1",
+    "swr": "^1.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
