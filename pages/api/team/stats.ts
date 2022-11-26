@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
+import { getAuthFromCookies, getRange } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
     billableHourPercentage, BillableHours, excludeLeaveTasks,
@@ -11,15 +11,15 @@ import {
     getTeamAssignments, getTeamHoursEntries, HourPerTaskObject
 } from "../../../src/server/utils";
 import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-forecast";
-import { REDIS_CACHE_TTL, TEAMS } from "../../../src/config";
+import {DEFAULT_CACHE_TTL, TEAMS} from "../../../src/config";
 import { TimeEntry } from "../../../src/server/harvest-types";
-import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 import { parse } from "date-fns";
 import {DATE_FORMAT} from "../../../src/context/formats";
 import {withApiRouteSession} from "../../../src/server/with-session";
 import {round} from "lodash";
 import { getAdminAccess } from "../../../src/server/has-admin-access";
+import {getCache} from "../../../src/server/services/cache";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -64,16 +64,15 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const teamPeopleIds = teamPeople
         .map(p => p.harvest_user_id);
 
-    const redisKey = `team/stats/${ teamId }-${ range.from }-${ range.to }-${ projectId }`;
+    const cacheKey = `team/stats/${ teamId }-${ range.from }-${ range.to }-${ projectId }`;
 
-    const redis = await getRedis();
-    if (redis) {
-        const cachedResult = await redis.get(redisKey);
-        if (!!cachedResult) {
-            res.send(JSON.parse(cachedResult));
-            return;
-        }
+    const cache = getCache();
+    const cachedResult = await cache.get(cacheKey)
+    if (!!cachedResult) {
+        res.send(cachedResult as GetTeamStatsHandlerResponse);
+        return;
     }
+
     const fromDate = parse(range.from, DATE_FORMAT, new Date());
     const toDate = parse(range.to, DATE_FORMAT, new Date());
 
@@ -136,10 +135,8 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
         statsPerUser,
     };
 
-    if (redis) {
-        await redis.set(redisKey, JSON.stringify(result));
-        await redis.expire(redisKey, REDIS_CACHE_TTL);
-    }
+    cache.set(cacheKey, result, DEFAULT_CACHE_TTL)
+
     res.send(result);
 }
 export default withApiRouteSession(getTeamStatsHandler);

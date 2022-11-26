@@ -23,6 +23,8 @@ export const TEAMS = [
     },
 ];
 
-export const REDIS_CACHE_TTL = !!process.env.REDIS_CACHE_TTL ? parseInt(process.env.REDIS_CACHE_TTL) : (60 * 5);
+export const SHORT_CACHE_TTL = 60 // 1 minute
+export const DEFAULT_CACHE_TTL = !!process.env.REDIS_CACHE_TTL  ? parseInt(process.env.REDIS_CACHE_TTL, 10)  : 60 * 5 // 5 minutes
+
 export const DATE_FORMAT = 'dd/mm/yyyy';
 export const PARSE_DATE_FORMAT = 'yyyy-MM-dd';

@@ -1,5 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
+import { getAuthFromCookies, getRange } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import { getTeamProjectHours, SpentProjectHours } from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";

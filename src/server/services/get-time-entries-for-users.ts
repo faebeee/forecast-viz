@@ -1,23 +1,19 @@
-import { getRedis } from "../redis";
 import { HarvestApi } from "../get-harvest";
 import { TimeEntry } from "../harvest-types";
+import {getCache} from "./cache";
+import {DEFAULT_CACHE_TTL} from "../../config";
 
 export const getTimeEntriesForUser = async (harvest: HarvestApi, userId: number, from: string, to: string, projectId?: number): Promise<TimeEntry[]> => {
     const redisKey = `services/entries/${ userId }-${ from }-${ to }-${projectId}`;
-
-    const redis = await getRedis();
-    if (redis) {
-        const cachedResult = await redis.get(redisKey);
+    const cache = getCache();
+    const cachedResult = await cache.get(redisKey) as TimeEntry[]
         if (!!cachedResult) {
-            return JSON.parse(cachedResult);
+            return cachedResult;
         }
-    }
 
     const results = await harvest.getTimeEntries({ userId, from, to, project_id: projectId });
-    if (redis) {
-        await redis.set(redisKey, JSON.stringify(results));
-        await redis.expire(redisKey, 60 * 15);
-    }
+
+    await cache.set(redisKey, results, DEFAULT_CACHE_TTL);
 
     return results;
 }
