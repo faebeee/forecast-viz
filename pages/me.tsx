@@ -235,7 +235,7 @@ export const Me = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (entriesApi.entries ?? []).map((h) => ({
+                                            data={ (entriesApi.data?.entries ?? []).map((h) => ({
                                                 key: h.projectName ?? '?',
                                                 data: h.hours ?? 0
                                             })) ?? [] }/>
@@ -253,7 +253,7 @@ export const Me = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (entriesApi.entries ?? []).map((h) => ({
+                                            data={ (entriesApi.data?.entries ?? []).map((h) => ({
                                                 key: h.projectName ?? '?',
                                                 data: h.nonBillableHours ?? 0
                                             })) ?? [] }/>
@@ -271,7 +271,7 @@ export const Me = () => {
                                                 padRadius={ 200 }
                                                 doughnut={ true }
                                             /> }
-                                            data={ (statsApi.hoursPerNonBillableTasks ?? []).map((h) => ({
+                                            data={ (statsApi.data?.hoursPerNonBillableTasks ?? []).map((h) => ({
                                                 key: h.task,
                                                 data: h.hours ?? 0
                                             })) ?? [] }/>
