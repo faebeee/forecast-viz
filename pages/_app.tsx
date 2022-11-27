@@ -10,13 +10,14 @@ import { FilterContext } from '../src/context/filter-context';
 import qs from "qs";
 import { useRouter } from "next/router";
 import mixpanel from 'mixpanel-browser';
-import {DATE_FORMAT} from "../src/context/formats";
+import { DATE_FORMAT } from "../src/context/formats";
+import Head from "next/head";
 
 const theme = createTheme({
     palette: {
-        mode: 'light',
+        mode: 'dark',
         primary: {
-            main: '#333',
+            main: '#7aeeff',
         },
         secondary: {
             main: '#ffe290',
@@ -35,7 +36,7 @@ const theme = createTheme({
             },
             styleOverrides: {
                 root: {
-                    background: "linear-gradient(to right, #283048, #859398)",
+                    background: 'linear-gradient(115deg, #4599f2, #27395d)',
                     color: 'white',
                 }
             }
@@ -68,11 +69,12 @@ function MyApp({ Component, pageProps }: AppProps) {
     return <LocalizationProvider dateAdapter={ AdapterDateFns }>
         <ThemeProvider theme={ theme }>
             <CssBaseline/>
-            <GlobalStyles styles={ { body: { background: 'rgba(255, 255, 255, 0.9)' } } }/>
+            <GlobalStyles styles={ { body: { background: '#121212' } } }/>
             <FilterContext.Provider value={ {
                 dateRange,
                 setDateRange,
             } }>
+                <Head><meta name="viewport" content="initial-scale=1, width=device-width" /></Head>
                 <Component { ...pageProps } />
             </FilterContext.Provider>
         </ThemeProvider>

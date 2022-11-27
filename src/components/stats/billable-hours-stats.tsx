@@ -1,10 +1,11 @@
 import { Box, Card, CardActions, CardContent, CircularProgress, Typography } from "@mui/material";
 import { round } from "lodash";
 import Image from "next/image";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
-export const BillableHoursStats = () => {
-    const statsApi = useStatsApiContext();
+
+export const BillableHoursStats = ( params:DefaultParams ) => {
+    const statsApi = useStats(params)
 
     return <Card sx={ {
         position: 'relative',
@@ -16,7 +17,7 @@ export const BillableHoursStats = () => {
             { !statsApi.isLoading &&
                 <Typography
                     variant={ 'h2' }>
-                    { round(statsApi.billableHoursPercentage, 1) }%
+                    { round(statsApi.data?.billableHoursPercentage ?? 0, 1) }%
                 </Typography>
             }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -24,7 +25,7 @@ export const BillableHoursStats = () => {
             </Box>
         </CardContent>
         { !statsApi.isLoading && <CardActions>
-            Billable/Non billable: { round(statsApi.billableHours, 1) }/{ round(statsApi.nonBillableHours, 1) }
+            Billable/Non billable: { round(statsApi.data?.billableHours ?? 0, 1) }/{ round(statsApi.data?.nonBillableHours ?? 0, 1) }
         </CardActions> }
     </Card>;
 }

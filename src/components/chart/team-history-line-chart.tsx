@@ -1,16 +1,9 @@
-import { parse } from "date-fns";
-import dynamic from "next/dynamic";
-import { LineChartProps, LineProps, LineSeriesProps } from "reaviz";
-import { useFilterContext } from "../../context/filter-context";
 import { useTeamStatsApiContext } from "../../context/team-stats-api-context";
 import { CircularProgress } from "@mui/material";
-import {DATE_FORMAT} from "../../context/formats";
-//@ts-ignore
-const LineChart = dynamic<Partial<LineChartProps>>(() => import('reaviz').then(module => module.LineChart), { ssr: false });
-//@ts-ignore
-const LineSeries = dynamic<Partial<LineSeriesProps>>(() => import('reaviz').then(module => module.LineSeries), { ssr: false });
-//@ts-ignore
-const Line = dynamic<Partial<LineProps>>(() => import('reaviz').then(module => module.Line), { ssr: false });
+import { LinesChart } from "./lines-chart";
+import { ParentSize } from "@visx/responsive";
+import { getColor } from "../../utils/get-color";
+import { AreasChart } from "./areas-chart";
 
 
 export const TeamHistoryLineChart = () => {
@@ -23,41 +16,19 @@ export const TeamHistoryLineChart = () => {
         return <CircularProgress color={ 'primary' }/>
     }
 
-    const data = [
-        ...(hoursPerUserHistory ?? []).map((e) => ({
-            key: e.user,
-            data: Object.entries(e.entries).map(([ key, value ]) => ({
-                key: parse(key, DATE_FORMAT, new Date()),
-                data: value,
-                id: `${ e.user }-${ key }`
-            }))
-        })),
-        {
-            key: '100% Work Day',
-            data: Object.entries(hoursPerUserHistory[0].entries).map(([ key, value ], index) => ({
-                key: parse(key, DATE_FORMAT, new Date()),
-                id: key,
-                data: 8.4
-            }))
-        },
-        {
-            key: '80% Work Day',
-            data: Object.entries(hoursPerUserHistory[0].entries).map(([ key, value ], index) => ({
-                key: parse(key, DATE_FORMAT, new Date()),
-                id: key,
-                data: 6.7
-            }))
-        },
-    ];
+    const data = (hoursPerUserHistory ?? []).map((e, index) => ({
+        key: e.user,
+        color: getColor(index),
+        label: e.user,
+        data: Object.entries(e.entries).map(([ key, value ]) => ({
+            date: key,
+            hours: value,
+        }))
+    }));
 
-    return <LineChart
-        height={ 400 }
-        gridlines={ null }
-        series={
-            <LineSeries
-                type="grouped"
-                line={ <Line strokeWidth={ 4 }/> }
-            />
-        }
-        data={ data }/>;
+    return <ParentSize debounceTime={ 10 }>
+        { ({ width }) => (<>
+            <LinesChart width={ width } height={ 400 } data={ data }/>
+        </>) }
+    </ParentSize>
 }

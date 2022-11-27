@@ -18,10 +18,6 @@ export type GetTeamEntriesHandlerResponse = {
 }
 
 export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamEntriesHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);

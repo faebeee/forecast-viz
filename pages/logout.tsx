@@ -8,7 +8,7 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         await req.session.destroy()
         return {
             redirect: {
-                destination: '/',
+                destination: '/welcome',
                 permanent: false,
             },
         }

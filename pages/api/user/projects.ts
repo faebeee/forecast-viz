@@ -16,10 +16,6 @@ export type GetProjectsApiHandlerResponse = {
 }
 
 export const getProjectsHandler = async (req: NextApiRequest, res: NextApiResponse<GetProjectsApiHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);

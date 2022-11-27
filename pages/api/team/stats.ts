@@ -40,10 +40,6 @@ export type HoursPerUserItem = {
 }
 
 export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
@@ -118,7 +114,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const statsPerUser = teamPeople.map((person) => {
         const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
         const lastEntryDate = usersEntries[0]?.spent_date ?? '?';
-        const attendanceEntries = excludeLeaveTasks(entries)
+        const attendanceEntries = excludeLeaveTasks(usersEntries)
         const billableHoursPerUser = getBillableHours(attendanceEntries);
         const billableRatePerUser = billableHourPercentage(billableHoursPerUser)
         return {

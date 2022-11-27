@@ -1,13 +1,12 @@
 export const COLORS = [
-    '#455A64',
-    '#CFD8DC',
-    '#607D8B',
-    '#bebebe',
-    '#9E9E9E',
-    '#212121',
-    '#757575',
-    '#BDBDBD',
-];
+    "#4599f2",
+    "#01adf4",
+    "#00bdf0",
+    "#00cde7",
+    "#00e1d6",
+    "#00f5af",
+    "#00ff6e"
+]
 
 export const TEAMS = [
     {
@@ -25,4 +24,5 @@ export const TEAMS = [
 ];
 
 export const REDIS_CACHE_TTL = !!process.env.REDIS_CACHE_TTL ? parseInt(process.env.REDIS_CACHE_TTL) : (60 * 5);
-export const DATE_FORMAT =  'dd/mm/yyyy';
+export const DATE_FORMAT = 'dd/mm/yyyy';
+export const PARSE_DATE_FORMAT = 'yyyy-MM-dd';

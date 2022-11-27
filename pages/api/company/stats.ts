@@ -25,10 +25,6 @@ export type HoursPerProjectEntry = {
 }
 
 export const getCompanyStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetCompanyStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);

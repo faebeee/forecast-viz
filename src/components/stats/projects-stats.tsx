@@ -1,9 +1,10 @@
 import { Box, Card, CardContent, CircularProgress, Typography } from "@mui/material";
 import Image from "next/image";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
-export const ProjectsStats = () => {
-    const statsApi = useStatsApiContext();
+export const ProjectsStats = (params: DefaultParams) => {
+
+    const statsApi = useStats(params);
 
     return  <Card sx={ {
         position: 'relative',
@@ -15,7 +16,7 @@ export const ProjectsStats = () => {
             { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
             { !statsApi.isLoading &&
                 <Typography
-                    variant={ 'h2' }>{ statsApi.totalProjects }
+                    variant={ 'h2' }>{ statsApi.data?.totalProjects }
                 </Typography>
             }
             <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>

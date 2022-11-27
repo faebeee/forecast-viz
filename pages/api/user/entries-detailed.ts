@@ -21,10 +21,6 @@ export type GetEntriesDetailedHandlerResponse = {
     entries: SimpleTimeEntry[];
 }
 export const getEntriesDetailedHandler = async (req: NextApiRequest, res: NextApiResponse<GetEntriesDetailedHandlerResponse>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send({ entries: [] });
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);

@@ -1,10 +1,10 @@
 import { Box, Card, CardActions, CardContent, CircularProgress, Typography } from "@mui/material";
 import { round } from "lodash";
 import Image from "next/image";
-import { useCurrentStatsApiContext } from "../../context/current-stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
-export const CurrentHoursStats = () => {
-    const currentStatsApi = useCurrentStatsApiContext();
+export const CurrentHoursStats = ( params: DefaultParams ) => {
+    const currentStatsApi = useStats(params);
     return <Card sx={ {
         position: 'relative',
         minHeight: '200px',
@@ -16,9 +16,9 @@ export const CurrentHoursStats = () => {
             { !currentStatsApi.isLoading &&
                 <Typography
                     variant={ 'h2' }>
-                    { round(currentStatsApi.totalHours ?? 0, 1) }
+                    { round(currentStatsApi.data?.totalHours ?? 0, 1) }
                     <Typography variant={ 'body2' } component={ 'span' }>
-                        of { round(currentStatsApi.totalHoursPerDayCapacity ?? 0, 1) } capacity
+                        of { round(currentStatsApi.data?.totalHoursPerDayCapacity ?? 0, 1) } capacity
                         hours
                     </Typography>
                 </Typography> }
@@ -27,8 +27,8 @@ export const CurrentHoursStats = () => {
             </Box>
         </CardContent>
 
-        { !!currentStatsApi.totalPlannedHours && !currentStatsApi.isLoading && <CardActions>
-            Planned hours: { round(currentStatsApi.totalPlannedHours, 2) }
+        { !!currentStatsApi.data?.totalPlannedHours && !currentStatsApi.isLoading && <CardActions>
+            Planned hours: { round(currentStatsApi.data?.totalPlannedHours, 2) }
         </CardActions> }
     </Card>
 }

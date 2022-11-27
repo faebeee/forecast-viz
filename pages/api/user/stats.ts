@@ -15,8 +15,8 @@ import { HourPerDayEntry } from "../../../src/type";
 import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { sortBy } from "lodash";
-import {DATE_FORMAT} from "../../../src/context/formats";
-import {withApiRouteSession} from "../../../src/server/with-session";
+import { DATE_FORMAT } from "../../../src/context/formats";
+import { withApiRouteSession } from "../../../src/server/with-session";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
@@ -31,15 +31,13 @@ export type GetStatsHandlerResponse = {
     lastEntryDate: string;
     hoursPerDay: HourPerDayEntry[];
     overtimePerDay: HourPerDayEntry[];
+    billableHoursPerDay: HourPerDayEntry[];
+    nonBillableHoursPerDay: HourPerDayEntry[];
     hoursPerTask: HourPerTaskObject[];
     hoursPerNonBillableTasks: HourPerTaskObject[];
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
@@ -99,6 +97,28 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
+
+    const billableHoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = {date: entry.spent_date, hours: 0};
+        }
+        if (entry.billable) {
+            acc[entry.spent_date].hours += entry.hours;
+        }
+        return acc;
+    }, getRecord()));
+
+    const nonBillableHoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = {date: entry.spent_date, hours: 0};
+        }
+        if (!entry.billable) {
+            acc[entry.spent_date].hours += entry.hours;
+        }
+        return acc;
+    }, getRecord()));
+
+
     const attendanceEntries = excludeLeaveTasks(entries)
     const billableHours = getBillableHours(attendanceEntries);
     const hoursPerTask = getHoursPerTask(attendanceEntries);
@@ -120,7 +140,9 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         hoursPerTask,
         lastEntryDate,
         overtimePerDay,
-        hoursPerNonBillableTasks
+        billableHoursPerDay,
+        nonBillableHoursPerDay,
+        hoursPerNonBillableTasks,
     }
 
     res.send(result);
