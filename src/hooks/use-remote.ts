@@ -48,6 +48,7 @@ export const useCompanyStats = (params: RangeParams, fallbackData?: GetCompanySt
 export const useCompanyTeamsStats = (params: RangeParams , fallbackData?: GetTeamsStatsHandlerResponse): RemoteCall<GetTeamsStatsHandlerResponse> => useRemote(`/company/teams`, params, fallbackData)
 
 export const StatsDefaultValue: GetStatsHandlerResponse = {
+    isAdmin: false, roles: [],
     hoursPerNonBillableTasks: [],
     billableHoursPerDay: [], nonBillableHoursPerDay: [],
     overtimePerDay: [],
