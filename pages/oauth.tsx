@@ -35,9 +35,7 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         const allPeople = await forecast.getPersons();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
-        console.log(myDetails);
-
-        req.session.hasAdminAccess = true;
+        req.session.hasAdminAccess = getAdminAccess(myDetails?.roles ?? []);
         req.session.userName = accounts?.user.first_name
 
 
