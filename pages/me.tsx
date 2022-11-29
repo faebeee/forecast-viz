@@ -33,6 +33,7 @@ import {
     useMe,
     useStats
 } from "../src/hooks/use-remote";
+import { UserRolesStats } from "../src/components/stats/user-roles-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -63,9 +64,7 @@ export const Me = () => {
     const hoursApi = useHours(apiParams);
     const detailedEntriesApi = useEntriesDetailed(apiParams);
 
-
     useEffect(() => {
-
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
             mixpanel.track('filter', {
                 'page': "Me",
@@ -107,7 +106,7 @@ export const Me = () => {
                         </Grid>
 
                         <Grid item xs={ 6 } xl={ 4 }>
-                            <div/>
+                            <UserRolesStats params={ apiParams }/>
                         </Grid>
 
                         <Grid item xs={ 12 } xl={ 12 }>

@@ -19,6 +19,7 @@ import { parse } from "date-fns";
 import {DATE_FORMAT} from "../../../src/context/formats";
 import {withApiRouteSession} from "../../../src/server/with-session";
 import {round} from "lodash";
+import { getAdminAccess } from "../../../src/server/has-admin-access";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -51,7 +52,7 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
 
     const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
-    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
+    const hasTeamAccess = getAdminAccess(myDetails?.roles ?? []);
     if (!hasTeamAccess || !myTeamEntry) {
         res.status(403).send(null);
         return;
@@ -104,7 +105,6 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
 
         return accumulator;
     }, new Map<number, HoursPerUserItem>());
-
 
     const attendanceEntries = excludeLeaveTasks(entries)
     const billableHours = getBillableHours(attendanceEntries)

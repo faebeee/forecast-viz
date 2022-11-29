@@ -36,6 +36,7 @@ import {
     useHours,
     useStats
 } from "../src/hooks/use-remote";
+import { UserRolesStats } from "../src/components/stats/user-roles-stats";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
@@ -56,8 +57,14 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
 
         const allPeople = await forecast.getPersons();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
+        if (!myDetails) {
+            throw new Error(`No data found for user ${ userId }`);
+        }
         const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
         const teamId = myTeamEntry!.key;
+        if (!teamId) {
+            throw new Error(`No team found for ${ userData.email } - ${ myDetails!.roles?.join(', ') }`);
+        }
         const teamPeople = allPeople
             .filter((p) => p.roles.includes(teamId!) && !p.archived)
 
@@ -157,7 +164,7 @@ export const User = ({
                         </Grid>
 
                         <Grid item xs={ 6 } xl={ 4 }>
-                            <BillableHoursStats {...apiParams} />
+                            <BillableHoursStats { ...apiParams } />
                         </Grid>
 
                         <Grid item xs={ 6 } xl={ 4 }>
@@ -166,6 +173,9 @@ export const User = ({
 
                         <Grid item xs={ 6 } xl={ 4 }>
                             <WeeklyCapacityStats { ...apiParams } />
+                        </Grid>
+                        <Grid item xs={ 6 } xl={ 4 }>
+                            <UserRolesStats params={ apiParams }/>
                         </Grid>
 
                         <Grid item xs={ 12 } xl={ 12 }>

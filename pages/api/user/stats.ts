@@ -29,6 +29,8 @@ export type GetStatsHandlerResponse = {
     totalWeeklyCapacity: number;
     totalHoursPerDayCapacity: number;
     lastEntryDate: string;
+    isAdmin: boolean;
+    roles: string[];
     hoursPerDay: HourPerDayEntry[];
     overtimePerDay: HourPerDayEntry[];
     billableHoursPerDay: HourPerDayEntry[];
@@ -143,6 +145,8 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         billableHoursPerDay,
         nonBillableHoursPerDay,
         hoursPerNonBillableTasks,
+        isAdmin:myData.admin,
+        roles: myData.roles,
     }
 
     res.send(result);

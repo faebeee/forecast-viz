@@ -11,6 +11,7 @@ import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 import {withApiRouteSession} from "../../../src/server/with-session";
+import { getAdminAccess } from "../../../src/server/has-admin-access";
 
 export type GetTeamEntriesHandlerResponse = {
     entries: SpentProjectHours[];
@@ -28,7 +29,7 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
     const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
     const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
     const teamId = myTeamEntry!.key;
-    const hasTeamAccess = (myDetails?.roles.includes('Coach') || myDetails?.roles.includes('Project Management')) ?? false;
+    const hasTeamAccess = getAdminAccess(myDetails?.roles ?? []);
 
     if (!hasTeamAccess || !myTeamEntry) {
         res.status(403).send(null);

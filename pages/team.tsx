@@ -64,9 +64,14 @@ export const getServerSideProps: GetServerSideProps = withServerSideSession(
         const allPeople = await forecast.getPersons();
         const projects = await forecast.getProjects();
         const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-
+        if (!myDetails) {
+            throw new Error(`No data found for user ${ userId }`);
+        }
         const myTeamEntry = TEAMS.filter(team => myDetails?.roles.includes(team.key) ?? false).pop();
         const teamId = myTeamEntry!.key;
+        if (!teamId) {
+            throw new Error(`No team found for ${ userData.email } - ${ myDetails!.roles?.join(', ') }`);
+        }
 
         return {
             props: {
