@@ -3,9 +3,8 @@ import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/
 import { getHarvest } from "../../../src/server/get-harvest";
 import { AssignmentEntry, getForecast } from "../../../src/server/get-forecast";
 import { TimeEntry } from "../../../src/server/harvest-types";
-import { getRedis } from "../../../src/server/redis";
-import { REDIS_CACHE_TTL } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type ProjectHours = {
     hoursSpent: number;
@@ -18,10 +17,6 @@ export type GetTeamHoursHandlerResponse = {
 }
 
 export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamHoursHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
@@ -74,4 +69,4 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
 
     res.send(result);
 }
-export default getTeamHoursHandler;
+export default withApiRouteSession(getTeamHoursHandler);

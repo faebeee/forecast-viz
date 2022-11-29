@@ -1,94 +1,42 @@
-import { getHarvest } from "../src/server/get-harvest";
 import { format, startOfWeek } from 'date-fns';
-import { GetServerSideProps } from "next";
 import { Box, Card, CardActions, CardContent, CircularProgress, Grid, Typography } from "@mui/material";
 import Image from 'next/image';
 import "react-datepicker/dist/react-datepicker.css";
-import { DATE_FORMAT } from "../src/components/date-range-widget";
 import { round } from "lodash";
 import { Layout } from "../src/components/layout";
-import {
-    COOKIE_FORC_ACCOUNTID_NAME,
-    COOKIE_HARV_ACCOUNTID_NAME,
-    COOKIE_HARV_TOKEN_NAME
-} from "../src/components/settings";
 import { useFilterContext } from "../src/context/filter-context";
 import { useEffect } from "react";
 import { ContentHeader } from "../src/components/content-header";
 import dynamic from "next/dynamic";
 import { PieChartProps } from "reaviz/dist/src/PieChart/PieChart";
-import { useCompanyStats } from "../src/hooks/use-company-stats";
-import { GridlineSeriesProps } from "reaviz";
-import { useCompanyTeamsStats } from "../src/hooks/use-company-team-stats";
-import { getAdminAccess } from "../src/server/has-admin-access";
-import { getForecast } from "../src/server/get-forecast";
 import mixpanel from "mixpanel-browser";
+import {DATE_FORMAT} from "../src/context/formats";
+import {useRouter} from "next/router";
+import {useCompanyStats, useCompanyTeamsStats, useMe} from "../src/hooks/use-remote";
 
 //@ts-ignore
 const PieChart = dynamic<PieChartProps>(() => import('reaviz').then(module => module.PieChart), { ssr: false });
 //@ts-ignore
 const PieArcSeries = dynamic(() => import('reaviz').then(module => module.PieArcSeries), { ssr: false });
-//@ts-ignore
-const BarChart = dynamic<BarChartProps>(() => import('reaviz').then(module => module.BarChart), { ssr: false });
-//@ts-ignore
-const GridlineSeries = dynamic<GridlineSeriesProps>(() => import('reaviz').then(module => module.GridlineSeries), { ssr: false });
-
-export const getServerSideProps: GetServerSideProps = async ({ query, req }): Promise<{ props: EntriesProps }> => {
-    const from = query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
-    const to = query.to as string ?? format(new Date(), DATE_FORMAT);
-    const token = req.cookies[COOKIE_HARV_TOKEN_NAME] as string;
-    const account = parseInt(req.cookies[COOKIE_HARV_ACCOUNTID_NAME] as string);
-    const forecastAccount = parseInt(req.cookies[COOKIE_FORC_ACCOUNTID_NAME] as string);
-
-    if (!token || !account) {
-        return {
-            props: {
-                from,
-                to,
-                userName: null,
-                hasAdminAccess: false,
-            }
-        }
-    }
-    const api = await getHarvest(token, account);
-    const forecast = getForecast(token, forecastAccount);
-    const userData = await api.getMe();
-    const allPeople = await forecast.getPersons();
-    const userId = userData.id;
-    const myDetails = allPeople.find((p) => p.harvest_user_id === userId);
-    const hasAdminAccess = getAdminAccess(myDetails?.roles ?? []) ?? false;
-    return {
-        props: {
-            from,
-            to,
-            userName: userData.first_name,
-            hasAdminAccess,
-        }
-    }
-}
 
 
-export type EntriesProps = {
-    from: string;
-    to: string;
-    userName?: string | null;
-    hasAdminAccess: boolean;
-}
+export const Company = () => {
+    const router = useRouter()
 
-
-export const Index = ({
-                          userName,
-                          from,
-                          to,
-                          hasAdminAccess,
-                      }: EntriesProps) => {
     const { dateRange } = useFilterContext();
-    const statsApi = useCompanyStats();
-    const teamsStats = useCompanyTeamsStats();
+    const apiParams = {
+        from: format(dateRange[0] ?? new Date(), DATE_FORMAT),
+        to: format(dateRange[1] ?? new Date(), DATE_FORMAT)
+    }
+    const me  = useMe()
+    const statsApi = useCompanyStats(apiParams);
+    const teamsStats = useCompanyTeamsStats(apiParams);
+
+
 
     useEffect(() => {
-        statsApi.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT))
-        teamsStats.load(format(dateRange[0] ?? new Date(), DATE_FORMAT), format(dateRange[1] ?? new Date(), DATE_FORMAT));
+        const from = router.query.from as string ?? format(startOfWeek(new Date(), { weekStartsOn: 1 }), DATE_FORMAT);
+        const to = router.query.to as string ?? format(new Date(), DATE_FORMAT);
 
         if (process.env.NEXT_PUBLIC_ANALYTICS_ID) {
             mixpanel.track('filter', {
@@ -99,7 +47,7 @@ export const Index = ({
     }, [ dateRange ])
 
     return <>
-        <Layout hasAdminAccess={ hasAdminAccess } userName={ userName ?? '' } active={ 'company' }>
+        <Layout hasAdminAccess={ me.data?.hasAdminAccess } userName={ me.data?.userName ?? '' } active={ 'company' }>
             <Box sx={ { flexGrow: 1, } }>
                 <Box p={ 4 }>
                     <ContentHeader title={ 'Company Dashboard' }>
@@ -127,7 +75,7 @@ export const Index = ({
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
                                         <Typography
-                                            variant={ 'h2' }>{ round(statsApi.totalHours ?? 0, 2) }</Typography>
+                                            variant={ 'h2' }>{ round(statsApi.data?.totalHours ?? 0, 2) }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -145,17 +93,17 @@ export const Index = ({
                                 <CardContent>
                                     <Typography variant={ 'body1' }>Team Billable Hours</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
-                                    { !statsApi.isLoading && statsApi.hours &&
+                                    { !statsApi.isLoading && statsApi.data?.hours &&
                                         <Typography
-                                            variant={ 'h2' }>{ round(100 / (statsApi.hours.billable + statsApi.hours.nonBillable) * statsApi.hours.billable, 1) }%</Typography>
+                                            variant={ 'h2' }>{ round(100 / (statsApi.data?.hours.billable + statsApi.data?.hours.nonBillable) * statsApi.data?.hours.billable, 1) }%</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
                                     <Image src={ '/illu/team-work.svg' } width={ 128 } height={ 128 }/>
                                 </Box>
-                                { !statsApi.isLoading && statsApi.hours && <CardActions>
+                                { !statsApi.isLoading && statsApi.data?.hours && <CardActions>
                                     Billable/Non
-                                    Billable: { round(statsApi.hours.billable, 1) }/{ round(statsApi.hours.nonBillable, 1) }
+                                    Billable: { round(statsApi.data?.hours.billable, 1) }/{ round(statsApi.data?.hours.nonBillable, 1) }
                                 </CardActions> }
                             </Card>
                         </Grid>
@@ -170,7 +118,7 @@ export const Index = ({
                                     <Typography variant={ 'body1' }>Company Members</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ statsApi.totalMembers }</Typography>
+                                        <Typography variant={ 'h2' }>{ statsApi.data?.totalMembers }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -189,7 +137,7 @@ export const Index = ({
                                     <Typography variant={ 'body1' }>Company Projects</Typography>
                                     { statsApi.isLoading && <CircularProgress color={ 'secondary' }/> }
                                     { !statsApi.isLoading &&
-                                        <Typography variant={ 'h2' }>{ statsApi.totalProjects }</Typography>
+                                        <Typography variant={ 'h2' }>{ statsApi.data?.totalProjects }</Typography>
                                     }
                                 </CardContent>
                                 <Box sx={ { position: 'absolute', bottom: 24, right: 24 } }>
@@ -209,7 +157,7 @@ export const Index = ({
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (statsApi.hoursPerProject ?? []).map((h) => ({
+                                    data={ (statsApi.data?.hoursPerProject ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
@@ -228,7 +176,7 @@ export const Index = ({
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.roles ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
@@ -246,7 +194,7 @@ export const Index = ({
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.teams ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.hours
                                     })) ?? [] }/>
@@ -264,7 +212,7 @@ export const Index = ({
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.roleStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.roles ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.members
                                     })) ?? [] }/>
@@ -282,7 +230,7 @@ export const Index = ({
                                         padRadius={ 200 }
                                         doughnut={ true }
                                     /> }
-                                    data={ (teamsStats.teamStats ?? []).map((h) => ({
+                                    data={ (teamsStats.data?.teams ?? []).map((h) => ({
                                         key: h.name,
                                         data: h.members
                                     })) ?? [] }/>
@@ -295,4 +243,4 @@ export const Index = ({
     </>
         ;
 }
-export default Index;
+export default Company;

@@ -1,8 +1,8 @@
 import { TimeEntry } from "./harvest-types";
 import { AssignmentEntry, Forecast } from "./get-forecast";
 import { HoursPerUserItemHistory } from "../../pages/api/team/stats";
-import { format, isWeekend, parse } from "date-fns";
-import { DATE_FORMAT } from "../components/date-range-widget";
+import { format, isWeekend } from "date-fns";
+import {DATE_FORMAT} from "../context/formats";
 
 
 export type SpentProjectHours = {
@@ -44,6 +44,15 @@ export type TeamHoursEntry = {
     userId: number;
     projects: Record<string, TeamHoursProjectEntry>
 }
+export type BillableHours = {
+    billable: number;
+    nonBillable: number
+}
+export type UserHours = {
+    name: string
+    hours: number
+}
+
 export const getTeamHours = (teamEntries: TimeEntry[]): Record<number, TeamHoursEntry> => {
     return teamEntries.reduce((acc, entry) => {
         if (!acc[entry.user.id]) {
@@ -230,6 +239,26 @@ export const getHoursPerTask = (entries: TimeEntry[]): HourPerTaskObject[] => {
     }, {} as Record<string, HourPerTaskObject>));
 }
 
+export const excludeLeaveTasks = (entries: TimeEntry[]): TimeEntry[] => {
+    const leaveTaskIDs = process.env.LEAVE_TASK_IDS ? process.env.LEAVE_TASK_IDS.split(',') : []
+    return entries.filter((entry) => {
+        return !leaveTaskIDs.includes(entry.task.id.toString())
+    })
+}
+
+
+export const getBillableHours = (entries: TimeEntry[]) : {billable: number, nonBillable: number} => {
+    return entries.reduce((acc, entry) => {
+        if (entry.billable) {
+            acc.billable += entry.hours;
+        } else {
+            acc.nonBillable += entry.hours;
+        }
+        return acc;
+    }, { billable: 0, nonBillable: 0 });
+}
+
+
 export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Date): HoursPerUserItemHistory[] => {
     const days = getDates(from, to);
 
@@ -257,4 +286,36 @@ export const getHoursPerUserHistory = (entries: TimeEntry[], from: Date, to: Dat
 
 export const filterEntriesForUser = (entries: TimeEntry[], userId: number) => {
     return entries.filter((e) => e.user.id === userId);
+}
+
+export const billableHourPercentage = (billableHours: BillableHours) => {
+    return 100 / (billableHours.billable + billableHours.nonBillable) * billableHours.billable
+}
+
+export const IRON_SESSION_OPTIONS = {
+    cookieName: "forecast-viz-session",
+    password: process.env.IRON_SESSION_PASSWORD as string,
+    // secure: true should be used in production (HTTPS) but can't be used in development (HTTP)
+    cookieOptions: {
+        secure: process.env.NODE_ENV === "production",
+    },
+};
+
+export const filterNonBillableEntries = (entries: TimeEntry[]): TimeEntry[] => {
+    return entries.filter((entry) => !entry.billable);
+}
+
+export const getInternalTeamTaskEntries = (entries: TimeEntry[]) : UserHours[] => {
+    const internalTeamTaskID = process.env.INTERNAL_TEAM_TASK_ID ? process.env.INTERNAL_TEAM_TASK_ID : ''
+    const teamEntriesInternal = entries.filter((entry) => entry.task.id.toString() === internalTeamTaskID);
+    return Object.values(teamEntriesInternal.reduce((acc, entry) => {
+        if (!acc[entry.user.name]) {
+            acc[entry.user.name] = {
+                name: entry.user.name,
+                hours: 0
+            }
+        }
+        acc[entry.user.name].hours += entry.hours
+        return acc;
+    }, {} as Record<string, UserHours>))
 }

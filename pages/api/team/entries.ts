@@ -1,20 +1,23 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
-import { getTeamHoursEntries, SpentProjectHours } from "../../../src/server/utils";
+import {
+    getInternalTeamTaskEntries,
+    getTeamHoursEntries,
+    SpentProjectHours,
+    UserHours
+} from "../../../src/server/utils";
 import { getForecast } from "../../../src/server/get-forecast";
 import { TEAMS } from "../../../src/config";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
+import {withApiRouteSession} from "../../../src/server/with-session";
 
 export type GetTeamEntriesHandlerResponse = {
     entries: SpentProjectHours[];
+    internalTeamHoursEntries: UserHours[]
 }
 
 export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamEntriesHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
@@ -38,11 +41,13 @@ export const getTeamHoursHandler = async (req: NextApiRequest, res: NextApiRespo
     const teamEntries = await getTimeEntriesForUsers(harvest, teamPeople, range.from, range.to, projectId);
     const assignments = await forecast.getAssignments(range.from, range.to, projectId);
     const teamProjectHourEntries = getTeamHoursEntries(teamEntries, assignments);
+    const internalTeamHoursEntries = getInternalTeamTaskEntries(teamEntries);
 
     const result = {
         entries: teamProjectHourEntries,
+        internalTeamHoursEntries
     };
 
     res.send(result);
 }
-export default getTeamHoursHandler;
+export default withApiRouteSession(getTeamHoursHandler);

@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    filterActiveAssignments,
+    billableHourPercentage, excludeLeaveTasks,
+    filterActiveAssignments, filterNonBillableEntries, getBillableHours,
     getDates,
     getHoursPerTask,
     getMyAssignments,
@@ -12,9 +13,10 @@ import { AssignmentEntry, Forecast, getForecast } from "../../../src/server/get-
 import { TimeEntry } from "../../../src/server/harvest-types";
 import { HourPerDayEntry } from "../../../src/type";
 import { differenceInBusinessDays, format, isWeekend, parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
 import { getTimeEntriesForUser } from "../../../src/server/services/get-time-entries-for-users";
 import { sortBy } from "lodash";
+import { DATE_FORMAT } from "../../../src/context/formats";
+import { withApiRouteSession } from "../../../src/server/with-session";
 
 export type GetStatsHandlerResponse = {
     totalHours: number;
@@ -29,14 +31,13 @@ export type GetStatsHandlerResponse = {
     lastEntryDate: string;
     hoursPerDay: HourPerDayEntry[];
     overtimePerDay: HourPerDayEntry[];
+    billableHoursPerDay: HourPerDayEntry[];
+    nonBillableHoursPerDay: HourPerDayEntry[];
     hoursPerTask: HourPerTaskObject[];
+    hoursPerNonBillableTasks: HourPerTaskObject[];
 }
 
 export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
     const harvest = await getHarvest(apiAuth.harvestToken, apiAuth.harvestAccount);
@@ -96,17 +97,33 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
             return { ...entry, hours: Math.max(entry.hours - dailyCapacity, 0) }
         });
 
-    const billableHours = entries.reduce((acc, entry) => {
-        if (entry.billable) {
-            acc.billable += entry.hours;
-        } else {
-            acc.nonBillable += entry.hours;
+
+    const billableHoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = {date: entry.spent_date, hours: 0};
         }
-
+        if (entry.billable) {
+            acc[entry.spent_date].hours += entry.hours;
+        }
         return acc;
-    }, { billable: 0, nonBillable: 0 });
+    }, getRecord()));
 
-    const hoursPerTask = getHoursPerTask(entries);
+    const nonBillableHoursPerDay: HourPerDayEntry[] = Object.values<{ date: string, hours: number }>(entries.reduce((acc, entry) => {
+        if (!acc[entry.spent_date]) {
+            acc[entry.spent_date] = {date: entry.spent_date, hours: 0};
+        }
+        if (!entry.billable) {
+            acc[entry.spent_date].hours += entry.hours;
+        }
+        return acc;
+    }, getRecord()));
+
+
+    const attendanceEntries = excludeLeaveTasks(entries)
+    const billableHours = getBillableHours(attendanceEntries);
+    const hoursPerTask = getHoursPerTask(attendanceEntries);
+    const nonBillableAttendanceEntries = filterNonBillableEntries(attendanceEntries)
+    const hoursPerNonBillableTasks = getHoursPerTask(nonBillableAttendanceEntries)
     const lastEntryDate = entries[0]?.spent_date;
 
     const result = {
@@ -114,7 +131,7 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         totalPlannedHours,
         totalProjects,
         hoursPerDay: sortBy(hoursPerDay, 'date'),
-        billableHoursPercentage: 100 / (billableHours.billable + billableHours.nonBillable) * billableHours.billable,
+        billableHoursPercentage: billableHourPercentage(billableHours),
         billableHours: billableHours.billable,
         nonBillableHours: billableHours.nonBillable,
         avgPerDay: (totalHours / rangeDays),
@@ -123,8 +140,11 @@ export const getStatsHandler = async (req: NextApiRequest, res: NextApiResponse<
         hoursPerTask,
         lastEntryDate,
         overtimePerDay,
+        billableHoursPerDay,
+        nonBillableHoursPerDay,
+        hoursPerNonBillableTasks,
     }
 
     res.send(result);
 }
-export default getStatsHandler;
+export default withApiRouteSession(getStatsHandler);

@@ -2,7 +2,8 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getAuthFromCookies, getRange, hasApiAccess } from "../../../src/server/api-utils";
 import { getHarvest } from "../../../src/server/get-harvest";
 import {
-    filterEntriesForUser,
+    billableHourPercentage, BillableHours, excludeLeaveTasks,
+    filterEntriesForUser, getBillableHours,
     getHoursPerTask,
     getHoursPerUser,
     getHoursPerUserHistory,
@@ -15,7 +16,9 @@ import { TimeEntry } from "../../../src/server/harvest-types";
 import { getRedis } from "../../../src/server/redis";
 import { getTimeEntriesForUsers } from "../../../src/server/services/get-time-entries-for-users";
 import { parse } from "date-fns";
-import { DATE_FORMAT } from "../../../src/components/date-range-widget";
+import {DATE_FORMAT} from "../../../src/context/formats";
+import {withApiRouteSession} from "../../../src/server/with-session";
+import {round} from "lodash";
 
 export type GetTeamStatsHandlerResponse = {
     totalMembers: number;
@@ -25,8 +28,8 @@ export type GetTeamStatsHandlerResponse = {
     plannedHoursPerUser: HoursPerUserItem[];
     hoursPerUserHistory: HoursPerUserItemHistory[];
     hoursPerTask: HourPerTaskObject[];
-    hours: { billable: number, nonBillable: number },
-    statsPerUser: { user: string, lastEntryDate: string }[]
+    hours: BillableHours,
+    statsPerUser: { user: string, lastEntryDate: string, billableRate: number }[]
 }
 export type HoursPerUserItemHistory = {
     user: string;
@@ -37,10 +40,6 @@ export type HoursPerUserItem = {
 }
 
 export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiResponse<GetTeamStatsHandlerResponse | null>) => {
-    if (!hasApiAccess(req)) {
-        res.status(403).send(null);
-        return;
-    }
     const projectId = req.query['project_id'] ? parseInt(req.query['project_id'] as string) : undefined;
     const apiAuth = getAuthFromCookies(req);
     const range = getRange(req);
@@ -107,24 +106,21 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }, new Map<number, HoursPerUserItem>());
 
 
-    const billableHours = entries.reduce((acc, entry) => {
-        if (entry.billable) {
-            acc.billable += entry.hours;
-        } else {
-            acc.nonBillable += entry.hours;
-        }
-
-        return acc;
-    }, { billable: 0, nonBillable: 0 });
+    const attendanceEntries = excludeLeaveTasks(entries)
+    const billableHours = getBillableHours(attendanceEntries)
 
     const hoursPerTask = getHoursPerTask(entries);
 
     const statsPerUser = teamPeople.map((person) => {
         const usersEntries = filterEntriesForUser(entries, person.harvest_user_id);
         const lastEntryDate = usersEntries[0]?.spent_date ?? '?';
+        const attendanceEntries = excludeLeaveTasks(usersEntries)
+        const billableHoursPerUser = getBillableHours(attendanceEntries);
+        const billableRatePerUser = billableHourPercentage(billableHoursPerUser)
         return {
             user: `${ person.first_name } ${ person.last_name }`,
             lastEntryDate,
+            billableRate: round(billableRatePerUser, 2)
         }
     })
 
@@ -146,4 +142,4 @@ export const getTeamStatsHandler = async (req: NextApiRequest, res: NextApiRespo
     }
     res.send(result);
 }
-export default getTeamStatsHandler;
+export default withApiRouteSession(getTeamStatsHandler);

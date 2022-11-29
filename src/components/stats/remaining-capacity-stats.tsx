@@ -1,17 +1,18 @@
 import { Box, Card, CardActions, CardContent, CircularProgress, Typography } from "@mui/material";
 import { round } from "lodash";
 import Image from "next/image";
-import { useStatsApiContext } from "../../context/stats-api-context";
+import {DefaultParams, useStats} from "../../hooks/use-remote";
 
 export type RemainingCapacityStatsProps = {
     amountOfDays: number;
+    params: DefaultParams
 }
 
-export const RemainingCapacityStats = ({ amountOfDays }: RemainingCapacityStatsProps) => {
-    const statsApi = useStatsApiContext();
+export const RemainingCapacityStats = ({ amountOfDays, params }: RemainingCapacityStatsProps) => {
+    const statsApi = useStats(params)
 
-    const hoursOverCapacity = (statsApi.totalPlannedHours) - ((statsApi.totalHoursPerDayCapacity * amountOfDays));
-    const percentage = 100 / (statsApi.totalPlannedHours ?? 1) * hoursOverCapacity;
+    const hoursOverCapacity = (statsApi.data?.totalPlannedHours ?? 0 ) - (statsApi.data?.totalHoursPerDayCapacity ?? 0) * amountOfDays;
+    const percentage = 100 / (statsApi.data?.totalPlannedHours ?? 1) * hoursOverCapacity;
 
     return <Card sx={ {
         position: 'relative',
@@ -36,11 +37,11 @@ export const RemainingCapacityStats = ({ amountOfDays }: RemainingCapacityStatsP
             </Box>
         </CardContent>
 
-        { !!statsApi.totalPlannedHours && !statsApi.isLoading && <CardActions>
+        { !!statsApi.data?.totalPlannedHours && !statsApi.isLoading && <CardActions>
             <Typography component={ 'p' }>Planned
-                hours: { round(statsApi.totalPlannedHours ?? 0, 2) }</Typography>
+                hours: { round(statsApi.data?.totalPlannedHours ?? 0, 2) }</Typography>
             <Typography
-                component={ 'p' }>Capacity: { round(statsApi.totalHoursPerDayCapacity * amountOfDays, 2) }</Typography>
+                component={ 'p' }>Capacity: { round(statsApi.data?.totalHoursPerDayCapacity * amountOfDays, 2) }</Typography>
         </CardActions> }
 
     </Card>;
