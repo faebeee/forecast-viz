@@ -4,6 +4,7 @@ import { DateRangeWidget } from "./date-range-widget";
 import { endOfMonth, startOfMonth, startOfYear, sub } from "date-fns";
 import { useFilterContext } from "../context/filter-context";
 import { MoreVert } from "@mui/icons-material";
+import { DateRangeNavigation } from './date-range-navigation';
 
 export type ContentHeaderProps = PropsWithChildren<{
     title: ReactNode;
@@ -34,8 +35,11 @@ export const ContentHeader = ({ title, children, showPicker = true }: ContentHea
             </Typography>
             { children }
         </Box>
-        { showPicker && <Box sx={ { display: 'flex', alignItems: 'center', width: 280 } }>
-            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+        { showPicker && <Box sx={ { display: 'flex', alignItems: 'center', width: 380 } }>    
+            <DateRangeNavigation dateRange={ dateRange } onChange={ setDateRange }>
+                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+            </DateRangeNavigation>
+            
             <IconButton
                 sx={ { ml: 1 } }
                 onClick={ handleClick }
