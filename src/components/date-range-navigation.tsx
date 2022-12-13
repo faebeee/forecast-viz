@@ -1,10 +1,11 @@
-import { IconButton } from '@mui/material';
+import { FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
 import { endOfMonth, startOfMonth, endOfYear, startOfYear, sub, differenceInDays, isSameWeek, startOfWeek, endOfWeek, isSameMonth, isSameYear, add, setDefaultOptions, getDefaultOptions, startOfDay, endOfDay } from 'date-fns';
 import { PropsWithChildren, useEffect, useState } from 'react';
-import { NavigateBefore, NavigateNext } from '@mui/icons-material';
+import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
 
 export type DateRangeNavigationProps = PropsWithChildren<{
-    dateRange: DateRange
+    dateRange: DateRange,
+    showMoreOptions: boolean,
     onChange: (d: DateRange) => void;
 }>;
 
@@ -13,11 +14,11 @@ export type DateRange = [Date, Date];
 type ModifierFunction = (date: Date, duration: Duration) => Date;
 type StartEndOfIntervalFunction = (date: Date, options?: object) => Date;
 
-const enum DateInterval{
-    Day,
-    Week,
-    Month,
-    Year
+enum DateInterval{
+    Day = "days",
+    Week = "weeks",
+    Month = "months",
+    Year = "years"
 }
 
 const getDateRangeInterval = (dateRange: DateRange) : DateInterval => {
@@ -33,6 +34,14 @@ const getDateRangeInterval = (dateRange: DateRange) : DateInterval => {
 const shift = (someDate: Date, modifier: ModifierFunction, duration: object, startOfInterval: StartEndOfIntervalFunction, endOfInterval: StartEndOfIntervalFunction): DateRange => {
     const options = getDefaultOptions();
     return [startOfInterval(modifier(someDate, duration), options), endOfInterval(modifier(someDate, duration), options)];
+}
+
+const prepend = (dateRange: DateRange, duration: object): DateRange => {
+    return [sub(dateRange[0], duration), dateRange[1]];
+}
+
+const append = (dateRange: DateRange, duration: object): DateRange => {
+    return [dateRange[0], add(dateRange[1], duration)];
 }
 
 const IntervalMapper = {
@@ -76,8 +85,10 @@ const IntervalMapper = {
     }
 }
 
-export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRangeNavigationProps) => {
+export const DateRangeNavigation = ({ dateRange, showMoreOptions, children, onChange }: DateRangeNavigationProps) => {
     const [ range, setRange ] = useState<DateRange>(dateRange);
+    const [ periodInterval, setPeriodInterval ] = useState<string>(''); 
+
     setDefaultOptions({ weekStartsOn: 1 });
 
     useEffect(() => {
@@ -85,18 +96,53 @@ export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRange
     }, [dateRange]);
 
     const handlePeriodNavigation = (moveNext: boolean) => {
-        const interval : DateInterval = getDateRangeInterval(range);
+        const interval : DateInterval = periodInterval ? periodInterval as DateInterval : getDateRangeInterval(range);
         onChange?.(IntervalMapper[interval](range, moveNext));
     }
 
+    const handlePeriodIntervalChange = (event: SelectChangeEvent<DateInterval>) => {
+        setPeriodInterval(DateInterval[event.target.value as keyof typeof DateInterval]);
+    };
+
+    const handlePrependPeriodNavigation = () => {
+        const duration = { [periodInterval]: 1 }
+        onChange?.(prepend(range, duration));
+    }
+
+    const handleAppendPeriodNavigation = () => {
+        const duration = { [periodInterval]: 1 }
+        onChange?.(append(range, duration));
+    }
+    
     return (
         <>
+            <FormControl sx={{ m: 1, minWidth: 120, display: showMoreOptions?'inline-flex':'none' }} size="medium">
+                <InputLabel>Period Interval</InputLabel>
+                <Select
+                    defaultValue={undefined}
+                    label="Period Interval"
+                    onChange={handlePeriodIntervalChange}>
+                    {Object.keys(DateInterval).map((key, index) => (
+                        <MenuItem key={index} value={key}>{key}</MenuItem>    
+                    ))}
+                </Select>
+            </FormControl>
+            <IconButton 
+                sx={{ display: showMoreOptions?'inline-flex':'none' }} 
+                onClick={ () => handlePrependPeriodNavigation() }>
+                <FirstPage />
+            </IconButton>
             <IconButton sx={ { mr: 1 } } onClick={ () => handlePeriodNavigation(false) }>
                 <NavigateBefore />
             </IconButton>
                 {children}
             <IconButton sx={ { ml: 1 } } onClick={ () => handlePeriodNavigation(true) }>
                 <NavigateNext />
+            </IconButton>
+            <IconButton 
+            sx={{ display: showMoreOptions?'inline-flex':'none' }} 
+            onClick={ () => handleAppendPeriodNavigation() }>
+                <LastPage />
             </IconButton>
         </>
     )

@@ -1,4 +1,4 @@
-import { TextField } from "@mui/material";
+import { Box, TextField } from "@mui/material";
 import DatePicker from "react-datepicker";
 import { useEffect, useState } from "react";
 import {DATE_FORMAT} from "../context/formats";
@@ -21,13 +21,17 @@ export const DateRangeWidget = ({ dateRange, onChange, onClose }: DateRangeWidge
         setRange(dateRange);
     }, [ dateRange ])
 
-    return <DatePicker
-        selectsRange
-        startDate={ range[0] }
-        endDate={ range[1] }
-        dateFormat={ DATE_FORMAT }
-        customInput={ <TextField variant={ 'outlined' } label={ 'Date range' } fullWidth/> }
-        onCalendarClose={ onCalendarClose }
-        onChange={ (d) => setRange(d as [ Date, Date ]) }
-    />
+    return (
+    <Box sx={ { minWidth:230 } }>
+        <DatePicker
+            selectsRange
+            startDate={ range[0] }
+            endDate={ range[1] }
+            dateFormat={ DATE_FORMAT }
+            customInput={ <TextField variant={ 'outlined' } label={ 'Date range' } fullWidth/> }
+            onCalendarClose={ onCalendarClose }
+            onChange={ (d) => setRange(d as [ Date, Date ]) }
+            />
+    </Box>
+    )
 }
