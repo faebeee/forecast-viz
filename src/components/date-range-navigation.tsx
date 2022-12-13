@@ -1,12 +1,17 @@
 import { IconButton } from '@mui/material';
-import { endOfMonth, startOfMonth, endOfYear, startOfYear, sub, differenceInDays, isSameWeek, startOfWeek, endOfWeek, isSameMonth, isSameYear, add } from 'date-fns';
-import { PropsWithChildren } from 'react';
+import { endOfMonth, startOfMonth, endOfYear, startOfYear, sub, differenceInDays, isSameWeek, startOfWeek, endOfWeek, isSameMonth, isSameYear, add, setDefaultOptions, getDefaultOptions, startOfDay, endOfDay } from 'date-fns';
+import { PropsWithChildren, useEffect, useState } from 'react';
 import { ArrowBackIosNew, ArrowForwardIos } from '@mui/icons-material';
 
 export type DateRangeNavigationProps = PropsWithChildren<{
-    dateRange: [ Date, Date ]
-    onChange: (d: [ Date, Date ]) => void;
+    dateRange: DateRange
+    onChange: (d: DateRange) => void;
 }>;
+
+export type DateRange = [Date, Date];
+
+type ModifierFunction = (date: Date, duration: Duration) => Date;
+type StartEndOfIntervalFunction = (date: Date, options?: object) => Date;
 
 const enum DateInterval{
     Day,
@@ -15,80 +20,73 @@ const enum DateInterval{
     Year
 }
 
-export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRangeNavigationProps) => {
-    const getDateRangeInterval = () : DateInterval => {
-        const startDate = dateRange[0];
-        const endDate = dateRange[1];
-        const daysBetween = differenceInDays(endDate, startDate);
+const getDateRangeInterval = (dateRange: DateRange) : DateInterval => {
+    const daysBetween = differenceInDays(dateRange[1], dateRange[0]);
+    
+    if(daysBetween >= 6 && daysBetween < 27) return DateInterval.Week; 
+    if(daysBetween >= 27 && daysBetween < 31) return DateInterval.Month;
+    if(daysBetween >= 60) return DateInterval.Year;
+
+    return DateInterval.Day;
+}
+
+const shift = (someDate: Date, modifier: ModifierFunction, duration: object, startOfInterval: StartEndOfIntervalFunction, endOfInterval: StartEndOfIntervalFunction): DateRange => {
+    const options = getDefaultOptions();
+    return [startOfInterval(modifier(someDate, duration), options), endOfInterval(modifier(someDate, duration), options)];
+}
+
+const IntervalMapper = {
+    [DateInterval.Day]: (range: DateRange, moveNext: boolean) => {
+        const [startDate] = range;
+        const duration : object = { days: 1 };
+        return moveNext ? shift(startDate, add, duration, startOfDay, endOfDay) : shift(startDate, sub, duration, startOfDay, endOfDay);
+    },
+    [DateInterval.Week]: (range: DateRange, moveNext: boolean) => {
+        const [startDate, endDate] = range;
+        let duration : object = { weeks: 0 };
         
-        if(daysBetween >= 6 && daysBetween < 28){
-            return DateInterval.Week; 
-        }
-        if(daysBetween >= 28 && daysBetween < 31){
-            return DateInterval.Month;
-        }
-        if(daysBetween >= 60){
-            return DateInterval.Year;
+        if(isSameWeek(startDate, endDate, getDefaultOptions())){
+            duration = { weeks: 1 };
+            return moveNext ? shift(startDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek)
         }
 
-        return DateInterval.Day;
+        return moveNext ? shift(endDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek)
+    },
+    [DateInterval.Month]: (range: DateRange, moveNext: boolean) => {
+        const [startDate, endDate] = range;
+        let duration : object = { months: 0 };
+        
+        if(isSameMonth(startDate, endDate)){ 
+            duration = { months: 1 };
+            return moveNext ? shift(startDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth)
+        }
+
+        return moveNext ? shift(endDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth)
+    },
+    [DateInterval.Year]: (range: DateRange, moveNext: boolean) => {
+        const [startDate, endDate] = range;
+        let duration : object = { years: 0 };
+        
+        if(isSameYear(startDate, endDate)){
+            duration = { years: 1 };
+            return moveNext ? shift(startDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear)
+        }
+
+        return moveNext ? shift(endDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear)
     }
+}
+
+export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRangeNavigationProps) => {
+    const [ range, setRange ] = useState<DateRange>(dateRange);
+    setDefaultOptions({ weekStartsOn: 1 })
+
+    useEffect(() => {
+        setRange(dateRange);
+    }, [dateRange])
 
     const handlePeriodNavigation = (moveNext: boolean) => {
-        const interval: DateInterval = getDateRangeInterval();
-        const startDate: Date = dateRange[0];
-        const endDate: Date = dateRange[1];
-        let range: [Date, Date] = dateRange;
-
-        switch(interval) {
-            case DateInterval.Day: {
-                range = moveNext ? 
-                    [add(startDate, { days: 1 }), add(startDate, { days: 1 })] :
-                    [sub(startDate, { days: 1 }), sub(startDate, { days: 1 })];
-                break;
-            }
-            case DateInterval.Week: {
-                if(isSameWeek(startDate, endDate, { weekStartsOn: 1 })) {
-                    range = moveNext ? 
-                        [startOfWeek(add(startDate, { days: 7 }), { weekStartsOn: 1 }), endOfWeek(add(startDate, { days:7 }), { weekStartsOn: 1 })] : 
-                        [startOfWeek(sub(startDate, { days: 7 }), { weekStartsOn: 1 }), endOfWeek(sub(startDate, { days:7 }), { weekStartsOn: 1 })];
-                } else {
-                    range = moveNext ?
-                        [startOfWeek(endDate, { weekStartsOn: 1 }), endOfWeek(endDate, { weekStartsOn: 1 })] :
-                        [startOfWeek(startDate, { weekStartsOn: 1 }), endOfWeek(startDate, { weekStartsOn: 1 })];
-                }
-                break;
-            }
-            case DateInterval.Month: {
-                if(isSameMonth(startDate, endDate)) {
-                    range = moveNext ?
-                        [startOfMonth(add(startDate, { months: 1 })), endOfMonth(add(startDate, { months: 1 }))] :
-                        [startOfMonth(sub(startDate, { months: 1 })), endOfMonth(sub(startDate, { months: 1 }))];
-                } else {
-                    range = moveNext ?
-                        [startOfMonth(endDate), endOfMonth(endDate)] :
-                        [startOfMonth(startDate), endOfMonth(startDate)];
-                }
-                break;
-            }
-            case DateInterval.Year: {
-                if(isSameYear(startDate, endDate)) {
-                    range = moveNext ? 
-                        [startOfYear(add(startDate, { years: 1 })), endOfYear(add(startDate, { years: 1 }))] :
-                        [startOfYear(sub(startDate, { years: 1 })), endOfYear(sub(startDate, { years: 1 }))];
-                } else {
-                    range = moveNext ?
-                        [startOfYear(endDate), endOfYear(endDate)] :
-                        [startOfYear(startDate), endOfYear(startDate)];
-                }
-                break;
-            }
-            default: {
-                break;
-            }
-        }
-
-        onChange?.(range);
+        const interval : DateInterval = getDateRangeInterval(range);
+        onChange?.(IntervalMapper[interval](range, moveNext));
     }
 
     return (
