@@ -47,10 +47,10 @@ const IntervalMapper = {
         
         if(isSameWeek(startDate, endDate, getDefaultOptions())){
             duration = { weeks: 1 };
-            return moveNext ? shift(startDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek)
+            return moveNext ? shift(startDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek);
         }
 
-        return moveNext ? shift(endDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek)
+        return moveNext ? shift(endDate, add, duration, startOfWeek, endOfWeek) : shift(startDate, sub, duration, startOfWeek, endOfWeek);
     },
     [DateInterval.Month]: (range: DateRange, moveNext: boolean) => {
         const [startDate, endDate] = range;
@@ -58,10 +58,10 @@ const IntervalMapper = {
         
         if(isSameMonth(startDate, endDate)){ 
             duration = { months: 1 };
-            return moveNext ? shift(startDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth)
+            return moveNext ? shift(startDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth);
         }
 
-        return moveNext ? shift(endDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth)
+        return moveNext ? shift(endDate, add, duration, startOfMonth, endOfMonth) : shift(startDate, sub, duration, startOfMonth, endOfMonth);
     },
     [DateInterval.Year]: (range: DateRange, moveNext: boolean) => {
         const [startDate, endDate] = range;
@@ -69,20 +69,20 @@ const IntervalMapper = {
         
         if(isSameYear(startDate, endDate)){
             duration = { years: 1 };
-            return moveNext ? shift(startDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear)
+            return moveNext ? shift(startDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear);
         }
 
-        return moveNext ? shift(endDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear)
+        return moveNext ? shift(endDate, add, duration, startOfYear, endOfYear) : shift(startDate, sub, duration, startOfYear, endOfYear);
     }
 }
 
 export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRangeNavigationProps) => {
     const [ range, setRange ] = useState<DateRange>(dateRange);
-    setDefaultOptions({ weekStartsOn: 1 })
+    setDefaultOptions({ weekStartsOn: 1 });
 
     useEffect(() => {
         setRange(dateRange);
-    }, [dateRange])
+    }, [dateRange]);
 
     const handlePeriodNavigation = (moveNext: boolean) => {
         const interval : DateInterval = getDateRangeInterval(range);
