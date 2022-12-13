@@ -1,7 +1,7 @@
 import { IconButton } from '@mui/material';
 import { endOfMonth, startOfMonth, endOfYear, startOfYear, sub, differenceInDays, isSameWeek, startOfWeek, endOfWeek, isSameMonth, isSameYear, add, setDefaultOptions, getDefaultOptions, startOfDay, endOfDay } from 'date-fns';
 import { PropsWithChildren, useEffect, useState } from 'react';
-import { ArrowBackIosNew, ArrowForwardIos } from '@mui/icons-material';
+import { NavigateBefore, NavigateNext } from '@mui/icons-material';
 
 export type DateRangeNavigationProps = PropsWithChildren<{
     dateRange: DateRange
@@ -92,11 +92,11 @@ export const DateRangeNavigation = ({ dateRange, children, onChange }: DateRange
     return (
         <>
             <IconButton sx={ { mr: 1 } } onClick={ () => handlePeriodNavigation(false) }>
-                <ArrowBackIosNew />
+                <NavigateBefore />
             </IconButton>
                 {children}
             <IconButton sx={ { ml: 1 } } onClick={ () => handlePeriodNavigation(true) }>
-                <ArrowForwardIos />
+                <NavigateNext />
             </IconButton>
         </>
     )
