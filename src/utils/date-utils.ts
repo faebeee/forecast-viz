@@ -27,6 +27,14 @@ const shift = (someDate: Date, modifier: ModifierFunction, duration: object, sta
     return [startOfInterval(modifier(someDate, duration), options), endOfInterval(modifier(someDate, duration), options)];
 }
 
+export const prepend = (dateRange: DateRange, duration: object): DateRange => {
+    return [sub(dateRange[0], duration), dateRange[1]];
+}
+
+export const append = (dateRange: DateRange, duration: object): DateRange => {
+    return [dateRange[0], add(dateRange[1], duration)];
+}
+
 export const getDateRangeInterval = (dateRange: DateRange): DateInterval => {
     const daysBetween = differenceInDays(dateRange[1], dateRange[0]);
 

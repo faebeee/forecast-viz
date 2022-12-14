@@ -1,8 +1,8 @@
 import { FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material';
-import { sub, add, setDefaultOptions } from 'date-fns';
+import { setDefaultOptions } from 'date-fns';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { FirstPage, LastPage, NavigateBefore, NavigateNext } from '@mui/icons-material';
-import {DateInterval, DateRange, getDateRangeInterval, IntervalMapper} from "../utils/date-utils";
+import {DateInterval, DateRange, getDateRangeInterval, IntervalMapper, prepend, append} from "../utils/date-utils";
 
 export type DateRangeNavigationProps = PropsWithChildren<{
     dateRange: DateRange,
@@ -10,23 +10,15 @@ export type DateRangeNavigationProps = PropsWithChildren<{
     onChange: (d: DateRange) => void;
 }>;
 
-
-const prepend = (dateRange: DateRange, duration: object): DateRange => {
-    return [sub(dateRange[0], duration), dateRange[1]];
-}
-
-const append = (dateRange: DateRange, duration: object): DateRange => {
-    return [dateRange[0], add(dateRange[1], duration)];
-}
-
 export const DateRangeNavigation = ({ dateRange, showMoreOptions, children, onChange }: DateRangeNavigationProps) => {
     const [ range, setRange ] = useState<DateRange>(dateRange);
-    const [ periodInterval, setPeriodInterval ] = useState<string>(''); 
-
+    const [ periodInterval, setPeriodInterval ] = useState<DateInterval>(getDateRangeInterval(range)); 
+    
     setDefaultOptions({ weekStartsOn: 1 });
 
     useEffect(() => {
         setRange(dateRange);
+        setPeriodInterval(getDateRangeInterval(dateRange));
     }, [dateRange]);
 
     const handlePeriodNavigation = (moveNext: boolean) => {
@@ -48,16 +40,21 @@ export const DateRangeNavigation = ({ dateRange, showMoreOptions, children, onCh
         onChange?.(append(range, duration));
     }
     
+    const getKeyFromEnumValue = (value : string) : DateInterval => {
+        const indexOfKey = Object.values(DateInterval).indexOf(value as unknown as DateInterval);
+        return Object.keys(DateInterval)[indexOfKey] as DateInterval;
+    }
+
     return (
         <>
             <FormControl sx={{ m: 1, minWidth: 120, display: showMoreOptions?'inline-flex':'none' }} size="medium">
                 <InputLabel>Period Interval</InputLabel>
                 <Select
-                    defaultValue={undefined}
+                    value={getKeyFromEnumValue(periodInterval)}
                     label="Period Interval"
                     onChange={handlePeriodIntervalChange}>
                     {Object.keys(DateInterval).map((key, index) => (
-                        <MenuItem key={index} value={key}>{key}</MenuItem>    
+                        <MenuItem key={index} value={key}>{key}</MenuItem>
                     ))}
                 </Select>
             </FormControl>
