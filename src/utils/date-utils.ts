@@ -31,35 +31,36 @@ export const getDateRangeInterval = (dateRange: DateRange): DateInterval => {
     const daysBetween = differenceInDays(dateRange[1], dateRange[0]);
 
     if (daysBetween >= 6 && daysBetween < 27) return DateInterval.Week;
-    if (daysBetween >= 27 && daysBetween < 31) return DateInterval.Month;
+    if (daysBetween >= 27 && daysBetween < 60) return DateInterval.Month;
     if (daysBetween >= 60) return DateInterval.Year;
 
     return DateInterval.Day;
 }
+
 export const IntervalMapper = {
     [DateInterval.Day]: (range: DateRange, moveNext: boolean) => {
-        const [startDate] = range;
-        return shift(startDate, moveNext ? add : sub, { days: 1 }, startOfDay, endOfDay);
+        const [startDate, endDate] = range;
+        return shift(moveNext ? endDate : startDate, moveNext ? add : sub, { days: 1 }, startOfDay, endOfDay);
     },
     [DateInterval.Week]: (range: DateRange, moveNext: boolean) => {
         const [startDate, endDate] = range;
         const sameWeek = isSameWeek(startDate, endDate, getDefaultOptions());
         const duration = sameWeek ? {weeks: 1} : {weeks: 0};
-        const date = sameWeek ? endDate : startDate;
+        const date = moveNext && sameWeek ? startDate : moveNext ? endDate : startDate;
         return shift(date, moveNext ? add : sub, duration, startOfWeek, endOfWeek);
     },
     [DateInterval.Month]: (range: DateRange, moveNext: boolean) => {
         const [startDate, endDate] = range;
         const sameMonth = isSameMonth(startDate, endDate)
         const duration  = sameMonth ?   { months: 1 } : { months: 0 }
-        const date = moveNext && sameMonth ? endDate : moveNext ? startDate : endDate;
+        const date = moveNext && sameMonth ? startDate : moveNext ? endDate : startDate;
         return shift(date, moveNext ? add : sub, duration, startOfMonth, endOfMonth);
     },
     [DateInterval.Year]: (range: DateRange, moveNext: boolean) => {
         const [startDate, endDate] = range;
         const sameYear = isSameYear(startDate, endDate);
         const duration = sameYear ? {years: 1} : {years: 0};
-        const date = moveNext && sameYear ? endDate : moveNext ? startDate : endDate;
+        const date = moveNext && sameYear ? startDate : moveNext ? endDate : startDate;
         return shift(date, moveNext ? add : sub, duration, startOfYear, endOfYear)
     }
 }
