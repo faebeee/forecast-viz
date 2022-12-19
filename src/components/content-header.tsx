@@ -4,6 +4,7 @@ import { DateRangeWidget } from "./date-range-widget";
 import { endOfMonth, startOfMonth, startOfYear, sub } from "date-fns";
 import { useFilterContext } from "../context/filter-context";
 import { MoreVert } from "@mui/icons-material";
+import { DateRangeNavigation } from './date-range-navigation';
 
 export type ContentHeaderProps = PropsWithChildren<{
     title: ReactNode;
@@ -13,6 +14,7 @@ export type ContentHeaderProps = PropsWithChildren<{
 export const ContentHeader = ({ title, children, showPicker = true }: ContentHeaderProps) => {
     const { dateRange, setDateRange } = useFilterContext();
     const [ anchorEl, setAnchorEl ] = useState<null | HTMLElement>(null);
+    const [ showMoreDateOptions, setShowMoreDateOptions ] = useState<boolean>(false);
     const open = Boolean(anchorEl);
     const handleClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -21,6 +23,7 @@ export const ContentHeader = ({ title, children, showPicker = true }: ContentHea
         setAnchorEl(null);
     };
 
+    const selectShowMoreOptions = () => setShowMoreDateOptions(!showMoreDateOptions);
     const selectWholeYear = () => setDateRange([ startOfYear(new Date()), new Date() ]);
     const selectCurrentMonth = () => setDateRange([ startOfMonth(new Date()), new Date() ]);
     const latest180Days = () => setDateRange([ sub(new Date(), { days: 180 }), new Date() ]);
@@ -34,8 +37,11 @@ export const ContentHeader = ({ title, children, showPicker = true }: ContentHea
             </Typography>
             { children }
         </Box>
-        { showPicker && <Box sx={ { display: 'flex', alignItems: 'center', width: 280 } }>
-            <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+        { showPicker && <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', width: 590 } }>    
+            <DateRangeNavigation dateRange={ dateRange } showMoreOptions={ showMoreDateOptions } onChange={ setDateRange }>
+                <DateRangeWidget dateRange={ dateRange } onChange={ setDateRange }/>
+            </DateRangeNavigation>
+            
             <IconButton
                 sx={ { ml: 1 } }
                 onClick={ handleClick }
@@ -51,6 +57,9 @@ export const ContentHeader = ({ title, children, showPicker = true }: ContentHea
                 open={ open }
                 onClose={ handleClose }
             >
+                <MenuItem onClick={ selectShowMoreOptions } disableRipple>
+                    Show more options
+                </MenuItem>
                 <MenuItem onClick={ latest7Days } disableRipple>
                     Last 7 days
                 </MenuItem>
