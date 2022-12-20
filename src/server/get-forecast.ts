@@ -1,5 +1,6 @@
 import axios from "axios";
 import { differenceInDays, isAfter, isBefore } from "date-fns";
+import {getCache} from "./services/cache";
 
 export type AssignmentEntry = Forecast.Assignment & {
     person?: Forecast.Person,
@@ -93,7 +94,9 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
     const getProjects = async (projectId?: number): Promise<Forecast.Project[]> => {
         try {
-            const response = await api.get<Forecast.GetProjectsResponse>(`/projects`);
+            const response = await getCache().getAndSet(`forecast-projects-${accountId}`, async () => {
+                return await api.get<Forecast.GetProjectsResponse>(`/projects`)
+            })
             const projects: Forecast.Project[] = response.data.projects;
             return projects
                 .map(p => ({ ...p, harvest_id: p.harvest_id ?? p.name }))
@@ -118,7 +121,9 @@ export const getForecast = (accessToken: string, accountId: number) => {
     const getPersons = async (): Promise<Forecast.Person[]> => {
 
         try {
-            const response = await api.get<Forecast.GetPeopleResponse>(`/people`);
+            const response = await getCache().getAndSet(`forecast:persons-${accountId}`, async () => {
+                return await api.get<Forecast.GetPeopleResponse>(`/people`)
+            })
             return response.data.people.filter((p) => !p.archived && p.login === 'enabled');
         } catch (e) {
             console.error(e);
@@ -143,7 +148,9 @@ export const getForecast = (accessToken: string, accountId: number) => {
 
 
         try {
-            const response = await api.get<{ assignments: Forecast.Assignment[] }>(`/assignments?start_date=${ from }&end_date=${ to }`);
+            const response = await getCache().getAndSet(`forecast:assignments-${accountId}-${from}-${to}`, async () => {
+                return await api.get<{ assignments: Forecast.Assignment[] }>(`/assignments?start_date=${ from }&end_date=${ to }`);
+            })
             const entries = response.data.assignments;
             const r = entries.map((e) => {
                 const startDate = isBefore(new Date(e?.start_date), fromDate) ? fromDate : new Date(e?.start_date);
