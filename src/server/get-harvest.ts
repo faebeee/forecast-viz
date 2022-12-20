@@ -9,6 +9,7 @@ import {
     TimeEntry
 } from "./harvest-types";
 import axios from "axios";
+import {getCache} from "./services/cache";
 
 
 export type QueryParams = {
@@ -65,7 +66,7 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
         }
         const url = `/time_entries?${ params.toString() }`;
         try {
-            return await fetchAllPages<TimeEntry[]>(url, 'time_entries', []);
+            return await getCache().getAndSet(`harvest:time_entries:${url}-${project_id}`, async () => { return await fetchAllPages(url, 'time_entries', []) })
         } catch (e) {
             return [];
         }
@@ -90,8 +91,10 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
                                         to
                                     }: QueryParams): Promise<GetProjectBudget.Result[]> => {
         try {
-            const response = await api.get<GetProjectBudget.Response>(`/reports/project_budget`)
-            return response.data.results;
+            return await getCache().getAndSet(`harvest:project_budget:${accountId}`, async () => {
+                const response = await api.get<GetProjectBudget.Response>(`/reports/project_budget`)
+                return response.data.results;
+            })
         } catch (e) {
             return [];
         }
@@ -102,8 +105,10 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
                                       from,
                                       to
                                   }: QueryParams) => {
-        const response = await api.get<GetTaskReport.Response>(`/reports/time/tasks?from=${ from }&to=${ to }`)
-        return response.data.results;
+        const response = await getCache().getAndSet(`harvest:tasks_report:${accountId}-${from}-${to}`, async () => {
+            const response = await api.get<GetTaskReport.Response>(`/reports/time/tasks?from=${from}&to=${to}`)
+            return response.data.results
+        })
     }
 
     const getProjectAssignments = async ({
@@ -111,26 +116,35 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
                                              from,
                                              to
                                          }: QueryParams): Promise<GetProjectAssignment.ProjectAssignment[]> => {
-        const response = await api.get<GetProjectAssignment.GetProjectAssignmentResponse>(`/users/me/project_assignments?from=${ from }&to=${ to }`)
-        return response.data.project_assignments;
+
+        return await getCache().getAndSet(`harvest:project_assignments:${accountId}-${from}-${to}`, async () => {
+            const response =  await api.get<GetProjectAssignment.GetProjectAssignmentResponse>(`/users/me/project_assignments?from=${ from }&to=${ to }`)
+            return response.data.project_assignments;
+        })
     }
 
     const getMe = async (): Promise<GetMe.GetMeResponse> => {
-        const response = await api.get(`/users/me`)
-        return response.data;
+        return await getCache().getAndSet(`harvest:me-${accountId}`, async () => {
+            const response = await api.get('/users/me')
+            return response.data;
+        })
     }
 
 
     const getUser = async (uid: number): Promise<GetMe.GetMeResponse> => {
-        const response = await api.get(`/users/${ uid }`)
-        return response.data;
+        return await getCache().getAndSet(`harvest:user-${uid}-${accountId}`, async () => {
+            const response = await api.get(`/users/${uid}`)
+            return response.data
+        })
     }
 
 
     const getUsers = async (): Promise<GetUsersAPI.Response | null> => {
         try {
-            const response = await api.get(`/users`)
-            return response.data;
+            return await getCache().getAndSet(`harvest:users-${accountId}`, async () => {
+                const response = await api.get('/users')
+                return response.data
+            })
         } catch (e) {
             return null
         }
@@ -138,7 +152,7 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
 
     const getRoles = async (): Promise<{ key: string, name: string }[]> => {
         try {
-            const roles = await fetchAllPages<RolesApi.Role[]>(`/roles`, 'roles', []);
+            const roles = await getCache().getAndSet(`harvest:roles-${accountId}`, async () => { return await fetchAllPages<RolesApi.Role[]>(`/roles`, 'roles', []) })
             return roles.map((role) => {
                 return {
                     key: role.name,
@@ -152,8 +166,10 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
 
     const getAccounts = async (): Promise<AccountsApi.Response | null> => {
         try {
-            const response = await api.get(`/accounts`)
-            return response.data;
+            return await getCache().getAndSet(`harvest:accounts-${accountId}`, async () => {
+                const response = await api.get('/accounts')
+                return response.data
+            })
         } catch (e) {
             return null
         }
