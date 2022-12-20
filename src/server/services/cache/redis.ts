@@ -48,29 +48,34 @@ export const RedisCache = (): Cache => {
       })
     },
     get<T extends Value>(key: Key): Promise<T> {
+      let finalResult : any = null
       return new Promise((resolve, reject) => {
         try {
           redis.hgetall(key, (err, result) => {
+            // guard: if there is an error, reject the promise and bail out.
             if (err) {
               reject()
+              return;
             }
-            // we need to convert the value back to the proper type
+            // we need to convert the value back to the proper type.
             if (result && result.type) {
               if (result.type === 'number') {
-                resolve(Number(result.data) as T) // we need to convert the stringified number back to a number
+                finalResult = Number(result.data) as T // we need to convert the stringified number back to a number
               } else if (result.type === 'string') {
-                resolve(result.data as T) // no conversion needed, ioredis stores all them values as strings
+                finalResult = result.data as T // no conversion needed, ioredis stores all them values as strings
               } else {
-                resolve(JSON.parse(result.data) as T) // convert the json string back to an object
+                finalResult = JSON.parse(result.data) as T // convert the json string back to an object
               }
-            } else {
-              resolve(null as T)
             }
           })
         } catch (e) {
+          // upon any error, log it and remove the cache key so that we don't get the same error twice.
+          // This also might mitigate the issue if the error is caused by a bad value in the cache
           console.log(`unable to retrieve/parse value of cache key:${key}`)
           redis.del(key)
-          resolve(null as T)
+        } finally {
+          // what ever happens - resolve the promise
+          resolve(finalResult)
         }
       })
     },
