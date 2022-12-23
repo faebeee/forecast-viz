@@ -52,20 +52,26 @@ export const RedisCache = (): Cache => {
       return new Promise((resolve, reject) => {
         try {
           redis.hgetall(key, (err, result) => {
+
             // guard: if there is an error, reject the promise and bail out.
             if (err) {
               reject()
               return;
             }
-            // we need to convert the value back to the proper type.
-            if (result && result.type) {
-              if (result.type === 'number') {
-                finalResult = Number(result.data) as T // we need to convert the stringified number back to a number
-              } else if (result.type === 'string') {
-                finalResult = result.data as T // no conversion needed, ioredis stores all them values as strings
-              } else {
-                finalResult = JSON.parse(result.data) as T // convert the json string back to an object
-              }
+
+            // guard: if there is no result, resolve the promise with null and bail out.
+            if (!(result && result.type)) {
+              resolve(finalResult)
+              return;
+            }
+
+            // we got something and need to convert the value back to the proper type.
+            if (result.type === 'number') {
+              finalResult = Number(result.data) as T // we need to convert the stringified number back to a number
+            } else if (result.type === 'string') {
+              finalResult = result.data as T // no conversion needed, ioredis stores all them values as strings
+            } else {
+              finalResult = JSON.parse(result.data) as T // convert the json string back to an object
             }
           })
         } catch (e) {
