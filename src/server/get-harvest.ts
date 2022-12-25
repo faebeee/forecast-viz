@@ -105,7 +105,7 @@ export const getHarvest = async (accessToken: string, accountId?: number) => {
                                       from,
                                       to
                                   }: QueryParams) => {
-        const response = await getCache().getAndSet(`harvest:tasks_report:${accountId}-${from}-${to}`, async () => {
+        return await getCache().getAndSet(`harvest:tasks_report:${accountId}-${from}-${to}`, async () => {
             const response = await api.get<GetTaskReport.Response>(`/reports/time/tasks?from=${from}&to=${to}`)
             return response.data.results
         })
